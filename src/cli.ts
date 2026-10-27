@@ -60,6 +60,7 @@ Cloud:
 
 Paths: use / for nested elements (e.g. overall-architecture/main-process)
 Fields: description, diagram, constraint, concern, context, todo, note
+Title:  omm write <path> title "Display name" (shown in the viewer instead of the id)
 `;
   process.stdout.write(help.trim() + '\n');
 }

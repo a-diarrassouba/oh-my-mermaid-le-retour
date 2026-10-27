@@ -393,6 +393,13 @@ function tw(t, f) { _tm.font = f || '11px Inter,system-ui'; return Math.ceil(_tm
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function r1(n) { return +n.toFixed(1); }
 function fmtLabel(s) { return s.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '); }
+// The element's title from meta.yaml; older metas hold the id itself, which gets formatted instead.
+function customTitle(key) {
+  const id = String(key).split('/').pop();
+  const title = (classesData[key] || classesData[id])?.meta?.title;
+  return typeof title === 'string' && title.trim() && title !== id ? title : null;
+}
+function displayTitle(key) { return customTitle(key) ?? fmtLabel(String(key).split('/').pop()); }
 
 // ── flowchart parser ──────────────────────────────────────
 function parseFlowchart(raw) {
@@ -683,16 +690,16 @@ function renderGroup(cls, classesData, allClasses, level, seen = new Set(), scop
       svg += `<g class="grp-node" clip-path="url(#${clipId})" onclick="event.stopPropagation();window.__openSb('${scopedId}')" data-cls="${scopedId}" data-depth="${level+1}" transform="translate(${nx},${ny})">`;
       svg += `<rect class="grp-border" width="${r1(boxW)}" height="${r1(boxH)}" rx="5"
         fill="${th.subFill}" stroke="${refSubStroke}" stroke-width="2"/>`;
-      const _slW = tw(fmtLabel(sg.cls), '600 9px "Plus Jakarta Sans",Inter,system-ui') + 12;
+      const _slW = tw(displayTitle(sg.scopedPath || sg.cls), '600 9px "Plus Jakarta Sans",Inter,system-ui') + 12;
       svg += `<rect class="grp-label-top grp-label-bg" x="5" y="-7" width="${_slW}" height="14" rx="2" fill="${th.subFill}" opacity="1"/>`;
       svg += `<text class="grp-label-top" x="10" y="2" font-family="&quot;Plus Jakarta Sans&quot;,Inter,system-ui" font-size="9" font-weight="600"
-        fill="${th.subLabelFill}" letter-spacing="0.05em">${esc(fmtLabel(sg.cls))}</text>`;
+        fill="${th.subLabelFill}" letter-spacing="0.05em">${esc(displayTitle(sg.scopedPath || sg.cls))}</text>`;
       svg += `<g class="grp-inner" transform="translate(${r1(PAD)},${r1(PAD)}) scale(${r1(fs)})">${sg.svgContent}</g>`;
       svg += `<text class="grp-label-center" x="${r1(boxW/2)}" y="${r1(boxH/2)}" text-anchor="middle" dominant-baseline="central"
-        font-family="&quot;Plus Jakarta Sans&quot;,Inter,system-ui" font-size="9" font-weight="600" fill="${th.grpLabelCenterFill}" letter-spacing="0.05em">${esc(fmtLabel(sg.cls))}</text>`;
+        font-family="&quot;Plus Jakarta Sans&quot;,Inter,system-ui" font-size="9" font-weight="600" fill="${th.grpLabelCenterFill}" letter-spacing="0.05em">${esc(displayTitle(sg.scopedPath || sg.cls))}</text>`;
       svg += `</g>`;
       labelOverlay += `<text class="grp-label-center" x="${r1(nx + boxW/2)}" y="${r1(ny + boxH/2)}" text-anchor="middle" dominant-baseline="central"
-        font-family="&quot;Plus Jakarta Sans&quot;,Inter,system-ui" font-size="9" font-weight="600" fill="${th.grpLabelCenterFill}" letter-spacing="0.05em">${esc(fmtLabel(sg.cls))}</text>`;
+        font-family="&quot;Plus Jakarta Sans&quot;,Inter,system-ui" font-size="9" font-weight="600" fill="${th.grpLabelCenterFill}" letter-spacing="0.05em">${esc(displayTitle(sg.scopedPath || sg.cls))}</text>`;
     } else {
       // ── regular node ──
       const st = nodeStyle(n);
@@ -1118,7 +1125,7 @@ window.__openSb = function(cls) {
 
 function openSidebar(cls) {
   const data=classesData[cls]||{}, refs=refsData[cls]||{};
-  sbTitle.textContent=fmtLabel(cls);
+  sbTitle.textContent=displayTitle(cls);
   sbDiagram.innerHTML = '';
   const md=t=>t?marked.parse(t):'';
   const sec=(title,body,ex='')=>body?`<div class="sb-sec ${ex}"><div class="sb-sec-title">${title}</div><div class="sb-sec-body">${body}</div></div>`:'';
@@ -1254,14 +1261,14 @@ function buildCanvas(classes, classesData, refsData) {
     innerSVG += `<g class="grp-node" data-cls="${esc(g.cls)}" data-depth="0" transform="translate(${tx},${ty})" onclick="event.stopPropagation();window.__openSb('${esc(g.cls)}')">`;
     innerSVG += `<rect class="grp-border" width="${g.W}" height="${g.H}" rx="8"
       fill="${th.groupFill}" stroke="${th.groupStroke}" stroke-width="2"/>`;
-    const _lblW = tw(fmtLabel(g.cls), '600 10px "Plus Jakarta Sans",Inter,system-ui') + 14;
+    const _lblW = tw(displayTitle(g.cls), '600 10px "Plus Jakarta Sans",Inter,system-ui') + 14;
     innerSVG += `<rect class="grp-label-top grp-label-bg" x="6" y="-10" width="${_lblW}" height="20" rx="2" fill="${th.groupFill}" opacity="1"/>`;
     innerSVG += `<text class="grp-label-top" x="12" y="3" font-family="&quot;Plus Jakarta Sans&quot;,Inter,system-ui" font-size="10" font-weight="600"
-      fill="${th.grpLabelFill}" letter-spacing="0.05em">${esc(fmtLabel(g.cls))}</text>`;
+      fill="${th.grpLabelFill}" letter-spacing="0.05em">${esc(displayTitle(g.cls))}</text>`;
     innerSVG += `<g class="grp-inner">${g.svgContent}</g>`;
     if (g.labelOverlay) innerSVG += `<g class="grp-sub-labels">${g.labelOverlay}</g>`;
     innerSVG += `<text class="grp-label-center" x="${r1(g.W/2)}" y="${r1(g.H/2)}" text-anchor="middle" dominant-baseline="central"
-      font-family="&quot;Plus Jakarta Sans&quot;,Inter,system-ui" font-size="10" font-weight="600" fill="${th.grpLabelCenterFill}" letter-spacing="0.05em">${esc(fmtLabel(g.cls))}</text>`;
+      font-family="&quot;Plus Jakarta Sans&quot;,Inter,system-ui" font-size="10" font-weight="600" fill="${th.grpLabelCenterFill}" letter-spacing="0.05em">${esc(displayTitle(g.cls))}</text>`;
     innerSVG += `</g>`;
   }
 
@@ -1354,7 +1361,7 @@ function buildNavTree() {
       children.forEach(function(child, j) {
         var isLast = j === children.length - 1;
         var childScoped = parentScopedPath + '/' + child;
-        addNavItem(childScoped, basePrefix, isLast, child);
+        addNavItem(childScoped, basePrefix, isLast, customTitle(childScoped) ?? child);
         // Recurse: check if this child has sub-children in classesData
         var childData = classesData[child];
         if (childData && childData.children && childData.children.length > 0) {
@@ -1391,7 +1398,7 @@ function buildNavTree() {
       }
 
       const labelSpan = document.createElement('span');
-      labelSpan.textContent = persp;
+      labelSpan.textContent = customTitle(persp) ?? persp;
       btn.appendChild(labelSpan);
       navList.appendChild(btn);
 

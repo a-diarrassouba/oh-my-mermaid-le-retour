@@ -213,6 +213,39 @@ function writeNodeMeta(perspective: string, nodePath: string[], meta: ClassMeta,
   fs.writeFileSync(filePath, YAML.stringify(meta), 'utf-8');
 }
 
+export const MAX_TITLE_LENGTH = 80;
+
+function elementId(perspective: string, nodePath: string[]): string {
+  return nodePath.length === 0 ? perspective : nodePath[nodePath.length - 1];
+}
+
+/** The element's display title, or null when it has none (older metas store the id as title). */
+export function readTitle(perspective: string, nodePath: string[], cwd?: string): string | null {
+  const title = readNodeMeta(perspective, nodePath, cwd)?.title;
+  if (typeof title !== 'string' || !title.trim() || title === elementId(perspective, nodePath)) return null;
+  return title;
+}
+
+/** Sets the display title of an existing element; an empty title removes it. */
+export function writeTitle(perspective: string, nodePath: string[], title: string, cwd?: string): void {
+  const dir = nodePath.length === 0 ? classDir(perspective, cwd) : nodeDir(perspective, nodePath, cwd);
+  const fullPath = [perspective, ...nodePath].join('/');
+  if (!fs.existsSync(dir)) {
+    throw new Error(`element '${fullPath}' not found. Write its description first.`);
+  }
+  const clean = title.trim();
+  if (/[\r\n]/.test(clean)) throw new Error('a title must fit on one line');
+  if (clean.length > MAX_TITLE_LENGTH) throw new Error(`a title must be at most ${MAX_TITLE_LENGTH} characters`);
+
+  const now = new Date().toISOString();
+  const meta: ClassMeta = readNodeMeta(perspective, nodePath, cwd)
+    ?? { created: now, updated: now, update_count: 0, last_field: 'description' };
+  if (clean) meta.title = clean;
+  else delete meta.title;
+  writeNodeMeta(perspective, nodePath, meta, cwd);
+  process.stderr.write(clean ? `title of ${fullPath}: ${clean}\n` : `title of ${fullPath} removed\n`);
+}
+
 /** Show all fields for a nested element */
 export function showNode(perspective: string, nodePath: string[], cwd?: string): ClassData | null {
   const dir = nodePath.length === 0
