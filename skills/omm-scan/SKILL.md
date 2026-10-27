@@ -29,7 +29,15 @@ If the install fails, tell the user: "Please run `npm install -g oh-my-mermaid` 
 omm config language
 ```
 
-It prints a language code: `en` (the default), `fr`, `ko`, `ja`, `zh`, ... Write field content (description, context, constraint, concern, todo, note) in that language. Element IDs, directory names, and diagram node IDs are always English kebab-case.
+It prints a language code: `en` (the default), `fr`, `ko`, `ja`, `zh`, ... Everything a reader sees is written in that language:
+
+- field content (description, context, constraint, concern, todo, note);
+- element titles (`omm write <path> title`, see 3b and 3c);
+- diagram labels: the first line of each node label and every edge label (see [Diagram Rules](#diagram-rules)).
+
+Only identifiers stay in English kebab-case: element IDs, directory names, diagram node IDs, `classDef` names. File paths stay as they are in the code.
+
+Example with `fr`: `data-store["Stockage des données\nsrc/main/store.ts"]`, title `Stockage des données`.
 
 ## Step 1: Explore the Codebase
 
@@ -82,9 +90,15 @@ graph LR
 MERMAID
 ```
 
-### 3b. Write the other 6 fields
+### 3b. Write the title and the other fields
 
-Each as a separate `omm write` command: description, context, constraint, concern, todo, note.
+The diagram from 3a created the perspective's folder, so it can now get a title in the configured language. Then write its fields, each as a separate `omm write` command: `description` always; `context`, `constraint`, `concern`, `todo`, `note` only when there is something real to say (an empty or generic field is worse than none).
+
+```bash
+omm write <perspective> title "Overall architecture"
+```
+
+The viewer shows the title instead of the ID. Keep it short (a few words, at most 80 characters, one line).
 
 ### 3c. Recursive drill-down: analyze every element
 
@@ -96,15 +110,25 @@ Each as a separate `omm write` command: description, context, constraint, concer
 
    ```bash
    omm write <perspective>/<element-name> description - <<'EOF'
-   (what this element does, which files/dirs it covers)
+   (one plain sentence: what it is for)
+
+   (then the technical part: what it does, which files/dirs it covers)
    EOF
    ```
 
-3. **Decide leaf or group:**
-   - **Distinct internal components found** → write a diagram and recurse deeper (it becomes a group)
-   - **No meaningful sub-components** (single file, trivial wrapper, external system) → write remaining fields only (it stays a leaf)
+   See [Writing for Everyone](#writing-for-everyone) for the first sentence.
 
-4. **If group** — write diagram and recurse:
+3. **Write its title**, the same name as the first line of its label in the parent diagram. Always after the description: `title` refuses an element whose folder does not exist yet.
+
+   ```bash
+   omm write <perspective>/<element-name> title "Data store"
+   ```
+
+4. **Decide leaf or group:**
+   - **Distinct internal components found** → write a diagram and recurse deeper (it becomes a group)
+   - **No meaningful sub-components** (single file, trivial wrapper, external system) → it stays a leaf: stop here, after writing the other fields that have something real to say
+
+5. **If group** — write diagram and recurse:
 
    ```bash
    omm write <perspective>/<element-name> diagram - <<'MERMAID'
@@ -145,17 +169,26 @@ overall-architecture (perspective)
 
 Report what was created/updated and suggest `omm view` to view.
 
+## Writing for Everyone
+
+The readers include people who do not code (product, newcomers). Every `description` starts with **one plain sentence** that says what the element is for, in everyday words: no jargon, no file names, no acronyms without explanation. The technical details come after, in a new paragraph.
+
+- Good: "Keeps every user's documents so they are still there after a restart." Then: "SQLite database accessed through `src/db/`, ..."
+- Not good: "Repository layer wrapping the ORM."
+
+The other fields can stay technical.
+
 ## Diagram Rules
 
 - **Element IDs must match the child directory name.** Use kebab-case: `main-process`, `data-store`, `terminal-dock`.
-- **Element labels use two-line format**: name + file path, separated by `\n`:
+- **Element labels use two-line format**: name + file path, separated by `\n`. The name is written in the configured language; the path is not translated. For an element made of several files, give their common folder; for an external system (service, API, AI tool), give its name or URL. External systems are leaves, with a description like any element:
 
   ```text
   main-process["Main Process\nsrc/main/"]
   auth-service["Auth Service\nsrc/auth/service.ts"]
   ```
 
-- Every edge must have a meaningful label: `A -->|"why this connection exists"| B`
+- Every edge must have a meaningful label, in the configured language: `A -->|"why this connection exists"| B`
 - More elements in one diagram means you should recurse deeper.
 - Use `graph LR` for most diagrams, `graph TD` for hierarchies.
 - Use `classDef` for visual distinction when helpful:
@@ -177,5 +210,7 @@ Report what was created/updated and suggest `omm view` to view.
 ## General Rules
 
 - **Write each field as a separate `omm write` command.** Each `omm write` must be its own Bash tool call.
+- **Run `omm write` commands one at a time, never in parallel.** Each write also updates the parent's `meta.yaml`; two writes at once can lose a child.
+- If `omm write <path> title ...` answers `invalid field 'title'`, the CLI is too old: tell the user to run `omm update`, and keep scanning without titles.
 - Do not rewrite elements that haven't changed.
 - Do not create circular references. A child element must never reference its parent.
