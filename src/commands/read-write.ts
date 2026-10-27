@@ -12,8 +12,12 @@ import {
   writeField,
   readNodeField,
   writeNodeField,
+  readTitle,
+  writeTitle,
 } from '../lib/store.js';
-import type { Field } from '../types.js';
+import { VALID_FIELDS, type Field } from '../types.js';
+
+const VALID_NAMES = [...VALID_FIELDS, 'title'].join(', ');
 
 function parsePath(targetPath: string): { perspective: string; nodePath: string[] } {
   const parts = targetPath.split('/');
@@ -25,13 +29,18 @@ export function commandRead(targetPath?: string, field?: string): void {
     process.stderr.write('error: omm read <path> <field>\n');
     process.exit(1);
   }
-  if (!isValidField(field)) {
-    process.stderr.write(`error: invalid field '${field}'. Valid: description, diagram, constraint, concern, context, todo, note\n`);
+  if (field !== 'title' && !isValidField(field)) {
+    process.stderr.write(`error: invalid field '${field}'. Valid: ${VALID_NAMES}\n`);
     process.exit(1);
   }
   if (!ensureOmmForRead()) return;
 
   const { perspective, nodePath } = parsePath(targetPath);
+  if (field === 'title') {
+    const title = readTitle(perspective, nodePath);
+    if (title) process.stdout.write(title + '\n');
+    return;
+  }
   const content = nodePath.length === 0
     ? readField(perspective, field as Field)
     : readNodeField(perspective, nodePath, field as Field);
@@ -46,8 +55,8 @@ export async function commandWrite(targetPath?: string, field?: string, contentA
     process.stderr.write('error: omm write <path> <field> <content|->\n');
     process.exit(1);
   }
-  if (!isValidField(field)) {
-    process.stderr.write(`error: invalid field '${field}'. Valid: description, diagram, constraint, concern, context, todo, note\n`);
+  if (field !== 'title' && !isValidField(field)) {
+    process.stderr.write(`error: invalid field '${field}'. Valid: ${VALID_NAMES}\n`);
     process.exit(1);
   }
 
@@ -71,6 +80,10 @@ export async function commandWrite(targetPath?: string, field?: string, contentA
   }
 
   const { perspective, nodePath } = parsePath(targetPath);
+  if (field === 'title') {
+    writeTitle(perspective, nodePath, content);
+    return;
+  }
   if (nodePath.length === 0) {
     writeField(perspective, field as Field, content);
   } else {
