@@ -29,7 +29,7 @@ If the install fails, tell the user: "Please run `npm install -g oh-my-mermaid` 
 omm config language
 ```
 
-Write field content (description, context, constraint, concern, todo, note) in the configured language. Default is English. Element IDs, directory names, and diagram node IDs are always English kebab-case.
+It prints a language code: `en` (the default), `fr`, `ko`, `ja`, `zh`, ... Write field content (description, context, constraint, concern, todo, note) in that language. Element IDs, directory names, and diagram node IDs are always English kebab-case.
 
 ## Step 1: Explore the Codebase
 
