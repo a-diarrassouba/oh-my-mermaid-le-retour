@@ -2,6 +2,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import { listClasses, showClass, readMeta, readField, listNodes, showNode } from '../lib/store.js';
 import { diffMermaid } from '../lib/diff.js';
 import { getIncomingRefs, getOutgoingRefs } from '../lib/refs.js';
+import { getLanguage } from '../lib/language.js';
 
 function json(res: ServerResponse, data: unknown, status = 200): void {
   res.writeHead(status, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
@@ -11,6 +12,12 @@ function json(res: ServerResponse, data: unknown, status = 200): void {
 export function handleApi(req: IncomingMessage, res: ServerResponse): boolean {
   const url = new URL(req.url || '/', `http://${req.headers.host}`);
   const path = url.pathname;
+
+  // GET /api/config — only what the viewer needs, not the cloud settings
+  if (path === '/api/config') {
+    json(res, { language: getLanguage() });
+    return true;
+  }
 
   // GET /api/classes
   if (path === '/api/classes') {
