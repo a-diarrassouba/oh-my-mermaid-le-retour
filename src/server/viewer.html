@@ -292,17 +292,17 @@ body.light .reg-node:hover .nshape { stroke: #000 !important; }
 <div id="mobile-overlay" onclick="toggleMobileNav()"></div>
 <div id="canvas-wrap">
   <div class="float-controls">
-    <button class="hbtn" onclick="zoomOut()">−</button>
+    <button class="hbtn" onclick="zoomOut()" data-i18n-title="zoomOut">−</button>
     <span id="zoom-label">70%</span>
-    <button class="hbtn" onclick="zoomIn()">+</button>
-    <button class="hbtn" onclick="resetView()" style="font-size:11px">fit</button>
-    <button class="hbtn" id="theme-btn" onclick="toggleTheme()" style="font-size:13px">○</button>
+    <button class="hbtn" onclick="zoomIn()" data-i18n-title="zoomIn">+</button>
+    <button class="hbtn" onclick="resetView()" style="font-size:11px" data-i18n="fit" data-i18n-title="fitTitle">fit</button>
+    <button class="hbtn" id="theme-btn" onclick="toggleTheme()" style="font-size:13px" data-i18n-title="theme">○</button>
   </div>
   <div id="canvas"></div>
 </div>
 
 <div id="sidebar">
-  <div id="sb-head"><div id="sb-title"></div><button id="sb-close" onclick="closeSidebar()">×</button></div>
+  <div id="sb-head"><div id="sb-title"></div><button id="sb-close" onclick="closeSidebar()" data-i18n-title="close">×</button></div>
   <div id="sb-body">
     <div class="sb-diagram" id="sb-diagram"></div>
     <div class="sb-fields" id="sb-fields"></div>
@@ -310,6 +310,42 @@ body.light .reg-node:hover .nshape { stroke: #000 !important; }
 </div>
 
 <script type="module">
+// ── interface language ────────────────────────────────────
+const I18N = {
+  en: {
+    zoomOut: 'Zoom out', zoomIn: 'Zoom in', fit: 'fit', fitTitle: 'Fit to screen',
+    theme: 'Switch theme', close: 'Close',
+    meta: 'Meta', description: 'Description', constraint: 'Constraints', concern: 'Concerns',
+    context: 'Context', todo: 'Todo', note: 'Notes', references: 'References',
+    updatesOne: '{n} update', updatesOther: '{n} updates',
+    emptyTitle: 'No perspectives found.', emptyHint: 'Run {cmd} in Claude Code.',
+  },
+  fr: {
+    zoomOut: 'Zoom arrière', zoomIn: 'Zoom avant', fit: 'ajuster', fitTitle: "Ajuster à l'écran",
+    theme: 'Changer de thème', close: 'Fermer',
+    meta: 'Infos', description: 'Description', constraint: 'Contraintes', concern: "Points d'attention",
+    context: 'Contexte', todo: 'À faire', note: 'Notes', references: 'Références',
+    updatesOne: '{n} mise à jour', updatesOther: '{n} mises à jour',
+    emptyTitle: 'Aucune perspective trouvée.', emptyHint: 'Lancez {cmd} dans Claude Code.',
+  },
+};
+let lang = 'en';
+// `fr-CA` uses the `fr` texts; a language without texts falls back to English.
+function setLanguage(code) {
+  const primary = String(code || '').toLowerCase().split('-')[0];
+  lang = I18N[primary] ? primary : 'en';
+  document.documentElement.lang = typeof code === 'string' && code ? code : lang;
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    el.title = t(el.dataset.i18nTitle);
+    el.setAttribute('aria-label', el.title);
+  });
+}
+function t(key, vars = {}) {
+  const text = I18N[lang][key] ?? I18N.en[key] ?? key;
+  return text.replace(/\{(\w+)\}/g, (_, k) => String(vars[k] ?? ''));
+}
+
 // ── theme ─────────────────────────────────────────────────
 function safeStorageGet(key) {
   try {
@@ -1088,22 +1124,24 @@ function openSidebar(cls) {
   const sec=(title,body,ex='')=>body?`<div class="sb-sec ${ex}"><div class="sb-sec-title">${title}</div><div class="sb-sec-body">${body}</div></div>`:'';
   let html='';
   if (data.meta) {
-    const t=data.meta.updated?new Date(data.meta.updated).toLocaleString():'';
-    html+=`<div class="sb-sec"><div class="sb-sec-title">Meta</div><div class="sb-meta-text">${t?t+'<br>':''}${data.meta.update_count||0} updates${data.meta.git_branch?` · ${data.meta.git_branch}`:''}${data.meta.git_commit?` · ${data.meta.git_commit}`:''}</div></div>`;
+    const when=data.meta.updated?new Date(data.meta.updated).toLocaleString(document.documentElement.lang):'';
+    const n=data.meta.update_count||0;
+    const updates=t(n===1?'updatesOne':'updatesOther',{n});
+    html+=`<div class="sb-sec"><div class="sb-sec-title">${esc(t('meta'))}</div><div class="sb-meta-text">${when?esc(when)+'<br>':''}${esc(updates)}${data.meta.git_branch?` · ${esc(data.meta.git_branch)}`:''}${data.meta.git_commit?` · ${esc(data.meta.git_commit)}`:''}</div></div>`;
   }
-  html+=sec('Description',md(data.description));
-  html+=sec('Constraints',md(data.constraint));
-  html+=sec('Concerns',md(data.concern),'sb-concern');
-  html+=sec('Context',md(data.context));
-  html+=sec('Todo',md(data.todo));
-  html+=sec('Notes',md(data.note));
+  html+=sec(esc(t('description')),md(data.description));
+  html+=sec(esc(t('constraint')),md(data.constraint));
+  html+=sec(esc(t('concern')),md(data.concern),'sb-concern');
+  html+=sec(esc(t('context')),md(data.context));
+  html+=sec(esc(t('todo')),md(data.todo));
+  html+=sec(esc(t('note')),md(data.note));
   const inc=refs.incoming||[], out=refs.outgoing||[];
   if (inc.length||out.length) {
     const links=[
       ...inc.map(r=>{const n=typeof r==='string'?r:r.source_class;return `<span class="sb-ref" onclick="window.__openSb('${esc(n)}')">← ${esc(n)}</span>`;}),
       ...out.map(r=>{const n=typeof r==='string'?r:r.target_class;return `<span class="sb-ref" onclick="window.__openSb('${esc(n)}')">→ ${esc(n)}</span>`;}),
     ].join('');
-    html+=`<div class="sb-sec"><div class="sb-sec-title">References</div><div class="sb-refs">${links}</div></div>`;
+    html+=`<div class="sb-sec"><div class="sb-sec-title">${esc(t('references'))}</div><div class="sb-refs">${links}</div></div>`;
   }
   sbFields.innerHTML=html;
   sidebar.classList.add('open');
@@ -1477,9 +1515,12 @@ async function loadSubNodeData(perspective, subPath, shortName) {
 // ── init ──────────────────────────────────────────────────
 async function init() {
   applyTheme();
-  classes = await api('/api/classes');
+  const [config, list] = await Promise.all([api('/api/config'), api('/api/classes')]);
+  setLanguage(config.language);
+  classes = Array.isArray(list) ? list : [];
   if (!classes.length) {
-    canvasEl.innerHTML=`<div class="empty-state" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%)"><p>No perspectives found.<br>Run <code>/omm-scan</code> in Claude Code.</p></div>`;
+    const hint = esc(I18N[lang].emptyHint).replace('{cmd}', '<code>/omm-scan</code>');
+    canvasEl.innerHTML=`<div class="empty-state" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%)"><p>${esc(t('emptyTitle'))}<br>${hint}</p></div>`;
     return;
   }
   const [da,ra,na] = await Promise.all([
