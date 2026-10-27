@@ -1,5 +1,6 @@
 import { ensureOmmForRead, isValidField, readField, writeField, classExists } from '../lib/store.js';
 import { VALID_FIELDS, type Field } from '../types.js';
+import { msg } from '../lib/messages.js';
 
 function readStdin(): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -13,7 +14,7 @@ function readStdin(): Promise<string> {
 
 export async function commandClassField(className: string, field: string, content?: string): Promise<void> {
   if (!isValidField(field)) {
-    process.stderr.write(`error: unknown field '${field}'. Valid: ${VALID_FIELDS.join(', ')}\n`);
+    process.stderr.write(msg('invalidField', { field, valid: VALID_FIELDS.join(', ') }) + '\n');
     process.exit(1);
   }
 
@@ -23,12 +24,12 @@ export async function commandClassField(className: string, field: string, conten
   if (content === undefined) {
     if (!ensureOmmForRead()) return;
     if (!classExists(className)) {
-      process.stderr.write(`error: element '${className}' not found\n`);
+      process.stderr.write(msg('elementNotFound', { path: className }) + '\n');
       process.exit(1);
     }
     const value = readField(className, typedField);
     if (value === null) {
-      process.stderr.write(`error: ${className}/${field} is empty\n`);
+      process.stderr.write(msg('fieldEmpty', { path: `${className}/${field}` }) + '\n');
       process.exit(1);
     }
     process.stdout.write(value);

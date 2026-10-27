@@ -3,6 +3,7 @@
  */
 
 import { ensureOmmForRead, listNodes, listClasses } from '../lib/store.js';
+import { msg } from '../lib/messages.js';
 
 function printTree(perspective: string, nodePath: string[], prefix: string, isLast: boolean, isRoot: boolean): void {
   const name = nodePath.length === 0 ? perspective : nodePath[nodePath.length - 1];
@@ -28,7 +29,7 @@ export function commandTree(targetPath?: string): void {
   if (!targetPath) {
     const perspectives = listClasses();
     if (perspectives.length === 0) {
-      process.stderr.write('No perspectives found. Run /omm-scan to generate.\n');
+      process.stderr.write(msg('noPerspectivesScan') + '\n');
       return;
     }
     for (const persp of perspectives) {

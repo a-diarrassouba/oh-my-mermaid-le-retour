@@ -16,6 +16,7 @@ import {
   writeTitle,
 } from '../lib/store.js';
 import { VALID_FIELDS, type Field } from '../types.js';
+import { msg } from '../lib/messages.js';
 
 const VALID_NAMES = [...VALID_FIELDS, 'title'].join(', ');
 
@@ -26,11 +27,11 @@ function parsePath(targetPath: string): { perspective: string; nodePath: string[
 
 export function commandRead(targetPath?: string, field?: string): void {
   if (!targetPath || !field) {
-    process.stderr.write('error: omm read <path> <field>\n');
+    process.stderr.write(msg('usage', { usage: 'omm read <path> <field>' }) + '\n');
     process.exit(1);
   }
   if (field !== 'title' && !isValidField(field)) {
-    process.stderr.write(`error: invalid field '${field}'. Valid: ${VALID_NAMES}\n`);
+    process.stderr.write(msg('invalidField', { field, valid: VALID_NAMES }) + '\n');
     process.exit(1);
   }
   if (!ensureOmmForRead()) return;
@@ -52,11 +53,11 @@ export function commandRead(targetPath?: string, field?: string): void {
 
 export async function commandWrite(targetPath?: string, field?: string, contentArgs?: string[]): Promise<void> {
   if (!targetPath || !field) {
-    process.stderr.write('error: omm write <path> <field> <content|->\n');
+    process.stderr.write(msg('usage', { usage: 'omm write <path> <field> <content|->' }) + '\n');
     process.exit(1);
   }
   if (field !== 'title' && !isValidField(field)) {
-    process.stderr.write(`error: invalid field '${field}'. Valid: ${VALID_NAMES}\n`);
+    process.stderr.write(msg('invalidField', { field, valid: VALID_NAMES }) + '\n');
     process.exit(1);
   }
 
@@ -64,7 +65,7 @@ export async function commandWrite(targetPath?: string, field?: string, contentA
   let content: string;
 
   if (args.length === 0) {
-    process.stderr.write('error: omm write <path> <field> <content|->\n');
+    process.stderr.write(msg('usage', { usage: 'omm write <path> <field> <content|->' }) + '\n');
     process.exit(1);
     return;
   }

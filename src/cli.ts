@@ -22,47 +22,12 @@ import { commandValidate } from './commands/validate.js';
 import { commandTree } from './commands/tree.js';
 import { commandRead, commandWrite } from './commands/read-write.js';
 import { commandConfig } from './commands/config.js';
+import { msg } from './lib/messages.js';
 
 const GLOBAL_COMMANDS = ['init', 'setup', 'update', 'list', 'show', 'delete', 'status', 'diff', 'refs', 'validate', 'view', 'login', 'logout', 'push', 'pull', 'link', 'share', 'org', 'read', 'write', 'tree', 'config', 'help'];
 
 function printHelp(): void {
-  const help = `
-oh-my-mermaid (omm) — Architecture mirror for vibe coding
-
-Usage:
-  omm init                          Initialize .omm/ directory (usually not needed)
-  omm setup [platform]              Register skills with AI coding tools
-  omm setup --list                  Show detected platforms
-  omm setup --teardown              Unregister from all platforms
-  omm update                        Update CLI + plugins to latest version
-  omm list                          List perspectives
-  omm tree <path>                   Show element tree
-  omm read <path> <field>           Read a field (stdout)
-  omm write <path> <field> <text|-> Write a field
-  omm show <path>                   Show all fields for an element
-  omm delete <path>                 Delete an element
-  omm status                        Show overview of all elements
-  omm diff <path>                   Compare current vs previous diagram
-  omm refs <path>                   Show elements that reference this element
-  omm validate [path]               Validate diagram(s) for syntax and conventions
-  omm view [--port <port>]         Start web viewer (default: 3000)
-
-Cloud:
-  omm login                         Log in to omm.dev
-  omm logout                        Log out
-  omm link [org/slug]                Link project to a cloud slug
-  omm push                          Push .omm/ to cloud
-  omm pull                          Pull .omm/ from cloud
-  omm share                         Print the shareable URL
-  omm org list                      List your organizations
-  omm org switch <slug>             Set default organization
-  omm org members [slug]            View members (opens web)
-
-Paths: use / for nested elements (e.g. overall-architecture/main-process)
-Fields: description, diagram, constraint, concern, context, todo, note
-Title:  omm write <path> title "Display name" (shown in the viewer instead of the id)
-`;
-  process.stdout.write(help.trim() + '\n');
+  process.stdout.write(msg('help') + '\n');
 }
 
 async function main(): Promise<void> {
@@ -118,7 +83,7 @@ async function main(): Promise<void> {
 
     case 'show':
       if (!args[1]) {
-        process.stderr.write('error: omm show <path>\n');
+        process.stderr.write(msg('usage', { usage: 'omm show <path>' }) + '\n');
         process.exit(1);
       }
       commandShow(args[1]);
@@ -126,7 +91,7 @@ async function main(): Promise<void> {
 
     case 'delete':
       if (!args[1]) {
-        process.stderr.write('error: omm delete <path>\n');
+        process.stderr.write(msg('usage', { usage: 'omm delete <path>' }) + '\n');
         process.exit(1);
       }
       commandDelete(args[1]);
@@ -138,7 +103,7 @@ async function main(): Promise<void> {
 
     case 'diff':
       if (!args[1]) {
-        process.stderr.write('error: omm diff <class>\n');
+        process.stderr.write(msg('usage', { usage: 'omm diff <path>' }) + '\n');
         process.exit(1);
       }
       commandDiff(args[1]);
@@ -156,7 +121,7 @@ async function main(): Promise<void> {
         className = args[2];
       }
       if (!className) {
-        process.stderr.write('error: omm refs [--reverse] <class>\n');
+        process.stderr.write(msg('usage', { usage: 'omm refs [--reverse] <path>' }) + '\n');
         process.exit(1);
       }
       commandRefs(className, reverse);
@@ -168,7 +133,7 @@ async function main(): Promise<void> {
       if (args[1] === '--port' && args[2]) {
         port = parseInt(args[2], 10);
         if (isNaN(port)) {
-          process.stderr.write('error: invalid port number\n');
+          process.stderr.write(msg('invalidPort') + '\n');
           process.exit(1);
         }
       }
@@ -217,12 +182,12 @@ async function main(): Promise<void> {
         return;
       }
 
-      process.stderr.write(`error: unknown command '${cmd}'. Run 'omm help' for usage.\n`);
+      process.stderr.write(msg('unknownCommand', { cmd }) + '\n');
       process.exit(1);
   }
 }
 
 main().catch(err => {
-  process.stderr.write(`error: ${err.message}\n`);
+  process.stderr.write(msg('error', { message: err.message }) + '\n');
   process.exit(1);
 });

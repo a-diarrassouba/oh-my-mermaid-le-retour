@@ -1,10 +1,11 @@
 import { ensureOmmForRead, listClasses, readField, classExists } from '../lib/store.js';
 import { validateDiagram } from '../lib/validate.js';
+import { msg, plural } from '../lib/messages.js';
 
 function validateClass(className: string, allClasses: string[]): { errors: number; warnings: number } {
   const diagram = readField(className, 'diagram');
   if (!diagram) {
-    process.stdout.write(`${className}:\n  (no diagram)\n\n`);
+    process.stdout.write(`${className}:\n  ${msg('validateNoDiagram')}\n\n`);
     return { errors: 0, warnings: 0 };
   }
 
@@ -12,13 +13,15 @@ function validateClass(className: string, allClasses: string[]): { errors: numbe
   const errors = result.issues.filter(i => i.level === 'error').length;
   const warnings = result.issues.filter(i => i.level === 'warning').length;
 
-  const status = result.valid
-    ? `✓ valid${warnings > 0 ? ` (${warnings} warning${warnings > 1 ? 's' : ''})` : ''}`
-    : `✗ invalid (${errors} error${errors > 1 ? 's' : ''}${warnings > 0 ? `, ${warnings} warning${warnings > 1 ? 's' : ''}` : ''})`;
+  const counts = [
+    ...(result.valid ? [] : [plural('errors', errors)]),
+    ...(warnings > 0 ? [plural('warnings', warnings)] : []),
+  ];
+  const status = msg(result.valid ? 'validateValid' : 'validateInvalid') + (counts.length ? ` (${counts.join(', ')})` : '');
 
   process.stdout.write(`${className}:\n  ${status}\n`);
   for (const issue of result.issues) {
-    const loc = issue.line ? ` line ${issue.line}:` : '';
+    const loc = issue.line ? ` ${msg('validateLine', { line: issue.line })}` : '';
     process.stdout.write(`  ${issue.level} [${issue.rule}]${loc} ${issue.message}\n`);
   }
   process.stdout.write('\n');
@@ -33,7 +36,7 @@ export function commandValidate(className?: string): void {
 
   if (className) {
     if (!classExists(className)) {
-      process.stderr.write(`error: element '${className}' not found\n`);
+      process.stderr.write(msg('elementNotFound', { path: className }) + '\n');
       process.exit(1);
     }
     const { errors } = validateClass(className, allClasses);

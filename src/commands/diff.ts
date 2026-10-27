@@ -1,24 +1,25 @@
 import { ensureOmmForRead, readField, readMeta, classExists } from '../lib/store.js';
 import { diffMermaid, formatDiff } from '../lib/diff.js';
+import { msg } from '../lib/messages.js';
 
 export function commandDiff(className: string): void {
   if (!ensureOmmForRead()) return;
 
   if (!classExists(className)) {
-    process.stderr.write(`error: element '${className}' not found\n`);
+    process.stderr.write(msg('elementNotFound', { path: className }) + '\n');
     process.exit(1);
   }
 
   const current = readField(className, 'diagram');
   if (!current) {
-    process.stderr.write(`error: ${className}/diagram.mmd is empty\n`);
+    process.stderr.write(msg('fieldEmpty', { path: `${className}/diagram.mmd` }) + '\n');
     process.exit(1);
   }
 
   const meta = readMeta(className);
   const prev = meta?.prev_diagram;
   if (!prev) {
-    process.stderr.write(`No previous diagram version for '${className}'.\n`);
+    process.stderr.write(msg('noPreviousDiagram', { path: className }) + '\n');
     return;
   }
 

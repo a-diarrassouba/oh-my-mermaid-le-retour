@@ -4,6 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { handleApi } from './api.js';
 import { addSSEClient, startWatcher } from './watcher.js';
+import { msg } from '../lib/messages.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -59,7 +60,7 @@ export function startServer(port: number): void {
 
   server.on('error', (err: NodeJS.ErrnoException) => {
     if (err.code === 'EADDRINUSE') {
-      process.stderr.write(`Port ${port} in use, trying ${port + 1}...\n`);
+      process.stderr.write(msg('portInUse', { port, next: port + 1 }) + '\n');
       server.close();
       startServer(port + 1);
     } else {
@@ -68,6 +69,6 @@ export function startServer(port: number): void {
   });
 
   server.listen(port, () => {
-    process.stderr.write(`oh-my-mermaid viewer running at http://localhost:${port}\n`);
+    process.stderr.write(msg('viewerRunning', { url: `http://localhost:${port}` }) + '\n');
   });
 }
