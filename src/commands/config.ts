@@ -12,6 +12,7 @@ import path from 'node:path';
 import YAML from 'yaml';
 import { ensureOmmForWrite, getOmmDir } from '../lib/store.js';
 import { DEFAULT_LANGUAGE, getLanguage, normalizeLanguage } from '../lib/language.js';
+import { msg } from '../lib/messages.js';
 import type { OmmConfig } from '../types.js';
 
 const CONFIG_FILE = 'config.yaml';
@@ -44,13 +45,13 @@ export function commandConfig(args: string[]): void {
     const config = readConfig();
     if (key === 'language') {
       if (config.language !== undefined && normalizeLanguage(config.language) === null) {
-        process.stderr.write(`warning: '${config.language}' in .omm/config.yaml is not a language code, using ${DEFAULT_LANGUAGE}. Fix it with: omm config language fr\n`);
+        process.stderr.write(msg('configWarnLanguage', { value: String(config.language), fallback: DEFAULT_LANGUAGE }) + '\n');
       }
       process.stdout.write(getLanguage() + '\n');
       return;
     }
     const val = (config as Record<string, unknown>)[key];
-    process.stdout.write((val !== undefined ? String(val) : '(not set)') + '\n');
+    process.stdout.write((val !== undefined ? String(val) : msg('configNotSet')) + '\n');
     return;
   }
 
@@ -59,7 +60,7 @@ export function commandConfig(args: string[]): void {
   if (key === 'language') {
     const code = normalizeLanguage(value);
     if (!code) {
-      process.stderr.write(`error: '${value}' is not a language code. Use a code such as fr, en, ko, ja, zh or pt-BR.\n`);
+      process.stderr.write(msg('configBadLanguage', { value }) + '\n');
       process.exit(1);
     }
     stored = code;
@@ -67,5 +68,5 @@ export function commandConfig(args: string[]): void {
   const config = readConfig();
   (config as Record<string, unknown>)[key] = stored;
   writeConfig(config);
-  process.stderr.write(`config: ${key}=${stored}\n`);
+  process.stderr.write(msg('configSet', { key, value: stored }) + '\n');
 }

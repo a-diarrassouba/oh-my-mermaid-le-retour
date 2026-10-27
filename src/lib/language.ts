@@ -1,7 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import YAML from 'yaml';
-import { getOmmDir } from './store.js';
 import type { OmmConfig } from '../types.js';
 
 export const DEFAULT_LANGUAGE = 'en';
@@ -39,7 +38,7 @@ export function normalizeLanguage(raw: unknown): string | null {
 
 /** The project's language code from .omm/config.yaml, `en` when unset or unreadable. */
 export function getLanguage(cwd?: string): string {
-  const filePath = path.join(getOmmDir(cwd), 'config.yaml');
+  const filePath = path.join(cwd ?? process.cwd(), '.omm', 'config.yaml');
   if (!fs.existsSync(filePath)) return DEFAULT_LANGUAGE;
   const config = YAML.parse(fs.readFileSync(filePath, 'utf-8')) as OmmConfig | null;
   return normalizeLanguage(config?.language) ?? DEFAULT_LANGUAGE;

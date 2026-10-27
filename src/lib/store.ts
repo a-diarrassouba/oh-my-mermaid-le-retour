@@ -3,6 +3,7 @@ import path from 'node:path';
 import YAML from 'yaml';
 import { VALID_FIELDS, FIELD_FILES, type Field, type ClassMeta, type ClassData, type OmmConfig } from '../types.js';
 import { updateMeta } from './meta.js';
+import { msg } from './messages.js';
 
 const OMM_DIR = '.omm';
 const CONFIG_FILE = 'config.yaml';
@@ -22,7 +23,7 @@ export function ommExists(cwd?: string): boolean {
 export function ensureOmmForWrite(cwd?: string): void {
   if (!ommExists(cwd)) {
     initOmm(cwd);
-    process.stderr.write('Created .omm/ directory. Add to .gitignore if not wanted.\n');
+    process.stderr.write(msg('ommCreated') + '\n');
   }
 }
 
@@ -31,7 +32,7 @@ export function ensureOmmForWrite(cwd?: string): void {
  */
 export function ensureOmmForRead(cwd?: string): boolean {
   if (!ommExists(cwd)) {
-    process.stderr.write('No .omm/ directory found. Run /omm-scan in Claude Code to generate architecture docs.\n');
+    process.stderr.write(msg('ommMissing') + '\n');
     return false;
   }
   return true;
@@ -178,7 +179,7 @@ export function writeNodeField(
   }
 
   const bytes = Buffer.byteLength(content, 'utf-8');
-  process.stderr.write(`wrote ${fullPath}/${FIELD_FILES[field]} (${bytes} bytes)\n`);
+  process.stderr.write(msg('wrote', { file: `${fullPath}/${FIELD_FILES[field]}`, bytes }) + '\n');
   return bytes;
 }
 
@@ -231,11 +232,11 @@ export function writeTitle(perspective: string, nodePath: string[], title: strin
   const dir = nodePath.length === 0 ? classDir(perspective, cwd) : nodeDir(perspective, nodePath, cwd);
   const fullPath = [perspective, ...nodePath].join('/');
   if (!fs.existsSync(dir)) {
-    throw new Error(`element '${fullPath}' not found. Write its description first.`);
+    throw new Error(msg('titleElementMissing', { path: fullPath }));
   }
   const clean = title.trim();
-  if (/[\r\n]/.test(clean)) throw new Error('a title must fit on one line');
-  if (clean.length > MAX_TITLE_LENGTH) throw new Error(`a title must be at most ${MAX_TITLE_LENGTH} characters`);
+  if (/[\r\n]/.test(clean)) throw new Error(msg('titleOneLine'));
+  if (clean.length > MAX_TITLE_LENGTH) throw new Error(msg('titleTooLong', { max: MAX_TITLE_LENGTH }));
 
   const now = new Date().toISOString();
   const meta: ClassMeta = readNodeMeta(perspective, nodePath, cwd)
@@ -243,7 +244,7 @@ export function writeTitle(perspective: string, nodePath: string[], title: strin
   if (clean) meta.title = clean;
   else delete meta.title;
   writeNodeMeta(perspective, nodePath, meta, cwd);
-  process.stderr.write(clean ? `title of ${fullPath}: ${clean}\n` : `title of ${fullPath} removed\n`);
+  process.stderr.write((clean ? msg('titleSet', { path: fullPath, title: clean }) : msg('titleRemoved', { path: fullPath })) + '\n');
 }
 
 /** Show all fields for a nested element */
@@ -302,7 +303,7 @@ export function writeField(className: string, field: Field, content: string, cwd
   updateMeta(className, field, cwd);
 
   const bytes = Buffer.byteLength(content, 'utf-8');
-  process.stderr.write(`wrote ${className}/${FIELD_FILES[field]} (${bytes} bytes)\n`);
+  process.stderr.write(msg('wrote', { file: `${className}/${FIELD_FILES[field]}`, bytes }) + '\n');
   return bytes;
 }
 

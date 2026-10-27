@@ -1,11 +1,12 @@
 import YAML from 'yaml';
 import { ensureOmmForRead, showClass } from '../lib/store.js';
+import { msg } from '../lib/messages.js';
 
 export function commandShow(className: string): void {
   if (!ensureOmmForRead()) return;
   const data = showClass(className);
   if (!data) {
-    process.stderr.write(`error: element '${className}' not found\n`);
+    process.stderr.write(msg('elementNotFound', { path: className }) + '\n');
     process.exit(1);
   }
 
