@@ -96,6 +96,38 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); disp
 .hbtn:hover { border-color: #3a3a3a; color: var(--text); }
 #zoom-label { font-size: 11px; color: var(--text-dim); width: 38px; text-align: center; font-family: var(--mono); }
 
+/* Ask bar: question input that lights up the matching elements on the diagram */
+#ask-bar {
+  position: absolute; top: 12px; left: 12px; right: 260px; z-index: 100;
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(0,0,0,0.7); border: 1px solid var(--border); border-radius: 8px;
+  padding: 4px 4px 4px 12px; backdrop-filter: blur(8px);
+}
+#ask-input { flex: 1; background: none; border: none; outline: none; color: var(--text); font-family: var(--font); font-size: 13px; height: 28px; min-width: 0; }
+#ask-input::placeholder { color: var(--text-dim); }
+#ask-submit { background: none; border: 1px solid var(--border-hi); color: var(--text-mid); height: 26px; min-width: 30px; padding: 0 8px; border-radius: 5px; cursor: pointer; font-size: 13px; transition: border-color .12s, color .12s; }
+#ask-submit:hover { border-color: #3a3a3a; color: var(--text); }
+#ask-panel {
+  position: absolute; top: 56px; left: 12px; right: 260px; z-index: 99;
+  max-height: 46vh; overflow-y: auto;
+  background: var(--surface); border: 1px solid var(--border); border-top: 3px solid var(--accent);
+  border-radius: 10px; padding: 12px 14px; box-shadow: 0 10px 30px rgba(0,0,0,.28);
+  scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+}
+#ask-panel[hidden] { display: none; }
+.ask-answer { display: flex; flex-direction: column; gap: 4px; }
+.ask-answer-head { display: flex; align-items: center; gap: 8px; }
+.ask-answer-title { font-weight: 600; font-size: 13px; color: var(--text); flex: 1; cursor: pointer; }
+.ask-answer-field { font-family: var(--mono); font-size: 9.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--accent); background: color-mix(in srgb, var(--accent) 16%, transparent); padding: 2px 7px; border-radius: 5px; flex-shrink: 0; }
+.ask-answer-snippet { font-size: 12.5px; line-height: 1.6; color: var(--text-mid); }
+.ask-close { border: 0; background: none; color: var(--text-dim); font-size: 18px; line-height: 1; cursor: pointer; padding: 0 4px; flex-shrink: 0; }
+.ask-empty { font-size: 12.5px; color: var(--text-dim); }
+.ask-others { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 4px; }
+.ask-others-label { font-family: var(--mono); font-size: 9px; text-transform: uppercase; letter-spacing: .1em; color: var(--text-dim); margin-bottom: 2px; }
+.ask-other { font-size: 12px; color: var(--text-mid); padding: 4px 8px; background: var(--surface-2); border-radius: 6px; cursor: pointer; }
+.ask-other:hover { color: var(--text); }
+body.light #ask-bar { background: rgba(255,255,255,0.85); }
+
 #canvas-wrap {
   flex: 1; position: relative; overflow: hidden; cursor: grab; margin-left: 200px;
   background-color: var(--bg);
@@ -283,6 +315,7 @@ body.light .reg-node:hover .nshape { stroke: #000 !important; }
     background: #444; border-radius: 2px;
   }
   .float-controls { display: none; }
+  #ask-bar, #ask-panel { display: none; }
 }
 /* ── Guides ──────────────────────────────────────────────────
    A guide walks through elements of the diagram. While it runs, #canvas-wrap
@@ -394,6 +427,11 @@ body.light .reg-node:hover .nshape { stroke: #000 !important; }
     <button class="hbtn" onclick="resetView()" style="font-size:11px" data-i18n="fit" data-i18n-title="fitTitle">fit</button>
     <button class="hbtn" id="theme-btn" onclick="toggleTheme()" style="font-size:13px" data-i18n-title="theme">○</button>
   </div>
+  <div id="ask-bar">
+    <input id="ask-input" type="text" autocomplete="off" />
+    <button id="ask-submit" type="button" aria-label="Ask">↵</button>
+  </div>
+  <div id="ask-panel" hidden></div>
   <div id="canvas"></div>
 </div>
 
@@ -424,6 +462,10 @@ const I18N = {
     stepOf: 'Step {i} of {n}', partOf: 'Part {i}/{n} — {name}',
     showFull: 'See the full sheet', hideFull: 'Back to the step',
     newHere: 'New to this project?', startBtn: '▶ Start', welcome: 'Start here', replayWelcome: '✓ Replay the welcome guide',
+    askPlaceholder: 'Ask how something works…', askNoResults: 'No matching element found.',
+    askOtherMatches: 'Also relevant', askClose: 'Close', askField_description: 'Description',
+    askField_context: 'Context', askField_constraint: 'Constraints', askField_concern: "Concerns",
+    askField_todo: 'Todo', askField_note: 'Notes',
   },
   fr: {
     zoomOut: 'Zoom arrière', zoomIn: 'Zoom avant', fit: 'ajuster', fitTitle: "Ajuster à l'écran",
@@ -438,6 +480,10 @@ const I18N = {
     stepOf: 'Étape {i} sur {n}', partOf: 'Partie {i}/{n} — {name}',
     showFull: 'Voir la fiche complète', hideFull: "Revenir à l'étape",
     newHere: 'Nouveau sur ce projet ?', startBtn: '▶ Commencer', welcome: 'Pour commencer', replayWelcome: "✓ Revoir le parcours d'accueil",
+    askPlaceholder: 'Posez une question sur le fonctionnement…', askNoResults: 'Aucun élément correspondant.',
+    askOtherMatches: 'Également pertinent', askClose: 'Fermer', askField_description: 'Description',
+    askField_context: 'Contexte', askField_constraint: 'Contraintes', askField_concern: "Points d'attention",
+    askField_todo: 'À faire', askField_note: 'Notes',
   },
 };
 let lang = 'en';
@@ -452,6 +498,8 @@ function setLanguage(code) {
     el.title = t(el.dataset.i18nTitle);
     el.setAttribute('aria-label', el.title);
   });
+  const askInputEl = document.getElementById('ask-input');
+  if (askInputEl) askInputEl.placeholder = t('askPlaceholder');
 }
 function t(key, vars = {}) {
   const text = I18N[lang][key] ?? I18N.en[key] ?? key;
@@ -1148,7 +1196,8 @@ canvasWrap.addEventListener('mousedown', e => {
   const isMiddle   = e.button === 1;
   const isSpaceDrag = e.button === 0 && spaceHeld;
   const isEmptyDrag = e.button === 0 && !spaceHeld &&
-    !e.target.closest('.grp-node') && !e.target.closest('.reg-node');
+    !e.target.closest('.grp-node') && !e.target.closest('.reg-node') &&
+    !e.target.closest('.float-controls') && !e.target.closest('#ask-bar') && !e.target.closest('#ask-panel');
 
   if (isMiddle || isSpaceDrag || isEmptyDrag) {
     e.preventDefault();
@@ -1891,6 +1940,110 @@ guideBar.addEventListener('click', e => {
 });
 
 // Called by init(), on first load and after each live reload.
+// ── ask ──────────────────────────────────────────────────
+// Lets the user type a question about how the system works; the matching
+// elements light up on the canvas the same way a guide step does, and the
+// top match's fields open in the sidebar — the "answer" materializes there.
+const askInput = document.getElementById('ask-input');
+const askSubmit = document.getElementById('ask-submit');
+const askPanel = document.getElementById('ask-panel');
+let searchActive = false;
+
+function fieldLabel(field) { return t('askField_' + field); }
+
+const SEARCH_MARKS = ['guide-lit', 'guide-cur', 'guide-anc', 'guide-in', 'guide-trail', 'guide-edge'];
+function clearPaintMarks() {
+  document.querySelectorAll(SEARCH_MARKS.map(m => '#canvas .' + m).join(','))
+    .forEach(el => el.classList.remove(...SEARCH_MARKS));
+}
+
+function paintSearchResults(results) {
+  canvasWrap.classList.add('guiding');
+  clearPaintMarks();
+  const byCls = cls => document.querySelector(`#canvas [data-cls="${CSS.escape(cls)}"]`);
+  // The canvas draws each nested element once: fall back to its nearest drawn ancestor.
+  const drawn = cls => {
+    for (let segs = cls.split('/'); segs.length; segs.pop()) {
+      const el = byCls(segs.join('/'));
+      if (el) return el;
+    }
+    return null;
+  };
+  results.forEach((r, i) => {
+    const el = drawn(r.cls);
+    if (!el) return;
+    el.classList.add('guide-lit');
+    if (i === 0) el.classList.add('guide-cur');
+    el.querySelectorAll('.reg-node, .grp-node').forEach(n => n.classList.add('guide-lit'));
+    el.querySelectorAll('.edge-path, .edge-label').forEach(n => n.classList.add('guide-in'));
+    const segs = r.cls.split('/');
+    for (let k = 1; k < segs.length; k++) byCls(segs.slice(0, k).join('/'))?.classList.add('guide-anc');
+  });
+}
+
+function clearSearch() {
+  searchActive = false;
+  askPanel.hidden = true;
+  if (activeGuide) {
+    paintGuideStep();
+  } else {
+    canvasWrap.classList.remove('guiding');
+    clearPaintMarks();
+  }
+}
+
+function renderAskPanel(results) {
+  askPanel.hidden = false;
+  if (!results.length) {
+    askPanel.innerHTML = `<div class="ask-empty">${esc(t('askNoResults'))}</div>`;
+    return;
+  }
+  const [top, ...rest] = results;
+  let html = `<div class="ask-answer">
+    <div class="ask-answer-head">
+      <span class="ask-answer-title" data-go="${esc(top.cls)}">${esc(top.title)}</span>
+      <span class="ask-answer-field">${esc(fieldLabel(top.field))}</span>
+      <button type="button" class="ask-close" data-action="close">×</button>
+    </div>
+    <div class="ask-answer-snippet">${esc(top.snippet)}</div>
+  </div>`;
+  if (rest.length) {
+    html += `<div class="ask-others"><div class="ask-others-label">${esc(t('askOtherMatches'))}</div>`;
+    html += rest.map(r => `<div class="ask-other" data-go="${esc(r.cls)}">${esc(r.title)}</div>`).join('');
+    html += `</div>`;
+  }
+  askPanel.innerHTML = html;
+}
+
+askPanel.addEventListener('click', e => {
+  const close = e.target.closest('[data-action="close"]');
+  if (close) { clearSearch(); return; }
+  const go = e.target.closest('[data-go]');
+  if (go) window.__openSb(go.dataset.go);
+});
+
+async function runSearch() {
+  const q = askInput.value.trim();
+  if (!q) { clearSearch(); return; }
+  const data = await api('/api/ask?q=' + encodeURIComponent(q));
+  const results = (data && data.results) || [];
+  searchActive = true;
+  renderAskPanel(results);
+  if (results.length) {
+    paintSearchResults(results);
+    window.__openSb(results[0].cls);
+  } else {
+    canvasWrap.classList.add('guiding');
+    clearPaintMarks();
+  }
+}
+
+askSubmit.addEventListener('click', runSearch);
+askInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') runSearch();
+  else if (e.key === 'Escape') { askInput.value = ''; askInput.blur(); clearSearch(); }
+});
+
 async function loadGuidesIntoViewer() {
   const data = await api('/api/guides');
   guides = Array.isArray(data) ? data : [];

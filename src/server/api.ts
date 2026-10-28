@@ -4,6 +4,7 @@ import { diffMermaid } from '../lib/diff.js';
 import { getIncomingRefs, getOutgoingRefs } from '../lib/refs.js';
 import { getLanguage } from '../lib/language.js';
 import { loadGuides } from '../lib/guides.js';
+import { searchElements } from '../lib/search.js';
 
 function json(res: ServerResponse, data: unknown, status = 200): void {
   res.writeHead(status, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
@@ -33,6 +34,13 @@ export function handleApi(req: IncomingMessage, res: ServerResponse): boolean {
     const guide = loadGuides().find(g => g.id === guideMatch[1]);
     if (!guide) json(res, { error: 'guide not found' }, 404);
     else json(res, guide);
+    return true;
+  }
+
+  // GET /api/ask?q=... — natural-language-ish search across every element's fields
+  if (path === '/api/ask') {
+    const q = url.searchParams.get('q') || '';
+    json(res, { query: q, results: searchElements(q) });
     return true;
   }
 
