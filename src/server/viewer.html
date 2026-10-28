@@ -338,6 +338,7 @@ body.light .reg-node:hover .nshape { stroke: #000 !important; }
 .sb-step[hidden] { display: none; }
 .sb-step b { display: block; font-family: var(--mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); font-weight: 500; margin-bottom: 2px; }
 .sb-step .sb-say { margin: 4px 0 0; }
+.sb-step .sb-say code { background: var(--bg); padding: 1px 5px; border-radius: 3px; font-family: var(--mono); font-size: .88em; font-weight: 400; }
 /* Guide mode: on the step's element, the panel tells the step only. The
    full sheet stays one click away (.show-full). */
 #sidebar.guide-mode:not(.show-full) .sb-fields,
@@ -1823,7 +1824,9 @@ function paintGuideStep() {
   const head = [t('stepOf', { i: guideStep + 1, n: g.steps.length }), partLabel(g, cur)].filter(Boolean).join(' · ');
   const details = cur.details ? `<div class="sb-details">${safeMarkdown(cur.details)}</div>` : '';
   const full = sidebar.classList.contains('show-full');
-  sbStep.innerHTML = `<b>${esc(head)}</b><p class="sb-say">${esc(cur.say)}</p>${details}`
+  // `say` is plain text; only `code` spans are shown as code, after escaping.
+  const say = esc(cur.say).replace(/`([^`]+)`/g, '<code>$1</code>');
+  sbStep.innerHTML = `<b>${esc(head)}</b><p class="sb-say">${say}</p>${details}`
     + `<button type="button" class="sb-full-toggle">${esc(t(full ? 'hideFull' : 'showFull'))}</button>`;
   sbStep.querySelector('.sb-full-toggle').onclick = () => {
     sidebar.classList.toggle('show-full');
