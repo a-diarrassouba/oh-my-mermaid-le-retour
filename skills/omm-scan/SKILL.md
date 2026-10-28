@@ -47,6 +47,7 @@ Use Glob and Read to understand the project:
 - List top-level directories to identify module boundaries
 - Read key entry points (main, index, app files)
 - Look for route definitions, service layers, database connections, external integrations
+- Read what a newcomer needs beyond the code: `README`, `CONTRIBUTING`, `docs/`, `CHANGELOG`, roadmap files; the scripts (`package.json` scripts, `Makefile`); `.env.example` and config files; `Dockerfile` and compose files; CI workflows (`.github/workflows/`, `.gitlab-ci.yml`, ...); deployment configs (`vercel.json`, `fly.toml`, Kubernetes manifests, ...); test folders and test config; logging and monitoring libraries in the dependencies; `TODO` / `FIXME` comments
 
 ## Step 2: Select Perspectives
 
@@ -56,6 +57,10 @@ From the catalog below, choose which perspectives are meaningful for this codeba
 
 | Perspective | When to create | What it answers |
 | --- | --- | --- |
+| `functional-overview` | **Always** | What the application does, for whom, and its business rules |
+| `operations` | **Always** | How to install, run, test, deploy and monitor it |
+| `security` | Sign-in, user data, secrets or a public API | How access is controlled and what must stay protected |
+| `project-status` | **Always** | What is done, in progress, fragile, planned, and what to ask the team |
 | `overall-architecture` | **Always** | What exists and how pieces relate |
 | `request-lifecycle` | Any server/API | How a request enters and gets handled end-to-end |
 | `data-flow` | Any data processing, DB usage | Where data comes from, transforms, and lands |
@@ -70,6 +75,8 @@ From the catalog below, choose which perspectives are meaningful for this codeba
 | `storage` | 2+ storage systems | Storage topology (DB, cache, queue, object store) |
 
 Don't force perspectives that don't exist in the code.
+
+The first four rows are **onboarding perspectives**: they answer what a newcomer needs beyond the code. Write them after the architecture perspectives, since they reuse what the scan learned, and follow [Onboarding Perspectives](#onboarding-perspectives).
 
 ## Step 3: Generate Perspectives with Recursive Drill-Down
 
@@ -112,7 +119,7 @@ The viewer shows the title instead of the ID. Keep it short (a few words, at mos
 
 ### 3c. Recursive drill-down: analyze every element
 
-**For every element in the diagram:**
+**For every element in the diagram**, in this order (a perspective starts with its diagram in 3a only because it has no parent diagram):
 
 1. **Analyze** the code it represents (Glob + Read the relevant files/directories)
 
@@ -179,6 +186,42 @@ overall-architecture (perspective)
 
 Report what was created/updated and suggest `omm view` to view.
 
+## Onboarding Perspectives
+
+These perspectives follow the same rules as any element (plain first sentence, title, roles, real paths, fields), with these shapes.
+
+### `functional-overview` — what the application does and why
+
+- Diagram: who uses it and what they get. Users and outside actors (`external`), the features they use (every feature an actor reaches directly is `entry`), and what the features produce or change. Edges read as actions: `customer -->|"places an order"| checkout`.
+- One element per main feature (a group if the feature has distinct sub-steps). Its description says what a user can do, in business words; the technical part names the code that implements it, which is the path in its label.
+- Business rules a newcomer must not break go in `constraint` ("an order cannot be paid twice"). Say in `context` which features are critical and why.
+- Sources: README, docs, pages and routes, CLI help, test names (they often describe behaviors).
+
+### `operations` — how to run, test, ship and watch it
+
+- Diagram, in order, as far as the project goes: `local-setup` → `tests` → `ci` → `environments` → `deployment` → `monitoring`. Leave out a stage the repository shows nothing for, and say so in the perspective's `note` ("No deployment configuration found"). Outside systems the stages rely on (package registry, hosting, error tracker) may appear as `external`.
+- `local-setup`: prerequisites (runtime versions), install command, environment variables (names and purpose, never values), start command, and how to check it works (URL, health route, first command). Path: the file holding the commands (`package.json`, `Makefile`, `docker-compose.yml`).
+- `tests`: kinds of tests, the command to run them, what they cover and what they do not, scenarios to check by hand.
+- `ci`, `environments`, `deployment`: what triggers them, which environments exist, how secrets and variables are provided, database migrations, how to roll back.
+- `monitoring`: where logs go, error reporting, metrics, alerts, how to diagnose a failure; known limits go in `concern`.
+- Write exact commands in code spans, so they can be copied.
+
+### `security` — when the project has sign-in, user data, secrets or a public API
+
+- Diagram: how a user or a request gets access: entry points, authentication, sessions or tokens, authorization (roles, permissions), the protected resources (`store`), and where secrets come from.
+- What must never be done goes in `constraint` ("never log tokens"); weak spots and missing protections in `concern`.
+
+### `project-status` — where the project stands
+
+- Diagram with up to five leaves and **no edges** (they are not steps of a flow, and the 5-to-15 rule does not apply): `done` (what works and is shipped), `in-progress` (half-done work), `fragile` (fragile code, known bugs, technical debt; give it the `concern` role), `planned` (roadmap, ideas), `open-questions`. Leave out an element with nothing to say, and say so in the perspective's `note`.
+- Each element lists concrete items in its description, with the file where each was found (`TODO` comments, `CHANGELOG`, roadmap files, skipped tests). The path in its label is the main source, or the two main ones.
+- `open-questions` lists what a newcomer needs but the repository cannot tell: who owns what, who has production access, recurring incidents, priorities, what a first task could be. Phrase each as a question to ask the team. Its label's second line is `?`.
+- Write only what the sources show: a guess about the project's state is worse than a question in `open-questions`.
+
+An element that appears in several perspectives (a login, a config file) is described there from that perspective's angle: what it means for the product, for operations, for security. Do not copy the same text.
+
+**Never copy a secret value** (password, token, key), even from a sample file: name the variable and say what it is for.
+
 ## Writing for Everyone
 
 The readers include people who do not code (product, newcomers). Every `description` starts with **one plain sentence** that says what the element is for, in everyday words: no jargon, no file names, no acronyms without explanation. The technical details come after, in a new paragraph.
@@ -198,9 +241,11 @@ The other fields can stay technical.
   auth-service["Auth Service\nsrc/auth/service.ts"]
   ```
 
-- **Every label has a real path.** The second line is a file or folder that exists in the repository, written from the repository root (folders end with `/`). Check it with Glob before writing; never guess a path. When an element spans two places and their common folder says nothing (like `src/`), list both: `src/commands/push.ts, src/lib/cloud.ts`. Two exceptions, where the second line says where the thing lives instead:
+- **Every label has a real path.** The second line is a file or folder that exists in the repository, written from the repository root (folders end with `/`). Check it with Glob before writing; never guess a path. When an element spans two places and their common folder says nothing (like `src/`), list both: `src/commands/push.ts, src/lib/cloud.ts`. Exceptions, where the second line says where the thing lives instead:
   - an external system: its name, domain or command (`ohmymermaid.com`, `Claude Code`, `git`), not translated;
-  - a storage outside the repository: its location (`~/.omm/credentials.json`, `localStorage`, `PostgreSQL`).
+  - a person or group using the system: how they reach it (`browser`, `terminal`, `mobile app`, `API`);
+  - a storage outside the repository: its location (`~/.omm/credentials.json`, `localStorage`, `PostgreSQL`);
+  - `project-status/open-questions`, which holds what the repository does not tell: `?`.
 - **A diagram shows only its own elements.** A child diagram lists the parts of that element; how it connects to its siblings is already in the parent diagram, so do not repeat outside elements there (each node would become a duplicate child).
 - The same element may appear in several perspectives with the same ID (each perspective has its own folder for it).
 - Every edge must have a meaningful label, in the configured language: `A -->|"why this connection exists"| B`
@@ -216,7 +261,7 @@ The other fields can stay technical.
   | `concern` | `#f38ba8` | Optional: a known risk or bottleneck (explain it in the element's `concern` field) |
 
   What counts, within the diagram you are drawing:
-  - `entry` is the first element that receives something from **outside the system**: a person, the network, a scheduler, another program. Code reached only through another element of this project is not an entry, even if it handles a command or a route. A group whose main job is to receive outside input (a web server) is an entry too.
+  - `entry` is the first element that receives something from **outside the system**: a person, the network, a scheduler, an event such as a push that starts a CI workflow, another program. Code reached only through another element of this project is not an entry, even if it handles a command or a route. A group whose main job is to receive outside input (a web server) is an entry too.
   - `store` is where data stays after the program stops. Code that reads or writes the data is not a store; the database or the folder is.
   - `external` is anything this repository does not contain, including local tools (`git`) and AI assistants.
 
@@ -244,7 +289,7 @@ Each field has one job. Put a fact in the field that matches it, so readers (and
 
 For a perspective as a whole, write `context` (why this view matters for this project) and `concern` (risks that cross several elements) when there are any; element-level details belong to the elements.
 
-Write only what the code or the docs show. When something important cannot be found (who owns it, how it is deployed), say so in `note` instead of guessing.
+Write only what the code or the docs show. A conclusion drawn from an absence is written as one ("No database found", not "There is no database"); a conclusion drawn from how a library or a platform behaves names that library or platform. When something important cannot be found (who owns it, how it is deployed), say so in `note` instead of guessing.
 
 ## General Rules
 
