@@ -23,8 +23,9 @@ import { commandTree } from './commands/tree.js';
 import { commandRead, commandWrite } from './commands/read-write.js';
 import { commandConfig } from './commands/config.js';
 import { msg } from './lib/messages.js';
+import { commandGuide } from './commands/guide.js';
 
-const GLOBAL_COMMANDS = ['init', 'setup', 'update', 'list', 'show', 'delete', 'status', 'diff', 'refs', 'validate', 'view', 'login', 'logout', 'push', 'pull', 'link', 'share', 'org', 'read', 'write', 'tree', 'config', 'help'];
+const GLOBAL_COMMANDS = ['init', 'setup', 'update', 'list', 'show', 'delete', 'status', 'diff', 'refs', 'validate', 'guide', 'view', 'login', 'logout', 'push', 'pull', 'link', 'share', 'org', 'read', 'write', 'tree', 'config', 'help'];
 
 function printHelp(): void {
   process.stdout.write(msg('help') + '\n');
@@ -71,6 +72,10 @@ async function main(): Promise<void> {
 
     case 'config':
       commandConfig(args.slice(1));
+      return;
+
+    case 'guide':
+      await commandGuide(args.slice(1));
       return;
 
     case 'read':

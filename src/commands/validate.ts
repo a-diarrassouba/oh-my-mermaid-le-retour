@@ -1,6 +1,8 @@
 import { ensureOmmForRead, listClasses, readField, classExists } from '../lib/store.js';
 import { validateDiagram } from '../lib/validate.js';
 import { msg, plural } from '../lib/messages.js';
+import { loadGuides } from '../lib/guides.js';
+import { formatGuideIssues } from './guide.js';
 
 function validateClass(className: string, allClasses: string[]): { errors: number; warnings: number } {
   const diagram = readField(className, 'diagram');
@@ -49,6 +51,12 @@ export function commandValidate(className?: string): void {
   for (const cls of allClasses) {
     const { errors } = validateClass(cls, allClasses);
     totalErrors += errors;
+  }
+
+  // Guides point at elements and edges, so a scan that renames them breaks guides.
+  for (const guide of loadGuides()) {
+    process.stdout.write(`${msg('validateGuide', { id: guide.id })}\n  ${msg(guide.valid ? 'validateValid' : 'validateInvalid')}\n${formatGuideIssues(guide.issues)}\n`);
+    if (!guide.valid) totalErrors++;
   }
 
   if (totalErrors > 0) process.exit(1);

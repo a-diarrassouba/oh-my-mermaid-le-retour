@@ -43,6 +43,26 @@ const en = {
   'configSet': 'config: {key}={value}',
   'portInUse': 'Port {port} in use, trying {next}...',
   'viewerRunning': 'oh-my-mermaid viewer running at {url}',
+  'guideStep': 'step {n}:',
+  'guideNone': 'No guides yet. Write one with: omm guide write <id> < guide.yaml',
+  'guideSteps.one': '{count} step',
+  'guideSteps.other': '{count} steps',
+  'guideParts.one': '{count} part',
+  'guideParts.other': '{count} parts',
+  'guideUnreadable': 'unreadable',
+  'guideNotFound': "error: guide '{id}' not found",
+  'guideIdRequired': 'error: give a guide id (lowercase letters, digits and dashes)',
+  'guideStdin': 'error: the guide is read from stdin',
+  'guideNotWritten': "error: guide '{id}' not written, fix the errors above",
+  'guideWritten': "guide '{id}' written",
+  'guideNeeded': "error: guide '{id}' not deleted: {ids} name it in \"after\"",
+  'guideDeleted': "guide '{id}' deleted",
+  'validateGuide': 'guide {id}:',
+  'guideUsage': `usage:
+  omm guide list                List guides and whether they are valid
+  omm guide show <id>           Print a guide and its validation
+  omm guide write <id> [-]      Write a guide from YAML on stdin (refused if invalid)
+  omm guide delete <id>         Delete a guide`,
   'help': `oh-my-mermaid (omm) — Architecture mirror for vibe coding
 
 Usage:
@@ -60,7 +80,8 @@ Usage:
   omm status                        Show overview of all elements
   omm diff <path>                   Compare current vs previous diagram
   omm refs <path>                   Show elements that reference this element
-  omm validate [path]               Validate diagram(s) for syntax and conventions
+  omm validate [path]               Validate diagram(s) and guides
+  omm guide list|show|write|delete  Manage guides, step-by-step walks (.omm/.guides/)
   omm config [key] [value]          Read or set project settings (e.g. language fr)
   omm view [--port <port>]          Start web viewer (default: 3000)
 
@@ -125,6 +146,26 @@ const fr: Record<MessageKey, string> = {
   'configSet': 'config : {key}={value}',
   'portInUse': 'Le port {port} est occupé, essai du port {next}...',
   'viewerRunning': 'Viewer oh-my-mermaid lancé sur {url}',
+  'guideStep': 'étape {n} :',
+  'guideNone': 'Aucun parcours pour le moment. Écrivez-en un avec : omm guide write <id> < parcours.yaml',
+  'guideSteps.one': '{count} étape',
+  'guideSteps.other': '{count} étapes',
+  'guideParts.one': '{count} partie',
+  'guideParts.other': '{count} parties',
+  'guideUnreadable': 'illisible',
+  'guideNotFound': "erreur : parcours '{id}' introuvable",
+  'guideIdRequired': 'erreur : donnez un identifiant de parcours (minuscules, chiffres et tirets)',
+  'guideStdin': "erreur : le parcours se lit sur l'entrée standard",
+  'guideNotWritten': "erreur : parcours '{id}' non écrit, corrigez les erreurs ci-dessus",
+  'guideWritten': "parcours '{id}' écrit",
+  'guideNeeded': "erreur : parcours '{id}' non supprimé : {ids} le cite dans \"after\"",
+  'guideDeleted': "parcours '{id}' supprimé",
+  'validateGuide': 'parcours {id} :',
+  'guideUsage': `utilisation :
+  omm guide list                Lister les parcours et dire s'ils sont valides
+  omm guide show <id>           Afficher un parcours et sa validation
+  omm guide write <id> [-]      Écrire un parcours depuis du YAML sur l'entrée standard (refusé s'il est invalide)
+  omm guide delete <id>         Supprimer un parcours`,
   'help': `oh-my-mermaid (omm) — le miroir de l'architecture de votre projet
 
 Utilisation :
@@ -142,7 +183,8 @@ Utilisation :
   omm status                        Vue d'ensemble des éléments
   omm diff <chemin>                 Comparer le diagramme actuel au précédent
   omm refs <chemin>                 Voir les éléments qui référencent cet élément
-  omm validate [chemin]             Vérifier la syntaxe et les conventions des diagrammes
+  omm validate [chemin]             Vérifier les diagrammes et les parcours
+  omm guide list|show|write|delete  Gérer les parcours guidés (.omm/.guides/)
   omm config [clé] [valeur]         Lire ou régler le projet (ex. : language fr)
   omm view [--port <port>]          Lancer le viewer web (port 3000 par défaut)
 
