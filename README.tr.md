@@ -70,12 +70,17 @@ Her düğüm **özyinelemeli olarak analiz edilir**. Karmaşık düğümler, ken
 │   └── renderer/
 │       └── ...
 ├── data-flow/
-└── external-integrations/
+├── external-integrations/
+└── .guides/                        ← rehberler (adım adım gezintiler)
 ```
 
 Görüntüleyici, bu iç içe yapıyı dosya sistemine bakarak otomatik algılar. Alt öğeleri olan elementler genişletilebilir grup olarak, diğerleri ise düğüm olarak gösterilir.
 
 Her element en fazla 7 alan taşıyabilir: `description`, `diagram`, `context`, `constraint`, `concern`, `todo`, `note`.
+
+### Rehberler
+
+**Rehber**, diyagramlar üzerinde adım adım bir gezintidir: görüntüleyici her elementi açar, geri kalanını soluklaştırır ve izlenen bağlantıyı vurgular. AI aracınızda `/omm-guide` ile bir tane isteyin (örneğin `/omm-guide bir kullanıcı kaydolduğunda ne olur?`). Projede bir karşılama rehberi (`start-here`) varsa, görüntüleyici ilk ziyarette bunu önerir. Rehberler `.omm/.guides/` içinde saklanır ve yeni bir tarama bir rehberi bozduğunda `omm validate` bunu bildirir.
 
 ## CLI
 
@@ -83,6 +88,7 @@ Her element en fazla 7 alan taşıyabilir: `description`, `diagram`, `context`, 
 omm setup                          # Yetenekleri AI araçlarına kaydet
 omm view                           # Etkileşimli görüntüleyiciyi aç
 omm config language ko             # İçerik dilini ayarla
+omm guide list                     # Rehberleri listele
 omm update                         # En güncel sürüme geç
 ```
 
@@ -95,6 +101,7 @@ Yetenekler, **AI kodlama aracınızın içinde** çalıştırdığınız komutla
 | Yetenek | Açıklama |
 | --- | --- |
 | `/omm-scan` | Kod tabanını analiz eder → mimari dokümantasyon üretir |
+| `/omm-guide` | Bir soruyu yanıtlayan adım adım rehber yazar → görüntüleyicide oynatılır |
 | `/omm-push` | Giriş + bağlama + buluta gönderme işlemini tek adımda tamamlar |
 
 ## Bulut

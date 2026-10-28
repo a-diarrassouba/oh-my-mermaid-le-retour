@@ -68,12 +68,17 @@ Every node gets **recursively analyzed**. Complex nodes become nested child elem
 │   └── renderer/
 │       └── ...
 ├── data-flow/
-└── external-integrations/
+├── external-integrations/
+└── .guides/                        ← guides (step-by-step walks)
 ```
 
 The viewer auto-detects nesting from the filesystem — elements with children render as expandable groups, others as nodes.
 
 Each element carries up to 7 fields: `description`, `diagram`, `context`, `constraint`, `concern`, `todo`, `note`.
+
+### Guides
+
+A **guide** is a step-by-step walk through the diagrams: the viewer opens each element, fades the rest and lights the edge being followed. Ask your AI tool for one with `/omm-guide` (for example `/omm-guide what happens when a user signs up?`). When the project has a welcome guide (`start-here`), the viewer offers it on the first visit. Guides live in `.omm/.guides/`, and `omm validate` tells you when a new scan breaks one.
 
 ## CLI
 
@@ -81,6 +86,7 @@ Each element carries up to 7 fields: `description`, `diagram`, `context`, `const
 omm setup                          # Register skills with your AI tools
 omm view                           # Open interactive viewer
 omm config language ko             # Set content language
+omm guide list                     # List guides (step-by-step walks)
 omm update                         # Update to latest version
 ```
 
@@ -93,6 +99,7 @@ Skills are commands you run **inside your AI coding tool** (not the terminal). T
 | Skill | What it does |
 | --- | --- |
 | `/omm-scan` | Analyze codebase → generate architecture docs |
+| `/omm-guide` | Write a step-by-step guide that answers a question, played in the viewer |
 | `/omm-push` | Login + link + push to cloud in one step |
 
 ## Cloud

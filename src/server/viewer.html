@@ -6,6 +6,7 @@
 <title>oh-my-mermaid</title>
 <script src="https://cdn.jsdelivr.net/npm/dagre@0.8.5/dist/dagre.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js" integrity="sha384-+VfUPEb0PdtChMwmBcBmykRMDd+v6D/oFmB3rZM/puCMDYcIvF968OimRh4KQY9a" crossorigin="anonymous"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -19,6 +20,9 @@
   --font: 'Inter', system-ui, -apple-system, sans-serif;
   --mono: 'SF Mono', 'Fira Code', monospace;
   --sidebar-w: 400px;
+  --accent: #818cf8;
+  --surface: #0a0a0a;
+  --surface-2: #141414;
 }
 html, body { height: 100%; overflow: hidden; }
 body { font-family: var(--font); background: var(--bg); color: var(--text); display: flex; flex-direction: column; }
@@ -194,7 +198,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); disp
 .empty-state { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; pointer-events: none; }
 .empty-state p { font-size: 12px; color: #444; line-height: 1.9; }
 /* Light mode */
-body.light { --bg: #f0f0f0; --border: #ddd; --border-hi: #bbb; --text: #1a1a1a; --text-mid: #555; --text-dim: #aaa; }
+body.light { --bg: #f0f0f0; --border: #ddd; --border-hi: #bbb; --text: #1a1a1a; --text-mid: #555; --text-dim: #aaa; --accent: #4f46e5; --surface: #ffffff; --surface-2: #ebebeb; }
 body.light header { background: #fff; }
 body.light #canvas-wrap { background-color: #f0f0f0; background-image: radial-gradient(circle, #ccc 1px, transparent 1px); }
 body.light #sidebar { background: #fafafa; }
@@ -280,12 +284,103 @@ body.light .reg-node:hover .nshape { stroke: #000 !important; }
   }
   .float-controls { display: none; }
 }
+/* ── Guides ──────────────────────────────────────────────────
+   A guide walks through elements of the diagram. While it runs, #canvas-wrap
+   has .guiding: visited elements stay lit (.guide-lit), the rest fades, the
+   edges already walked stay tinted (.guide-trail) and the current one flows
+   (.guide-edge). These rules come after the zoom-overview ones on purpose. */
+#nav-guides { border-top: 1px solid var(--border); max-height: 46%; overflow-y: auto; padding: 8px 0 10px; flex-shrink: 0; display: flex; flex-direction: column; gap: 6px; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+.nav-section { font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--text-dim); padding: 4px 16px 2px; }
+.guide-start { margin: 0 12px; padding: 10px 12px; border-radius: 9px; border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); background: color-mix(in srgb, var(--accent) 12%, transparent); display: flex; flex-direction: column; gap: 4px; }
+.guide-start .gs-eyebrow { font-family: var(--mono); font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); }
+.guide-start .gs-title { font-size: 13px; font-weight: 600; color: var(--text); }
+.guide-start .gs-meta { font-family: var(--mono); font-size: 10.5px; color: var(--text-mid); }
+.guide-start button { margin-top: 4px; align-self: flex-start; border: 0; border-radius: 6px; padding: 5px 10px; background: var(--accent); color: var(--bg); font-family: var(--font); font-size: 12px; font-weight: 600; cursor: pointer; }
+.guide-start-done { margin: 0 12px; border: 0; background: none; padding: 4px; text-align: left; font-family: var(--font); font-size: 12px; color: var(--text-mid); cursor: pointer; border-radius: 6px; }
+.guide-start-done:hover { color: var(--text); background: var(--surface-2); }
+.guide-item { display: flex; align-items: center; gap: 8px; width: 100%; padding: 5px 16px; border: 0; background: none; text-align: left; cursor: pointer; color: var(--text); font-family: var(--font); font-size: 12px; line-height: 1.35; }
+.guide-item > span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.guide-item small { flex-shrink: 0; font-family: var(--mono); font-size: 10.5px; color: var(--text-dim); }
+.guide-item:hover { background: var(--surface-2); }
+.guide-item.active { background: color-mix(in srgb, var(--accent) 16%, transparent); }
+.guide-item .guide-check { color: var(--accent); flex-shrink: 0; width: 10px; font-size: 11px; font-style: normal; }
+.guide-item.invalid { cursor: help; }
+.guide-item.invalid > span { color: var(--text-dim); }
+.guide-item.invalid small { color: #f38ba8; }
+
+#guide-bar {
+  position: fixed; left: 212px; right: 12px; bottom: 12px; z-index: 250;
+  background: var(--surface); border: 1px solid var(--border); border-top: 3px solid var(--accent);
+  border-radius: 10px; padding: 12px 14px;
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 14px; align-items: center;
+  box-shadow: 0 10px 30px rgba(0,0,0,.28);
+}
+#guide-bar[hidden] { display: none; }
+#sidebar.open ~ #guide-bar { right: calc(var(--sidebar-w) + 12px); }
+.gb-kind { font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--accent); background: color-mix(in srgb, var(--accent) 16%, transparent); padding: 3px 8px; border-radius: 6px; }
+.gb-main { min-width: 0; }
+.gb-title { font-weight: 600; font-size: 13px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gb-sub { font-size: 12px; color: var(--text-mid); margin-top: 2px; }
+.gb-steps { display: flex; gap: 5px; margin-top: 8px; align-items: center; flex-wrap: wrap; }
+.gb-steps button { width: 22px; height: 6px; border-radius: 3px; border: 0; padding: 0; background: var(--border-hi); cursor: pointer; }
+.gb-steps button.done { background: var(--accent); opacity: .45; }
+.gb-steps button.cur { background: var(--accent); }
+.gb-steps .gb-gap { width: 8px; }
+.gb-steps span { font-family: var(--mono); font-size: 11px; color: var(--text-dim); margin-left: 6px; font-variant-numeric: tabular-nums; }
+.gb-actions { display: flex; gap: 6px; }
+.gb-btn { border: 1px solid var(--border-hi); background: var(--surface); color: var(--text); border-radius: 7px; padding: 6px 12px; font-size: 12.5px; font-family: var(--font); cursor: pointer; }
+.gb-btn:hover { border-color: var(--text-dim); }
+.gb-btn.primary { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.gb-btn:disabled { opacity: .4; cursor: default; }
+.gb-close { border: 0; background: none; color: var(--text-dim); font-size: 20px; line-height: 1; cursor: pointer; padding: 0 4px; }
+
+.sb-step { margin: 14px 20px 0; padding: 10px 12px; border-radius: 8px; background: var(--surface-2); border-left: 3px solid var(--accent); font-size: 12.5px; color: var(--text); line-height: 1.6; }
+.sb-step[hidden] { display: none; }
+.sb-step b { display: block; font-family: var(--mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); font-weight: 500; margin-bottom: 2px; }
+.sb-step .sb-say { margin: 4px 0 0; }
+/* Guide mode: on the step's element, the panel tells the step only. The
+   full sheet stays one click away (.show-full). */
+#sidebar.guide-mode:not(.show-full) .sb-fields,
+#sidebar.guide-mode:not(.show-full) .sb-diagram { display: none; }
+#sidebar.guide-mode .sb-step { margin: 18px 20px; padding: 16px 18px; font-size: 14px; }
+#sidebar.guide-mode .sb-step .sb-say { font-size: 16px; line-height: 1.5; font-weight: 500; }
+.sb-step .sb-details { margin-top: 12px; font-size: 13.5px; line-height: 1.7; color: var(--text-mid); }
+.sb-step .sb-details p { margin: 0 0 8px; }
+.sb-step .sb-details ul, .sb-step .sb-details ol { padding-left: 18px; margin: 0 0 8px; }
+.sb-step .sb-details strong { color: var(--text); }
+.sb-step .sb-details code { background: var(--bg); padding: 1px 5px; border-radius: 3px; font-family: var(--mono); font-size: 12px; color: var(--text); }
+.sb-full-toggle { margin-top: 12px; border: 0; background: none; padding: 0; color: var(--accent); font-family: var(--font); font-size: 12px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+
+#canvas-wrap.guiding .grp-node[data-cls] > .grp-inner > .reg-node:not(.guide-lit) { opacity: .18 !important; transition: opacity .25s; }
+#canvas-wrap.guiding .grp-node[data-cls]:not(.guide-lit):not(.guide-anc) > .grp-border { opacity: .35 !important; }
+#canvas-wrap.guiding .grp-node[data-cls] .grp-inner .edge-path:not(.guide-trail):not(.guide-edge):not(.guide-in):not(.edge-hl) { opacity: .1 !important; }
+#canvas-wrap.guiding .grp-node[data-cls] > .grp-inner > .reg-node.guide-lit { opacity: 1 !important; }
+#canvas-wrap.guiding .grp-node.guide-anc > .grp-inner,
+#canvas-wrap.guiding .grp-node.guide-lit > .grp-inner { opacity: 1 !important; pointer-events: auto !important; }
+#canvas-wrap.guiding .grp-node.guide-anc > .grp-label-center,
+#canvas-wrap.guiding .grp-node.guide-lit > .grp-label-center { display: none !important; }
+#canvas-wrap.guiding .reg-node.guide-cur .nshape,
+#canvas-wrap.guiding .grp-node.guide-cur > .grp-border { stroke: var(--accent) !important; stroke-width: 3px; stroke-opacity: 1; filter: drop-shadow(0 0 10px color-mix(in srgb, var(--accent) 60%, transparent)); }
+#canvas-wrap.guiding .edge-path.guide-trail { stroke: var(--accent) !important; stroke-width: 2px; opacity: .55 !important; }
+#canvas-wrap.guiding .edge-path.guide-edge { stroke: var(--accent) !important; stroke-width: 2.5px; opacity: 1 !important; stroke-dasharray: 7 5; animation: edge-flow .7s linear infinite; }
+@keyframes edge-flow { to { stroke-dashoffset: -12; } }
+@media (prefers-reduced-motion: reduce) {
+  #canvas-wrap.guiding .edge-path.guide-edge { animation: none; stroke-dasharray: none; }
+}
+@media (max-width: 1100px) {
+  #sidebar.open ~ #guide-bar { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+}
+@media (max-width: 768px) {
+  #guide-bar { left: 12px; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  #sidebar.open ~ #guide-bar { right: 12px; bottom: calc(50vh + 8px); }
+}
 </style>
 </head>
 <body>
 <div id="nav-sidebar">
   <div id="nav-title">omm</div>
   <div id="nav-list"></div>
+  <div id="nav-guides" hidden></div>
 </div>
 
 <div id="mobile-nav-btn" onclick="toggleMobileNav()"><span>☰</span><span id="mobile-title">omm</span></div>
@@ -304,10 +399,13 @@ body.light .reg-node:hover .nshape { stroke: #000 !important; }
 <div id="sidebar">
   <div id="sb-head"><div id="sb-title"></div><button id="sb-close" onclick="closeSidebar()" data-i18n-title="close">×</button></div>
   <div id="sb-body">
+    <div class="sb-step" id="sb-step" hidden></div>
     <div class="sb-diagram" id="sb-diagram"></div>
     <div class="sb-fields" id="sb-fields"></div>
   </div>
 </div>
+
+<div id="guide-bar" role="region" data-i18n-aria="guides" hidden></div>
 
 <script type="module">
 // ── interface language ────────────────────────────────────
@@ -319,6 +417,12 @@ const I18N = {
     context: 'Context', todo: 'Todo', note: 'Notes', references: 'References',
     updatesOne: '{n} update', updatesOther: '{n} updates',
     emptyTitle: 'No perspectives found.', emptyHint: 'Run {cmd} in Claude Code.',
+    guides: 'Guides', guideInvalid: 'needs fixing: run omm validate', stepN: 'Step {n}',
+    stepsOne: '{n} step', stepsOther: '{n} steps', partsOne: '{n} part', partsOther: '{n} parts',
+    kindPath: 'guide', kindTrace: 'scenario', back: 'Back', next: 'Next', finish: 'Finish', exitGuide: 'Exit',
+    stepOf: 'Step {i} of {n}', partOf: 'Part {i}/{n} — {name}',
+    showFull: 'See the full sheet', hideFull: 'Back to the step',
+    newHere: 'New to this project?', startBtn: '▶ Start', welcome: 'Start here', replayWelcome: '✓ Replay the welcome guide',
   },
   fr: {
     zoomOut: 'Zoom arrière', zoomIn: 'Zoom avant', fit: 'ajuster', fitTitle: "Ajuster à l'écran",
@@ -327,6 +431,12 @@ const I18N = {
     context: 'Contexte', todo: 'À faire', note: 'Notes', references: 'Références',
     updatesOne: '{n} mise à jour', updatesOther: '{n} mises à jour',
     emptyTitle: 'Aucune perspective trouvée.', emptyHint: 'Lancez {cmd} dans Claude Code.',
+    guides: 'Parcours', guideInvalid: 'à corriger : lancez omm validate', stepN: 'Étape {n}',
+    stepsOne: '{n} étape', stepsOther: '{n} étapes', partsOne: '{n} partie', partsOther: '{n} parties',
+    kindPath: 'parcours', kindTrace: 'scénario', back: 'Précédent', next: 'Suivant', finish: 'Terminer', exitGuide: 'Quitter',
+    stepOf: 'Étape {i} sur {n}', partOf: 'Partie {i}/{n} — {name}',
+    showFull: 'Voir la fiche complète', hideFull: "Revenir à l'étape",
+    newHere: 'Nouveau sur ce projet ?', startBtn: '▶ Commencer', welcome: 'Pour commencer', replayWelcome: "✓ Revoir le parcours d'accueil",
   },
 };
 let lang = 'en';
@@ -336,6 +446,7 @@ function setLanguage(code) {
   lang = I18N[primary] ? primary : 'en';
   document.documentElement.lang = typeof code === 'string' && code ? code : lang;
   document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-aria]').forEach(el => el.setAttribute('aria-label', t(el.dataset.i18nAria)));
   document.querySelectorAll('[data-i18n-title]').forEach(el => {
     el.title = t(el.dataset.i18nTitle);
     el.setAttribute('aria-label', el.title);
@@ -1021,7 +1132,12 @@ window.addEventListener('keydown', e => {
     if (e.key === '+' || e.key === '=') { e.preventDefault(); window.zoomIn(); }
     if (e.key === '-') { e.preventDefault(); window.zoomOut(); }
   }
-  if (e.key === 'Escape') closeSidebar();
+  if (e.target.closest?.('input, textarea')) return;
+  if (e.key === 'Escape') { if (activeGuide) exitGuide(); closeSidebar(); }
+  if (activeGuide && !e.metaKey && !e.ctrlKey && !e.altKey) {
+    if (e.key === 'ArrowRight') { e.preventDefault(); nextGuideStep(); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); goToGuideStep(guideStep - 1); }
+  }
 });
 window.addEventListener('keyup', e => {
   if (e.code === 'Space') { spaceHeld = false; updateCursor(); }
@@ -1094,7 +1210,7 @@ canvasWrap.addEventListener('click', e => {
 });
 
 // ── sidebar ───────────────────────────────────────────────
-window.__openSb = function(cls) {
+window.__openSb = function(cls, frameCls) {
   // Resolve: try full scoped path, then short name, then fallback to parent perspective
   var shortName = cls.includes('/') ? cls.split('/').pop() : cls;
   var dataKey = classesData[cls] ? cls : (classesData[shortName] ? shortName : null);
@@ -1107,15 +1223,20 @@ window.__openSb = function(cls) {
   document.querySelectorAll('.grp-node,.reg-node').forEach(el=>el.classList.remove('selected'));
   document.querySelectorAll(`[data-cls="${CSS.escape(cls)}"]`).forEach(el=>el.classList.add('selected'));
   selectedCls=cls;
+  const onStep = !!(activeGuide && cls === activeGuide.guide.steps[guideStep].element);
+  sbStep.hidden = !onStep;
+  // Coming back to the step's element opens on its explanation.
+  if (onStep) sidebar.classList.remove('show-full');
+  setGuidePanel(onStep);
   document.querySelectorAll('.nav-item').forEach(el => {
     el.classList.toggle('active', el.getAttribute('data-nav') === cls);
   });
   var sidebarAlreadyOpen = sidebar.classList.contains('open');
   openSidebar(dataKey);
   if (sidebarAlreadyOpen) {
-    focusGroup(cls);
+    focusGroup(frameCls || cls);
   } else {
-    setTimeout(() => focusGroup(cls), 260);
+    setTimeout(() => focusGroup(frameCls || cls), 260);
   }
   // Cloud mode: notify parent frame of selection
   if (window.parent !== window) {
@@ -1333,6 +1454,7 @@ function rebuildCanvas() {
   svgW = result.W; svgH = result.H;
   applyTransform(); // re-sync label sizes / blur state
   postRender();
+  paintGuideStep();
   // restore selected highlight only (no re-focus — user controls viewport after initial focus)
   if (selectedCls) {
     document.querySelectorAll(`[data-cls="${CSS.escape(selectedCls)}"]`)
@@ -1477,6 +1599,326 @@ function addNavItem(name, prefix, isLast, displayLabel) {
   navList.appendChild(btn);
 }
 
+// ── guides ────────────────────────────────────────────────
+// A guide (.omm/.guides/<id>.yaml, served by /api/guides) walks through
+// elements already on the canvas. It only opens elements, fades the rest and
+// animates the edge of each step: all content stays in the elements.
+const navGuides = document.getElementById('nav-guides');
+const guideBar  = document.getElementById('guide-bar');
+const sbStep    = document.getElementById('sb-step');
+let guides = [];          // [{ id, guide, valid, issues }]
+let activeGuide = null;   // one of guides
+let guideStep = 0;
+
+const guideKey = id => 'omm-guide:' + id;
+const GUIDE_DISMISS_KEY = 'omm-guide-start-dismissed';
+// Same arrows as parseFlowchart(): "a --> b", "a -->|label| b", ...
+const STEP_EDGE = /^\s*@?([\w-]+)\s*(?:-->(?:\|[^|]*\|)?|--o|--x|---|-.->|==>|~~>)\s*@?([\w-]+)\s*$/;
+
+// Guide text comes from .omm/ (and later from AI answers): never let it run code.
+function safeMarkdown(text) {
+  return DOMPurify.sanitize(marked.parse(String(text)), {
+    FORBID_TAGS: ['img', 'picture', 'audio', 'video', 'source', 'track', 'style', 'form', 'input', 'button',
+      'textarea', 'select', 'iframe', 'object', 'embed', 'svg', 'math'],
+    FORBID_ATTR: ['style'],
+  });
+}
+
+function guideProgress(id) {
+  const v = safeStorageGet(guideKey(id));
+  if (v === 'done') return 'done';
+  const n = parseInt(v || '', 10);
+  return Number.isNaN(n) ? null : n;
+}
+
+const parentOf = elementPath => elementPath.split('/').slice(0, -1).join('/');
+const guidePartsOf = g => [...new Set(g.steps.map(s => s.part).filter(Boolean))];
+const stepsLabel = n => t(n === 1 ? 'stepsOne' : 'stepsOther', { n });
+
+function partLabel(g, step) {
+  const parts = guidePartsOf(g);
+  if (!parts.length || !step.part) return '';
+  return t('partOf', { i: parts.indexOf(step.part) + 1, n: parts.length, name: step.part });
+}
+
+// On the step's element the panel shows the step only; the full sheet otherwise.
+function setGuidePanel(on) {
+  sidebar.classList.toggle('guide-mode', on);
+  if (!on) sidebar.classList.remove('show-full');
+  syncFullToggle();
+}
+
+function syncFullToggle() {
+  const btn = sbStep.querySelector('.sb-full-toggle');
+  if (btn) btn.textContent = t(sidebar.classList.contains('show-full') ? 'hideFull' : 'showFull');
+}
+
+function closeMobileNav() {
+  document.getElementById('nav-sidebar').classList.remove('mobile-open');
+  document.getElementById('mobile-overlay').classList.remove('show');
+}
+
+function startFromNav(id) {
+  startGuide(id);
+  closeMobileNav();
+}
+
+// The Guides section of the left panel: the welcome guide on top, then the others.
+function renderGuideList() {
+  navGuides.innerHTML = '';
+  navGuides.hidden = guides.length === 0;
+  if (!guides.length) return;
+  const head = document.createElement('div');
+  head.className = 'nav-section';
+  head.textContent = t('guides');
+  navGuides.appendChild(head);
+
+  const start = guides.find(g => g.valid && g.guide.start);
+  if (start) navGuides.appendChild(startCard(start));
+  for (const g of guides) if (g !== start) navGuides.appendChild(guideItem(g));
+}
+
+function guideMeta(g) {
+  const parts = guidePartsOf(g).length;
+  return [stepsLabel(g.steps.length), parts ? t(parts === 1 ? 'partsOne' : 'partsOther', { n: parts }) : '', g.duration]
+    .filter(Boolean).join(' · ');
+}
+
+function startCard(g) {
+  if (guideProgress(g.id) === 'done') {
+    const btn = document.createElement('button');
+    btn.className = 'guide-start-done';
+    btn.textContent = t('replayWelcome');
+    btn.onclick = () => startFromNav(g.id);
+    return btn;
+  }
+  const card = document.createElement('div');
+  card.className = 'guide-start';
+  card.innerHTML = `
+    <span class="gs-eyebrow">${esc(t('welcome'))}</span>
+    <span class="gs-title">${esc(g.guide.title)}</span>
+    <span class="gs-meta">${esc(guideMeta(g.guide))}</span>
+    <button type="button">${esc(t('startBtn'))}</button>`;
+  card.querySelector('button').onclick = () => startFromNav(g.id);
+  return card;
+}
+
+function guideItem(g) {
+  const btn = document.createElement('button');
+  btn.className = 'guide-item' + (g.valid ? '' : ' invalid') + (activeGuide?.id === g.id ? ' active' : '');
+  const check = document.createElement('i');
+  check.className = 'guide-check';
+  const title = document.createElement('span');
+  title.textContent = g.guide ? g.guide.title : g.id;
+  const info = document.createElement('small');
+  if (!g.valid) {
+    const first = g.issues.find(i => i.level === 'error');
+    info.textContent = '!';
+    btn.title = `${t('guideInvalid')}${first ? ` — ${first.step ? t('stepN', { n: first.step }) + ': ' : ''}${first.message}` : ''}`;
+  } else {
+    if (guideProgress(g.id) === 'done') check.textContent = '✓';
+    info.textContent = String(g.guide.steps.length);
+    btn.title = `${g.guide.title}\n${t(g.guide.kind === 'trace' ? 'kindTrace' : 'kindPath')} · ${guideMeta(g.guide)}`;
+    btn.onclick = () => startFromNav(g.id);
+  }
+  btn.append(check, title, info);
+  return btn;
+}
+
+function startGuide(id, step) {
+  const g = guides.find(x => x.id === id);
+  if (!g || !g.valid) return;
+  activeGuide = g;
+  const saved = guideProgress(id);
+  const last = g.guide.steps.length - 1;
+  guideStep = step ?? (typeof saved === 'number' && saved > 0 && saved < last ? saved : 0);
+  guideStep = Math.max(0, Math.min(last, guideStep));
+  showGuideStep();
+}
+
+function goToGuideStep(i) {
+  if (!activeGuide || i < 0 || i >= activeGuide.guide.steps.length) return;
+  guideStep = i;
+  showGuideStep();
+}
+
+function nextGuideStep() {
+  if (!activeGuide) return;
+  if (guideStep < activeGuide.guide.steps.length - 1) goToGuideStep(guideStep + 1);
+  else finishGuide();
+}
+
+function finishGuide() {
+  safeStorageSet(guideKey(activeGuide.id), 'done');
+  exitGuide();
+}
+
+function exitGuide() {
+  activeGuide = null;
+  paintGuideStep();
+  guideBar.hidden = true;
+  sbStep.hidden = true;
+  setGuidePanel(false);
+  if (location.hash.startsWith('#guide=')) history.replaceState(null, '', location.pathname + location.search);
+  renderGuideList();
+}
+
+// Opens the step's element, framing its parent diagram so the edge is in view.
+function showGuideStep() {
+  const step = activeGuide.guide.steps[guideStep];
+  sidebar.classList.remove('show-full');
+  safeStorageSet(guideKey(activeGuide.id), String(guideStep));
+  history.replaceState(null, '', `#guide=${encodeURIComponent(activeGuide.id)}&step=${guideStep + 1}`);
+  renderGuideBar();
+  window.__openSb(step.element, parentOf(step.element) || step.element);
+  paintGuideStep();
+  renderGuideList();
+}
+
+// Marks what the guide has walked so far. Safe to call after any re-render.
+function paintGuideStep() {
+  canvasWrap.classList.toggle('guiding', !!activeGuide);
+  const marks = ['guide-lit', 'guide-cur', 'guide-anc', 'guide-in', 'guide-trail', 'guide-edge'];
+  document.querySelectorAll(marks.map(m => '#canvas .' + m).join(','))
+    .forEach(el => el.classList.remove(...marks));
+  if (!activeGuide) return;
+
+  const byCls = cls => document.querySelector(`#canvas [data-cls="${CSS.escape(cls)}"]`);
+  // The canvas draws each nested element once: fall back to its nearest drawn parent.
+  const drawn = cls => {
+    for (let segs = cls.split('/'); segs.length; segs.pop()) {
+      const el = byCls(segs.join('/'));
+      if (el) return el;
+    }
+    return null;
+  };
+  activeGuide.guide.steps.slice(0, guideStep + 1).forEach((step, i) => {
+    const parent = parentOf(step.element);
+    const lit = [step.element, ...(step.focus || []).map(n => parent ? `${parent}/${n}` : n)];
+    for (const cls of lit) {
+      const el = cls === step.element ? drawn(cls) : byCls(cls);
+      if (!el) continue;
+      el.classList.add('guide-lit');
+      if (i === guideStep && cls === step.element) el.classList.add('guide-cur');
+      // A lit group lights everything inside it.
+      el.querySelectorAll('.reg-node, .grp-node').forEach(n => n.classList.add('guide-lit'));
+      el.querySelectorAll('.edge-path, .edge-label').forEach(n => n.classList.add('guide-in'));
+    }
+    // Keep the borders of the groups around the element.
+    const segs = step.element.split('/');
+    for (let k = 1; k < segs.length; k++) byCls(segs.slice(0, k).join('/'))?.classList.add('guide-anc');
+
+    const m = step.edge && step.edge.match(STEP_EDGE);
+    const parentEl = parent && byCls(parent);
+    if (!m || !parentEl) return;
+    parentEl.querySelectorAll('.edge-path').forEach(path => {
+      if (path.closest('[data-cls]') !== parentEl) return;
+      if (path.dataset.from !== m[1] || path.dataset.to !== m[2]) return;
+      path.classList.add(i === guideStep ? 'guide-edge' : 'guide-trail');
+    });
+  });
+
+  const g = activeGuide.guide, cur = g.steps[guideStep];
+  sbStep.hidden = selectedCls !== cur.element;
+  const head = [t('stepOf', { i: guideStep + 1, n: g.steps.length }), partLabel(g, cur)].filter(Boolean).join(' · ');
+  const details = cur.details ? `<div class="sb-details">${safeMarkdown(cur.details)}</div>` : '';
+  const full = sidebar.classList.contains('show-full');
+  sbStep.innerHTML = `<b>${esc(head)}</b><p class="sb-say">${esc(cur.say)}</p>${details}`
+    + `<button type="button" class="sb-full-toggle">${esc(t(full ? 'hideFull' : 'showFull'))}</button>`;
+  sbStep.querySelector('.sb-full-toggle').onclick = () => {
+    sidebar.classList.toggle('show-full');
+    syncFullToggle();
+  };
+  setGuidePanel(selectedCls === cur.element);
+}
+
+function renderGuideBar() {
+  const g = activeGuide.guide, n = g.steps.length;
+  // A small gap between parts shows where each one starts.
+  const dots = g.steps.map((s, i) => {
+    const gap = i > 0 && s.part && s.part !== g.steps[i - 1].part ? '<i class="gb-gap"></i>' : '';
+    return `${gap}<button type="button" data-step="${i}" aria-label="${esc(t('stepN', { n: i + 1 }))}" class="${i < guideStep ? 'done' : i === guideStep ? 'cur' : ''}"></button>`;
+  }).join('');
+  const part = partLabel(g, g.steps[guideStep]);
+  guideBar.innerHTML = `
+    <span class="gb-kind">${esc(t(g.kind === 'trace' ? 'kindTrace' : 'kindPath'))}</span>
+    <div class="gb-main">
+      <div class="gb-title">${esc(g.title)}</div>
+      ${part ? `<div class="gb-sub">${esc(part)}</div>` : ''}
+      <div class="gb-steps">${dots}<span>${guideStep + 1} / ${n}</span></div>
+    </div>
+    <div class="gb-actions">
+      <button type="button" class="gb-btn" data-act="prev" ${guideStep === 0 ? 'disabled' : ''}>${esc(t('back'))}</button>
+      <button type="button" class="gb-btn primary" data-act="next">${esc(t(guideStep === n - 1 ? 'finish' : 'next'))}</button>
+      <button type="button" class="gb-btn" data-act="exit">${esc(t('exitGuide'))}</button>
+    </div>`;
+  guideBar.hidden = false;
+}
+
+// Offers the project's start guide once, without opening it by itself.
+function suggestStartGuide() {
+  const g = guides.find(x => x.valid && x.guide.start);
+  if (!g || activeGuide || guideProgress(g.id) === 'done' || safeStorageGet(GUIDE_DISMISS_KEY) === g.id) {
+    if (!activeGuide) guideBar.hidden = true;
+    return;
+  }
+  guideBar.innerHTML = `
+    <span class="gb-kind">${esc(t('kindPath'))}</span>
+    <div class="gb-main">
+      <div class="gb-title">${esc(t('newHere'))} ${esc(g.guide.title)}</div>
+      <div class="gb-sub">${esc(guideMeta(g.guide))}</div>
+    </div>
+    <div class="gb-actions">
+      <button type="button" class="gb-btn primary" data-act="start" data-id="${esc(g.id)}">${esc(t('startBtn'))}</button>
+      <button type="button" class="gb-close" data-act="dismiss" data-id="${esc(g.id)}" aria-label="${esc(t('close'))}">×</button>
+    </div>`;
+  guideBar.hidden = false;
+}
+
+guideBar.addEventListener('click', e => {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  if (btn.dataset.step !== undefined) return goToGuideStep(+btn.dataset.step);
+  const act = btn.dataset.act;
+  if (act === 'prev') goToGuideStep(guideStep - 1);
+  if (act === 'next') nextGuideStep();
+  if (act === 'exit') { exitGuide(); closeSidebar(); }
+  if (act === 'start') startGuide(btn.dataset.id);
+  if (act === 'dismiss') { safeStorageSet(GUIDE_DISMISS_KEY, btn.dataset.id); guideBar.hidden = true; }
+});
+
+// Called by init(), on first load and after each live reload.
+async function loadGuidesIntoViewer() {
+  const data = await api('/api/guides');
+  guides = Array.isArray(data) ? data : [];
+  if (activeGuide) {
+    const again = guides.find(g => g.id === activeGuide.id && g.valid);
+    if (!again) return exitGuide();
+    activeGuide = again;
+    guideStep = Math.min(guideStep, again.guide.steps.length - 1);
+    // A reload (scan, AI edit) must not move the view or the selection.
+    renderGuideBar();
+    paintGuideStep();
+    renderGuideList();
+    return;
+  }
+  renderGuideList();
+  if (startLinkedGuide(60)) return;
+  suggestStartGuide();
+}
+
+// #guide=<id>&step=<n> opens a guide at a step; returns whether it did.
+function startLinkedGuide(delay = 0) {
+  const link = new URLSearchParams(location.hash.slice(1));
+  const linked = link.get('guide');
+  if (!linked || !guides.some(g => g.id === linked && g.valid)) return false;
+  const step = Math.max(0, (parseInt(link.get('step') || '1', 10) || 1) - 1);
+  setTimeout(() => startGuide(linked, step), delay);
+  return true;
+}
+// A link pasted into an open viewer changes only the hash.
+window.addEventListener('hashchange', () => startLinkedGuide());
+
 // ── nested element support ────────────────────────────────
 var childrenByPerspective = {};
 var originalPerspectives = []; // top-level only, before short names pollute classes
@@ -1564,7 +2006,9 @@ async function init() {
     svgW = result.W; svgH = result.H;
   }
   postRender();
-  requestAnimationFrame(centerView);
+  paintGuideStep();
+  if (!activeGuide) requestAnimationFrame(centerView);
+  await loadGuidesIntoViewer();
 
   // Cloud mode: notify parent frame of available classes
   if (window.parent !== window) {

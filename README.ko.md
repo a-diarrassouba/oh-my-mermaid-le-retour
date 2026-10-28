@@ -70,12 +70,17 @@ AI가 코드베이스를 분석하고 **관점(perspective)** 을 생성합니�
 │   └── renderer/
 │       └── ...
 ├── data-flow/
-└── external-integrations/
+├── external-integrations/
+└── .guides/                        ← 가이드 (단계별 안내)
 ```
 
 뷰어는 파일시스템에서 중첩을 자동 감지합니다 — 자식이 있는 element는 확장 가능한 그룹으로, 나머지는 노드로 렌더링됩니다.
 
 각 element는 최대 7개 필드를 가집니다: `description`, `diagram`, `context`, `constraint`, `concern`, `todo`, `note`.
+
+### 가이드
+
+**가이드**는 다이어그램을 단계별로 따라가는 안내입니다. 뷰어는 각 element를 열고, 나머지는 흐리게 하며, 따라가는 연결선을 강조합니다. AI 도구에서 `/omm-guide`로 요청하세요 (예: `/omm-guide 사용자가 가입하면 무슨 일이 일어나나요?`). 프로젝트에 환영 가이드(`start-here`)가 있으면 뷰어가 처음 방문할 때 제안합니다. 가이드는 `.omm/.guides/`에 저장되며, 새 스캔으로 가이드가 깨지면 `omm validate`가 알려줍니다.
 
 ## CLI
 
@@ -83,6 +88,7 @@ AI가 코드베이스를 분석하고 **관점(perspective)** 을 생성합니�
 omm setup                          # AI 도구에 스킬 등록
 omm view                           # 인터랙티브 뷰어 열기
 omm config language ko             # 콘텐츠 언어 설정
+omm guide list                     # 가이드 목록 보기
 omm update                         # 최신 버전으로 업데이트
 ```
 
@@ -95,6 +101,7 @@ omm update                         # 최신 버전으로 업데이트
 | 스킬 | 기능 |
 | --- | --- |
 | `/omm-scan` | 코드베이스 분석 → 아키텍처 문서 생성 |
+| `/omm-guide` | 질문에 답하는 단계별 가이드 작성 → 뷰어에서 재생 |
 | `/omm-push` | 로그인 + 연결 + 클라우드 푸시를 한 번에 |
 
 ## 클라우드
