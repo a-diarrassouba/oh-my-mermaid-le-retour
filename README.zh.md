@@ -70,12 +70,17 @@ AI 分析代码库并生成 **视角（perspective）** — 观察架构的不�
 │   └── renderer/
 │       └── ...
 ├── data-flow/
-└── external-integrations/
+├── external-integrations/
+└── .guides/                        ← 导览（逐步引导）
 ```
 
 查看器自动从文件系统检测嵌套 — 有子元素的元素渲染为可展开的组，其他渲染为节点。
 
 每个元素最多包含 7 个字段：`description`、`diagram`、`context`、`constraint`、`concern`、`todo`、`note`。
+
+### 导览
+
+**导览**是逐步浏览图表的引导：查看器会打开每个元素，淡化其余部分，并高亮正在跟随的连线。在 AI 工具中使用 `/omm-guide` 请求一个（例如 `/omm-guide 用户注册时会发生什么？`）。如果项目有欢迎导览（`start-here`），查看器会在首次访问时推荐它。导览保存在 `.omm/.guides/` 中，当新的扫描破坏了某个导览时，`omm validate` 会提示你。
 
 ## CLI
 
@@ -83,6 +88,7 @@ AI 分析代码库并生成 **视角（perspective）** — 观察架构的不�
 omm setup                          # 向 AI 工具注册技能
 omm view                           # 打开交互式查看器
 omm config language zh             # 设置内容语言
+omm guide list                     # 列出导览
 omm update                         # 更新到最新版本
 ```
 
@@ -95,6 +101,7 @@ omm update                         # 更新到最新版本
 | 技能 | 功能 |
 | --- | --- |
 | `/omm-scan` | 分析代码库 → 生成架构文档 |
+| `/omm-guide` | 编写回答问题的逐步导览 → 在查看器中播放 |
 | `/omm-push` | 一步完成登录 + 链接 + 推送到云端 |
 
 ## 云端

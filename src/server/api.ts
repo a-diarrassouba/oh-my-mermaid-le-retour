@@ -3,6 +3,7 @@ import { listClasses, showClass, readMeta, readField, listNodes, showNode } from
 import { diffMermaid } from '../lib/diff.js';
 import { getIncomingRefs, getOutgoingRefs } from '../lib/refs.js';
 import { getLanguage } from '../lib/language.js';
+import { loadGuides } from '../lib/guides.js';
 
 function json(res: ServerResponse, data: unknown, status = 200): void {
   res.writeHead(status, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
@@ -16,6 +17,22 @@ export function handleApi(req: IncomingMessage, res: ServerResponse): boolean {
   // GET /api/config — only what the viewer needs, not the cloud settings
   if (path === '/api/config') {
     json(res, { language: getLanguage() });
+    return true;
+  }
+
+  // GET /api/guides — every guide with its validation, so the viewer can show
+  // a guide a scan broke as "needs fixing" instead of hiding it.
+  if (path === '/api/guides') {
+    json(res, loadGuides());
+    return true;
+  }
+
+  // GET /api/guides/:id
+  const guideMatch = path.match(/^\/api\/guides\/([a-z0-9][a-z0-9-]*)$/);
+  if (guideMatch) {
+    const guide = loadGuides().find(g => g.id === guideMatch[1]);
+    if (!guide) json(res, { error: 'guide not found' }, 404);
+    else json(res, guide);
     return true;
   }
 
