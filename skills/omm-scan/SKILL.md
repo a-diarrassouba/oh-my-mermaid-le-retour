@@ -87,8 +87,18 @@ graph LR
     main-process -->|"spawn PTY"| engine-system["Engine System\nsrc/main/engine/"]
     main-process -->|"read/write JSON"| data-store["Data Store\nsrc/main/store.ts"]
     main-process -->|"xterm.js"| terminal-dock["Terminal Dock\nsrc/renderer/src/panel/"]
+    main-process -->|"sign in"| github-oauth["GitHub OAuth\ngithub.com"]
+
+    classDef entry fill:#89b4fa,stroke:#89b4fa,color:#1e1e2e
+    classDef store fill:#a6e3a1,stroke:#a6e3a1,color:#1e1e2e
+    classDef external fill:#585b70,stroke:#585b70,color:#cdd6f4
+    class renderer entry
+    class data-store store
+    class github-oauth external
 MERMAID
 ```
+
+Every diagram follows the [Diagram Rules](#diagram-rules), including the mandatory roles.
 
 ### 3b. Write the title and the other fields
 
@@ -188,17 +198,29 @@ The other fields can stay technical.
   auth-service["Auth Service\nsrc/auth/service.ts"]
   ```
 
+- **Every label has a real path.** The second line is a file or folder that exists in the repository, written from the repository root (folders end with `/`). Check it with Glob before writing; never guess a path. When an element spans two places and their common folder says nothing (like `src/`), list both: `src/commands/push.ts, src/lib/cloud.ts`. Two exceptions, where the second line says where the thing lives instead:
+  - an external system: its name, domain or command (`ohmymermaid.com`, `Claude Code`, `git`), not translated;
+  - a storage outside the repository: its location (`~/.omm/credentials.json`, `localStorage`, `PostgreSQL`).
+- **A diagram shows only its own elements.** A child diagram lists the parts of that element; how it connects to its siblings is already in the parent diagram, so do not repeat outside elements there (each node would become a duplicate child).
+- The same element may appear in several perspectives with the same ID (each perspective has its own folder for it).
 - Every edge must have a meaningful label, in the configured language: `A -->|"why this connection exists"| B`
-- More elements in one diagram means you should recurse deeper.
+- Aim for 5 to 15 elements per diagram. More than that means some of them belong together: group them into a child element and recurse deeper.
 - Use `graph LR` for most diagrams, `graph TD` for hierarchies.
-- Use `classDef` for visual distinction when helpful:
+- **Mark the role of elements with `classDef` — this is mandatory, not decoration.** The viewer and the questions asked in it rely on these roles to find "where data is stored", "where it starts" or "what is outside". In every diagram:
 
-  | Style | Color | When to use |
+  | Style | Color | Required on |
   | --- | --- | --- |
-  | `external` | `#585b70` | Third-party services outside your codebase |
-  | `concern` | `#f38ba8` | Known risk or bottleneck |
-  | `entry` | `#89b4fa` | Entry points (HTTP handler, CLI, queue consumer) |
-  | `store` | `#a6e3a1` | Persistent storage (DB, cache, file system) |
+  | `entry` | `#89b4fa` | **Every** entry point: where a user, a request, a command or an event comes in (HTTP handler, CLI, page, queue consumer, cron job) |
+  | `store` | `#a6e3a1` | **Every** persistent storage: database, cache, files on disk, object storage, browser storage |
+  | `external` | `#585b70` | **Every** system outside this codebase: third-party API, cloud service, another team's service, AI tool |
+  | `concern` | `#f38ba8` | Optional: a known risk or bottleneck (explain it in the element's `concern` field) |
+
+  What counts, within the diagram you are drawing:
+  - `entry` is the first element that receives something from **outside the system**: a person, the network, a scheduler, another program. Code reached only through another element of this project is not an entry, even if it handles a command or a route. A group whose main job is to receive outside input (a web server) is an entry too.
+  - `store` is where data stays after the program stops. Code that reads or writes the data is not a store; the database or the folder is.
+  - `external` is anything this repository does not contain, including local tools (`git`) and AI assistants.
+
+  Declare only the styles the diagram uses, with exactly these colors, then apply them with `class` lines listing node IDs. Use `class a,b store`, not `a:::store`: the viewer ignores the `:::` form. An element has at most one role; when none applies (plain internal code), leave it unstyled. `entry`, `store` and `external` win over `concern`: a risky store stays `store`, and its risk goes in its `concern` field.
 
   ```text
   classDef external fill:#585b70,stroke:#585b70,color:#cdd6f4
@@ -207,10 +229,27 @@ The other fields can stay technical.
   classDef store fill:#a6e3a1,stroke:#a6e3a1,color:#1e1e2e
   ```
 
+## What Each Field Holds
+
+Each field has one job. Put a fact in the field that matches it, so readers (and the questions asked in the viewer) find it in the same place in every project.
+
+| Field | Holds | Typical sources |
+| --- | --- | --- |
+| `description` | **Required.** What the element is for (one plain sentence), then what it does and which files it covers | Code, README |
+| `context` | Why it is built this way: decisions, history, trade-offs | Comments, commit messages, docs, ADRs |
+| `constraint` | Rules that must stay true when changing it: invariants, limits, formats, conventions to respect | Validation code, tests, comments like "must" / "never" |
+| `concern` | What can go wrong: fragile parts, known bugs, security or performance risks, technical debt | `FIXME`, `HACK`, missing tests, error-prone code |
+| `todo` | Work not finished or planned | `TODO` comments, stubs, disabled code, roadmap files |
+| `note` | Anything useful that fits none of the above (how to run or debug it, a gotcha) | Scripts, config, docs |
+
+For a perspective as a whole, write `context` (why this view matters for this project) and `concern` (risks that cross several elements) when there are any; element-level details belong to the elements.
+
+Write only what the code or the docs show. When something important cannot be found (who owns it, how it is deployed), say so in `note` instead of guessing.
+
 ## General Rules
 
 - **Write each field as a separate `omm write` command.** Each `omm write` must be its own Bash tool call.
 - **Run `omm write` commands one at a time, never in parallel.** Each write also updates the parent's `meta.yaml`; two writes at once can lose a child.
 - If `omm write <path> title ...` answers `invalid field 'title'`, the CLI is too old: tell the user to run `omm update`, and keep scanning without titles.
-- Do not rewrite elements that haven't changed.
+- Do not rewrite elements that haven't changed. Fixing something you wrote earlier in the same scan is fine.
 - Do not create circular references. A child element must never reference its parent.
