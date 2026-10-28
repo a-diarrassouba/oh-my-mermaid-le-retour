@@ -182,9 +182,94 @@ overall-architecture (perspective)
     → TerminalDock.tsx, DockManager → leaf
 ```
 
-## Step 4: Summarize
+## Step 4: Write the Beginner Guide
 
-Report what was created/updated and suggest `omm view` to view.
+The scan ends with the project's welcome guide, `start-here`: the walk the viewer offers on the first visit. It is the most important output of the scan. After it, a newcomer must:
+
+- **understand what the project does** and why (functional);
+- **understand how it is built** and how its parts interact (technical);
+- **know how to run, test, ship and diagnose it** (operational);
+
+with a mental map precise enough to know where to look, what to change and how to check the impact of a change. Not every line of code.
+
+### When to write it
+
+```bash
+omm guide list
+omm validate
+```
+
+- If `omm guide list` answers `invalid field 'list'`, the CLI is too old for guides: tell the user to run `omm update`, and stop here.
+- Write `start-here` when it does not exist, when this scan added or removed perspectives or elements it walks through, when `omm validate` reports it invalid, or when the user asks for it. Otherwise keep it.
+
+### Its shape
+
+- `kind: path`, `audience: newcomer`, `start: true`, a `title` in the configured language that names the project ("Get started with <project>"), and a `duration` (one to two minutes per step).
+- **Three parts**, named in the configured language: Functional, Technical, Operational (`fr`: Fonctionnel, Technique, Opérationnel). Every step has its `part`, and the parts come in this order.
+- **One step per question below that `.omm/` can answer**, pointing at the element that answers it. Two questions answered by the same element share one step. When a question names two elements, point at the one that answers most of it and mention the other in `details`. So the length follows the project: a small CLI may need 7 steps, a large application 20 or more.
+- A question with nothing to show gets no step. When the project should have it (no tests, no deployment, no monitoring), say so in the `details` of the step of the same part that comes just before ("No monitoring was found: errors only appear in the terminal."). When the question does not fit this kind of project (routes in a CLI), skip it silently, or name what plays that role ("commands play the role of routes").
+- For "the key features", make one step per critical feature, three at most; name the others in the `details` of the last one.
+
+| Part | Question | Usually points at |
+| --- | --- | --- |
+| Functional | What is the project for: the problem, its users, its main features? | `functional-overview` |
+| Functional | What does a user do, from start to value? Which features and business rules are critical? | the key features of `functional-overview` |
+| Technical | How is it built: one program or several services, which components, front and back? | `overall-architecture` |
+| Technical | Where does it start, and where are the routes, business logic, data models, configuration? | the `entry` elements and the core groups of `overall-architecture` |
+| Technical | How does data enter, get validated, stored and sent back? | `data-flow` or `request-lifecycle`, and the `store` elements |
+| Technical | How is access protected, and where are the secrets? | `security` |
+| Operational | How do I install and start it, and check that it works? | `operations/local-setup` |
+| Operational | How is it tested, and how do I check that my change breaks nothing? | `operations/tests` |
+| Operational | How does code reach production, and how do I roll back? | `operations/ci`, `operations/deployment` |
+| Operational | How do I know it works, and where do I look when it fails? | `operations/monitoring` |
+| Operational | What is done, fragile or planned? | `project-status` |
+| Operational | What should I ask the team? | `project-status/open-questions` (always the last step when it exists) |
+
+### Each step
+
+Write each step for a newcomer who sees the project for the first time; while the guide runs, the viewer shows only the step, not the element's sheet:
+
+- `say`: the answer to the step's question, in one or two plain sentences (under 280 characters).
+- `details`: 300 to 800 characters of Markdown: which elements to look at on the diagram (by their titles, not by position or color), the answer in plain words, the few names a newcomer will meet (files, commands) in code spans, and "To remember:" in one sentence.
+- **Facts about this project** come only from `.omm/`: the fields of the step's element, of its children and of its parent. Never add one they do not hold. **General words** (CLI, unit test, CDN) may be defined from general knowledge, in plain words, the first time they appear.
+- In the technical part, say where to look to change things ("a new command starts in `src/commands/`"); in the operational part, give the exact commands, in code spans or a fenced code block.
+
+### Write it
+
+Put `title`, every `say` and every `part` in double quotes, and `details` as a `|` block. The closing `YAML` line starts at column 0.
+
+```bash
+omm guide write start-here - <<'YAML'
+title: "Get started with acme-shop"
+kind: path
+audience: newcomer
+start: true
+duration: 12m
+steps:
+  - element: functional-overview
+    part: "Functional"
+    say: "acme-shop lets small shops sell online: customers order, shop owners prepare and ship."
+    details: |
+      The diagram shows the two kinds of users on the left and what each can do.
+
+      To remember: everything starts from an order.
+  - element: overall-architecture
+    part: "Technical"
+    say: "A web front end talks to one back end, which owns the database."
+  - element: operations/local-setup
+    part: "Operational"
+    say: "Install with `npm install`, then `npm run dev` opens the shop on http://localhost:3000."
+  - element: project-status/open-questions
+    part: "Operational"
+    say: "Some answers are not in the code: here is what to ask the team."
+YAML
+```
+
+The CLI refuses a guide that points at a missing element. Read the errors, fix the YAML and run it again.
+
+## Step 5: Summarize
+
+Report what was created/updated, including the beginner guide (its title, its parts and number of steps, and the questions it could not answer), say that the viewer will offer it on the first visit, and suggest `omm view` to view.
 
 ## Onboarding Perspectives
 

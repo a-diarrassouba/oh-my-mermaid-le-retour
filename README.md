@@ -78,7 +78,7 @@ Each element carries up to 7 fields: `description`, `diagram`, `context`, `const
 
 ### Guides
 
-A **guide** is a step-by-step walk through the diagrams: the viewer opens each element, fades the rest and lights the edge being followed. Ask your AI tool for one with `/omm-guide` (for example `/omm-guide what happens when a user signs up?`). When the project has a welcome guide (`start-here`), the viewer offers it on the first visit. Guides live in `.omm/.guides/`, and `omm validate` tells you when a new scan breaks one.
+A **guide** is a step-by-step walk through the diagrams: the viewer opens each element, fades the rest and lights the edge being followed. Ask your AI tool for one with `/omm-guide` (for example `/omm-guide what happens when a user signs up?`). `/omm-scan` also writes a welcome guide, `start-here`, in three parts (what the project does, how it is built, how to run, test and ship it), and the viewer offers it on the first visit. Guides live in `.omm/.guides/`, and `omm validate` tells you when a new scan breaks one.
 
 ## CLI
 

@@ -80,7 +80,7 @@ Her element en fazla 7 alan taşıyabilir: `description`, `diagram`, `context`, 
 
 ### Rehberler
 
-**Rehber**, diyagramlar üzerinde adım adım bir gezintidir: görüntüleyici her elementi açar, geri kalanını soluklaştırır ve izlenen bağlantıyı vurgular. AI aracınızda `/omm-guide` ile bir tane isteyin (örneğin `/omm-guide bir kullanıcı kaydolduğunda ne olur?`). Projede bir karşılama rehberi (`start-here`) varsa, görüntüleyici ilk ziyarette bunu önerir. Rehberler `.omm/.guides/` içinde saklanır ve yeni bir tarama bir rehberi bozduğunda `omm validate` bunu bildirir.
+**Rehber**, diyagramlar üzerinde adım adım bir gezintidir: görüntüleyici her elementi açar, geri kalanını soluklaştırır ve izlenen bağlantıyı vurgular. AI aracınızda `/omm-guide` ile bir tane isteyin (örneğin `/omm-guide bir kullanıcı kaydolduğunda ne olur?`). `/omm-scan` ayrıca üç bölümlük bir karşılama rehberi, `start-here`, yazar (proje ne yapar, nasıl kurulmuştur, nasıl çalıştırılır, test edilir ve yayınlanır); görüntüleyici bunu ilk ziyarette önerir. Rehberler `.omm/.guides/` içinde saklanır ve yeni bir tarama bir rehberi bozduğunda `omm validate` bunu bildirir.
 
 ## CLI
 
