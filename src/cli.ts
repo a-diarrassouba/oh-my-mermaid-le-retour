@@ -85,7 +85,7 @@ async function main(): Promise<void> {
       return;
 
     case 'security':
-      commandSecurity(args.slice(1));
+      await commandSecurity(args.slice(1));
       return;
 
     case 'evolve':

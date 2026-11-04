@@ -520,6 +520,14 @@ body.light .reg-node:hover .nshape { stroke: #000 !important; }
 .sec-sub { font-size: 12.5px; color: var(--text-mid); line-height: 1.6; }
 .sec-sub code, .sec-item code { font-family: var(--mono); background: var(--surface-2); padding: 1px 5px; border-radius: 4px; color: var(--text); font-size: 11.5px; }
 .sec-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.th-stride { cursor: help; }
+.th-st-open { color: #f38ba8; border-color: #f38ba8; } .th-st-mitigated { color: #a6e3a1; border-color: #a6e3a1; } .th-st-accepted { color: var(--text-dim); }
+body.light .th-st-open { color: #b42318; border-color: #b42318; } body.light .th-st-mitigated { color: #1f7a4d; border-color: #1f7a4d; }
+.th-list { margin: 0; padding-left: 18px; font-size: 12.5px; line-height: 1.7; color: var(--text-mid); }
+.q-theme { margin-bottom: 10px; }
+.q-item { border: 1px solid var(--border); background: var(--surface); border-radius: 10px; padding: 10px 14px; margin-bottom: 6px; font-size: 12.5px; line-height: 1.6; color: var(--text-mid); display: flex; flex-direction: column; gap: 4px; }
+.q-item b { color: var(--text); font-weight: 600; font-size: 13px; }
+.sb-threat { border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; margin-bottom: 6px; font-size: 12px; line-height: 1.55; }
 .sec-owasp { text-decoration: none; color: var(--accent); border-color: color-mix(in srgb, var(--accent) 50%, transparent); }
 .sec-chip { font-family: var(--mono); font-size: 10.5px; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--border-hi); color: var(--text-mid); }
 .sev-critical { color: #f38ba8; border-color: #f38ba8; } .sev-high { color: #fab387; border-color: #fab387; }
@@ -633,6 +641,15 @@ const I18N = {
     secBack: '← Home', secMap: 'Open the map', secOutOf: '{score}/100 · {date}',
     secHow: 'An automatic check by {cmd}: a list of known risks, like a vehicle inspection. It can miss subtle problems or raise false alarms; to have an AI review each one and help fix it, run {skill} in Claude Code.', secOwasp: 'OWASP {code}',
     secNothing: 'Nothing found by the checks that ran.', secWhy: 'Why it matters', secFix: 'How to fix it', secSeeMap: 'See {name} on the map',
+    thTitle: 'Threats by element', thIntro: 'Written by Claude with /prisme-security from the map: the realistic threats on each element (STRIDE), and what protects against them.',
+    thAssets: 'To protect', thBoundaries: 'Where trusted parts meet the outside', thProtects: 'What protects against it', thTodo: 'What to do', thAccepted: 'Why it is accepted',
+    thStatus_open: 'To handle', thStatus_mitigated: 'Protected', thStatus_accepted: 'Accepted', thLikelihood: 'Likelihood: {v}', thImpact: 'Impact: {v}',
+    stride_S: 'Spoofing', stride_T: 'Tampering', stride_R: 'Repudiation', stride_I: 'Information disclosure', stride_D: 'Denial of service', stride_E: 'Elevation of privilege',
+    stride_S_help: 'someone pretends to be another user, a service or the server', stride_T_help: 'someone changes data, code or a request on the way',
+    stride_R_help: 'someone does something and nothing proves who', stride_I_help: 'data or secrets reach someone who should not see them',
+    stride_D_help: 'someone makes it slow or unavailable', stride_E_help: 'someone gets rights they should not have',
+    qTitle: 'Design questions', qIntro: 'What the team should be able to answer about the design. Claude answered the ones it could check in the code.',
+    qAnswered: 'Found in the code', qOpen: 'To ask the team', thNone: 'No threat model yet: run {cmd} in Claude Code.', threats: 'Threats',
     secTools: 'Tools', secReason: 'Why it was left out', secIgnored: 'Left out ({count}), with the reason', sev_critical: 'Critical', sev_high: 'High', sev_medium: 'Medium', sev_low: 'Low',
     tool_ran: 'ran', tool_missing: 'not installed', tool_failed: 'failed', tool_skipped: 'skipped', secFiles: '{count} files read',
     evCodeTab: 'In the code', evMarketTab: 'Around you', evCodeIntro: 'What the AI suggests from reading the code: simplify, speed up, go further.',
@@ -676,6 +693,15 @@ const I18N = {
     secBack: '← Accueil', secMap: 'Ouvrir la carte', secOutOf: '{score}/100 · {date}',
     secHow: "Vérification automatique par {cmd} : une liste de risques connus, comme un contrôle technique. Elle peut manquer un problème subtil ou donner une fausse alerte ; pour qu'une IA relise chaque alerte et aide à corriger, lancez {skill} dans Claude Code.", secOwasp: 'OWASP {code}',
     secNothing: 'Rien trouvé par les vérifications lancées.', secWhy: "Pourquoi c'est important", secFix: 'Comment corriger', secSeeMap: 'Voir {name} sur la carte',
+    thTitle: 'Menaces par bloc', thIntro: "Écrit par Claude avec /prisme-security à partir de la carte : les menaces réalistes sur chaque bloc (STRIDE), et ce qui protège contre elles.",
+    thAssets: 'À protéger', thBoundaries: "Là où le projet touche l'extérieur", thProtects: 'Ce qui protège', thTodo: 'À faire', thAccepted: 'Pourquoi on l\'accepte',
+    thStatus_open: 'À traiter', thStatus_mitigated: 'Protégé', thStatus_accepted: 'Accepté', thLikelihood: 'Probabilité : {v}', thImpact: 'Gravité : {v}',
+    stride_S: 'Usurpation', stride_T: 'Falsification', stride_R: 'Répudiation', stride_I: 'Fuite d\'information', stride_D: 'Déni de service', stride_E: 'Élévation de privilèges',
+    stride_S_help: "quelqu'un se fait passer pour un autre utilisateur, un service ou le serveur", stride_T_help: "quelqu'un modifie des données, du code ou une requête en chemin",
+    stride_R_help: "quelqu'un agit et rien ne prouve que c'est lui", stride_I_help: 'des données ou des secrets arrivent chez quelqu\'un qui ne devrait pas les voir',
+    stride_D_help: "quelqu'un rend le service lent ou indisponible", stride_E_help: "quelqu'un obtient des droits qu'il ne devrait pas avoir",
+    qTitle: 'Questions de conception', qIntro: "Ce que l'équipe doit savoir répondre sur la conception. Claude a répondu à celles qu'il a pu vérifier dans le code.",
+    qAnswered: 'Trouvé dans le code', qOpen: "À demander à l'équipe", thNone: 'Pas encore de modèle de menaces : lancez {cmd} dans Claude Code.', threats: 'Menaces',
     secTools: 'Outils', secReason: 'Pourquoi elle est écartée', secIgnored: 'Écartées ({count}), avec la raison', sev_critical: 'Critique', sev_high: 'Élevé', sev_medium: 'Moyen', sev_low: 'Faible',
     tool_ran: 'lancé', tool_missing: 'non installé', tool_failed: 'en échec', tool_skipped: 'ignoré', secFiles: '{count} fichiers lus',
     evCodeTab: 'Dans le code', evMarketTab: 'Autour de vous', evCodeIntro: "Ce que l'IA propose après avoir lu le code : simplifier, accélérer, aller plus loin.",
@@ -1538,6 +1564,7 @@ window.__openSb = function(cls, frameCls) {
 };
 
 let sbOpenKey = null;
+let threatModel = null;
 function explainSection(data, md) {
   const ex = data.explain;
   if (!ex || !ex.novice) return '';
@@ -1571,6 +1598,9 @@ function openSidebar(cls) {
   }
   const explained = explainSection(data, md);
   html += explained || sec(esc(t('description')),md(data.description));
+  // Threats on this element, from the threat model of /prisme-security.
+  const elThreats = (threatModel && threatModel.threats || []).filter(th => th.element === cls);
+  if (elThreats.length) html += sec(esc(t('threats')), elThreats.map(th => `<div class="sb-threat"><span class="sec-chip th-st-${esc(th.status)}">${esc(t('thStatus_' + th.status))}</span> <b>${esc(th.title)}</b><br>${strideChips(th.stride)}</div>`).join(''));
   html+=sec(esc(t('constraint')),md(data.constraint));
   html+=sec(esc(t('concern')),md(data.concern),'sb-concern');
   html+=sec(esc(t('context')),md(data.context));
@@ -2804,9 +2834,45 @@ async function computeSecurity() {
   openSecurity(body);
 }
 
+const strideChips = letters => (letters || []).map(l => `<span class="sec-chip th-stride" title="${esc(t('stride_' + l + '_help'))}">${esc(l)} · ${esc(t('stride_' + l))}</span>`).join('');
+const levelWord = v => t({ low: 'lvl_low', medium: 'lvl_medium', high: 'lvl_high' }[v] || 'lvl_medium');
+
+function threatItem(th) {
+  const control = th.status === 'mitigated' ? 'thProtects' : th.status === 'accepted' ? 'thAccepted' : 'thTodo';
+  return `<details class="sec-item">
+    <summary><span class="sec-chip th-st-${esc(th.status)}">${esc(t('thStatus_' + th.status))}</span><span class="sec-item-title">${esc(th.title)}</span>${strideChips(th.stride)}</summary>
+    <div class="sec-item-body">
+      <div>${esc(th.scenario)}</div>
+      <div class="sec-chips"><span class="sec-chip">${esc(t('thLikelihood', { v: levelWord(th.likelihood) }))}</span><span class="sec-chip${th.impact === 'high' ? ' sev-high' : ''}">${esc(t('thImpact', { v: levelWord(th.impact) }))}</span></div>
+      <div><b>${esc(t(control))}</b>${esc(th.control)}</div>
+      ${th.files && th.files.length ? `<div class="sec-item-where">${esc(th.files.join(', '))}</div>` : ''}
+      <div class="sec-links"><button type="button" class="sec-link" data-go="${esc(th.element)}">${esc(t('secSeeMap', { name: displayTitle(th.element) }))}</button></div>
+    </div>
+  </details>`;
+}
+
+function threatsSection(m) {
+  if (!m || m.error) return `<div class="sec-sub">${esc(t('thNone', { cmd: '\u0001' })).replace('\u0001', '<code>/prisme-security</code>')}</div>`;
+  const assets = m.assets?.length ? `<div><div class="sec-group-title">${esc(t('thAssets'))}</div><ul class="th-list">${m.assets.map(a => `<li>${esc(a)}</li>`).join('')}</ul></div>` : '';
+  const bounds = m.boundaries?.length ? `<div><div class="sec-group-title">${esc(t('thBoundaries'))}</div><ul class="th-list">${m.boundaries.map(b => `<li><b>${esc(displayTitle(b.from))} → ${esc(displayTitle(b.to))}</b> : ${esc(b.why)}</li>`).join('')}</ul></div>` : '';
+  // Threats grouped by element, in the model's order (most worrying first).
+  const byEl = new Map();
+  for (const th of m.threats || []) byEl.set(th.element, [...(byEl.get(th.element) || []), th]);
+  const threats = [...byEl].map(([el, list]) => `<div><div class="sec-group-title">${esc(displayTitle(el))} · ${list.length}</div>${list.map(threatItem).join('')}</div>`).join('');
+  const themes = new Map();
+  for (const q of m.questions || []) themes.set(q.theme, [...(themes.get(q.theme) || []), q]);
+  const questions = [...themes].map(([theme, list]) => `<div class="q-theme"><div class="sec-group-title">${esc(theme)}</div>${list.map(q => `<div class="q-item"><b>${esc(q.question)}</b><span class="sec-chip ${q.status === 'answered' ? 'th-st-mitigated' : 'th-st-open'}" style="align-self:flex-start">${esc(t(q.status === 'answered' ? 'qAnswered' : 'qOpen'))}</span>${q.answer ? `<span>${esc(q.answer)}</span>` : ''}</div>`).join('')}</div>`).join('');
+  return `<div class="sec-title" style="font-size:18px">${esc(t('thTitle'))}</div>
+    <div class="sec-sub">${esc(t('thIntro'))}</div>
+    ${m.summary ? `<div class="sec-sub ev-md">${safeMarkdown(m.summary)}</div>` : ''}
+    ${assets}${bounds}${threats}
+    ${questions ? `<div class="sec-title" style="font-size:18px">${esc(t('qTitle'))}</div><div class="sec-sub">${esc(t('qIntro'))}</div>${questions}` : ''}`;
+}
+
 async function openSecurity(report) {
   const r = report || await api('/api/v1/security');
   if (!r || r.error) return;
+  threatModel = await api('/api/v1/threats');
   const date = r.date ? new Date(r.date).toLocaleString(document.documentElement.lang) : '';
   const chips = SEVS.filter(s => r.counts?.[s]).map(s => `<span class="sec-chip sev-${s}">${r.counts[s]} · ${esc(t('sev_' + s))}</span>`).join('');
   const how = esc(t('secHow', { cmd: '\u0001', skill: '\u0002' })).replace('\u0001', '<code>prisme security</code>').replace('\u0002', '<code>/prisme-security</code>');
@@ -2830,6 +2896,7 @@ async function openSecurity(report) {
     <div class="sec-sub">${how}</div>
     ${groups || `<div class="sec-empty">${esc(t('secNothing'))}</div>`}
     ${ignored}
+    ${threatsSection(threatModel)}
     <div class="sec-tools"><div class="sec-group-title">${esc(t('secTools'))}</div>${tools}</div>
   </div>`;
   closeHome();
@@ -2907,6 +2974,7 @@ async function init() {
   paintGuideStep();
   if (!activeGuide) requestAnimationFrame(centerView);
   await loadGuidesIntoViewer();
+  threatModel = await api('/api/v1/threats');
   maybeShowHome();
 
   // Cloud mode: notify parent frame of available classes

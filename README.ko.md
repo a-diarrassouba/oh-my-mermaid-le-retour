@@ -97,6 +97,7 @@ prisme config language fr          # 문서와 인터페이스 언어 설정
 prisme guide list                  # 가이드 목록 보기
 prisme changes                     # 마지막 스캔 이후 변경 사항
 prisme security                    # 자동 점검 보안 점수 A–E (gitleaks, osv-scanner, semgrep이 설치되어 있으면 사용)
+prisme security threats show       # /prisme-security가 작성한 위협 모델(element별 STRIDE)과 설계 질문
 prisme evolve show                 # /prisme-evolve가 작성한 프로젝트 발전 아이디어
 prisme update                      # 최신 버전으로 업데이트
 ```
@@ -111,7 +112,7 @@ prisme update                      # 최신 버전으로 업데이트
 | --- | --- |
 | `/prisme-scan` | 코드베이스 분석 → 문서와 환영 가이드 작성 |
 | `/prisme-guide` | 질문에 답하는 단계별 가이드 작성 → 뷰어에서 재생 |
-| `/prisme-security` | `prisme security` 실행, 등급을 쉬운 말로 설명, 각 항목 확인 후 동의한 것만 수정 |
+| `/prisme-security` | `prisme security` 실행, 등급을 쉬운 말로 설명, 각 항목 확인 후 동의한 것만 수정; 지도의 위협 모델(element별 STRIDE)과 보안 설계 질문 작성 |
 | `/prisme-evolve` | 코드를 단순화·가속·확장하는 아이디어와 유사 제품 3~5개의 기능·디자인 비교 |
 | `/prisme-view` | 뷰어 열기 |
 

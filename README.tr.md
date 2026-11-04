@@ -97,6 +97,7 @@ prisme config language fr          # Belgelerin ve arayüzün dilini ayarlayın
 prisme guide list                  # Rehberleri listele
 prisme changes                     # Son taramadan bu yana değişenler
 prisme security                    # Otomatik kontrollerle güvenlik notu A–E (kuruluysa gitleaks, osv-scanner, semgrep kullanılır)
+prisme security threats show       # /prisme-security tarafından yazılan tehdit modeli (element başına STRIDE) ve tasarım soruları
 prisme evolve show                 # /prisme-evolve tarafından yazılan geliştirme fikirleri
 prisme update                      # En son sürüme güncelleyin
 ```
@@ -111,7 +112,7 @@ Beceriler, **AI kodlama aracınızın içinde** (terminalde değil) çalıştır
 | --- | --- |
 | `/prisme-scan` | Kod tabanını analiz eder → belgeleri ve karşılama rehberini yazar |
 | `/prisme-guide` | Bir soruyu yanıtlayan adım adım rehber yazar → görüntüleyicide oynatılır |
-| `/prisme-security` | `prisme security` çalıştırır, notu sade bir dille açıklar, her bulguyu kontrol eder ve onayladıklarınızı düzeltir |
+| `/prisme-security` | `prisme security` çalıştırır, notu sade bir dille açıklar, her bulguyu kontrol eder ve onayladıklarınızı düzeltir; haritanın tehdit modelini (element başına STRIDE) ve güvenli tasarım sorularını yazar |
 | `/prisme-evolve` | Kodu sadeleştirme, hızlandırma ve ileri taşıma fikirleri; 3-5 benzer ürünün özellik ve tasarım karşılaştırması |
 | `/prisme-view` | Görüntüleyiciyi açar |
 

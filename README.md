@@ -95,6 +95,7 @@ prisme config language fr          # Set the language of the docs and the interf
 prisme guide list                  # List guides (step-by-step walks)
 prisme changes                     # What changed since the last scan
 prisme security                    # Security score A–E, automatic checks (gitleaks, osv-scanner, semgrep used when installed)
+prisme security threats show       # Threat model (STRIDE per element) and design questions, written by /prisme-security
 prisme evolve show                 # Ideas to make the project evolve, written by /prisme-evolve
 prisme update                      # Update to the latest version
 ```
@@ -109,7 +110,7 @@ Skills are commands you run **inside your AI coding tool** (not the terminal). T
 | --- | --- |
 | `/prisme-scan` | Analyze the codebase → write the docs and the welcome guide |
 | `/prisme-guide` | Write a step-by-step guide that answers a question, played in the viewer |
-| `/prisme-security` | Run `prisme security`, explain the grade in plain words, check each finding and fix what you agree to |
+| `/prisme-security` | Run `prisme security`, explain the grade in plain words, check each finding and fix what you agree to; write the threat model of the map (STRIDE per element) and the secure-by-design questions |
 | `/prisme-evolve` | Ideas to simplify, speed up and go further in the code, and what 3 to 5 similar products do (features, design) |
 | `/prisme-view` | Open the viewer |
 

@@ -134,6 +134,29 @@ The ideas `/prisme-evolve` wrote (checked by `prisme evolve write`), `404` befor
 - `market`: level 2, 3 to 5 similar products the AI found on the web and the ideas they suggest; `kind` is `feature` or `design`, `seenIn` names products of `products`. `null` when only level 1 was written.
 - `effort`: `small`, `medium`, `large`; `impact`: `low`, `medium`, `high`; `elements`: existing element paths.
 
+## `GET /api/v1/threats`
+
+The threat model `/prisme-security` wrote from the map (checked by `prisme security threats write`), `404` before the first one. It does not count in the grade.
+
+```json
+{
+  "version": 1, "date": "…", "commit": "…",
+  "summary": "Markdown: what is exposed, what to handle first",
+  "assets": ["User accounts and their sessions"],
+  "boundaries": [{ "from": "overall-architecture/browser", "to": "overall-architecture/server", "why": "…" }],
+  "threats": [{
+    "element": "overall-architecture/server", "stride": ["S", "T"], "title": "…", "scenario": "…",
+    "likelihood": "low", "impact": "high", "status": "mitigated", "control": "…", "files": ["src/server/index.ts"]
+  }],
+  "questions": [{ "theme": "Exchanges", "question": "…", "status": "answered", "answer": "…", "elements": ["overall-architecture/server"] }]
+}
+```
+
+- `stride`: letters of Spoofing, Tampering, Repudiation, Information disclosure, Denial of service, Elevation of privilege.
+- `status`: `open` (to handle; `control` says what to do), `mitigated` (`control` says what protects), `accepted` (`control` says why).
+- Threats come most worrying first (open, then likelihood × impact). `questions[].status` is `answered` (found in the code) or `open` (for the team).
+- `/api/v1/project` gives `categories.security.threats` and `.questions` (counts).
+
 ## `POST /api/v1/security/run`
 
 Runs `prisme security` in a child process (no AI; `npm audit` and the installed tools included), then answers with the new report, same shape as `GET /api/v1/security`. One check at a time: a second call waits for the running one. Page token required.
