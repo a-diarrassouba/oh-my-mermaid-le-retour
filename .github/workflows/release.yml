@@ -1,4 +1,4 @@
-name: Release to npm
+name: Release
 
 on:
   push:
@@ -38,6 +38,20 @@ jobs:
             echo "changed=false" >> "$GITHUB_OUTPUT"
           fi
 
+      # prisme has no npm account yet: without an NPM_TOKEN secret, the
+      # release only creates the git tag and the GitHub release.
+      - name: Check whether npm publishing is set up
+        id: npm
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -n "$NPM_TOKEN" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::NPM_TOKEN is not set: skipping npm, creating the git tag and the GitHub release only."
+          fi
+
       - name: Detect existing release artifacts
         id: release_state
         env:
@@ -70,6 +84,7 @@ jobs:
           RELEASE_CURRENT_VERSION: ${{ steps.version.outputs.new }}
           RELEASE_PREVIOUS_VERSION: ${{ steps.version.outputs.old }}
           RELEASE_NPM_PUBLISHED: ${{ steps.release_state.outputs.npm_published }}
+          RELEASE_NPM_ENABLED: ${{ steps.npm.outputs.enabled }}
           RELEASE_TAG_EXISTS: ${{ steps.release_state.outputs.tag_exists }}
           RELEASE_GITHUB_RELEASE_EXISTS: ${{ steps.release_state.outputs.release_exists }}
         run: |
@@ -95,7 +110,7 @@ jobs:
           git diff --exit-code -- .claude-plugin/plugin.json .claude-plugin/marketplace.json package-lock.json
 
       - name: Publish to npm
-        if: steps.release_gate.outputs.should_release == 'true' && steps.release_state.outputs.npm_published != 'true'
+        if: steps.release_gate.outputs.should_release == 'true' && steps.npm.outputs.enabled == 'true' && steps.release_state.outputs.npm_published != 'true'
         run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
