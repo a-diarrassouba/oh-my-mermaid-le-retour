@@ -17,8 +17,9 @@ import { commandRead, commandWrite } from './commands/read-write.js';
 import { commandConfig } from './commands/config.js';
 import { msg } from './lib/messages.js';
 import { commandGuide } from './commands/guide.js';
+import { commandChanges } from './commands/changes.js';
 
-const GLOBAL_COMMANDS = ['init', 'setup', 'update', 'list', 'show', 'delete', 'status', 'diff', 'refs', 'validate', 'guide', 'view', 'read', 'write', 'tree', 'config', 'help'];
+const GLOBAL_COMMANDS = ['init', 'setup', 'update', 'list', 'show', 'delete', 'status', 'diff', 'refs', 'validate', 'guide', 'changes', 'view', 'read', 'write', 'tree', 'config', 'help'];
 
 function printHelp(): void {
   process.stdout.write(msg('help') + '\n');
@@ -69,6 +70,10 @@ async function main(): Promise<void> {
 
     case 'guide':
       await commandGuide(args.slice(1));
+      return;
+
+    case 'changes':
+      commandChanges(args.slice(1));
       return;
 
     case 'read':

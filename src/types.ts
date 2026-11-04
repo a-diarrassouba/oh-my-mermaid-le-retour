@@ -43,6 +43,9 @@ export interface OmmConfig {
   version: string;
   theme?: string;
   language?: string;
+  /** The commit the last scan analyzed, for partial scans */
+  last_scan?: { commit: string; date: string };
+  [key: string]: unknown;
 }
 
 export interface DiffResult {

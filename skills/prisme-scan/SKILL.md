@@ -39,6 +39,22 @@ Only identifiers stay in English kebab-case: element IDs, directory names, diagr
 
 Example with `fr`: `data-store["Stockage des données\nsrc/main/store.ts"]`, title `Stockage des données`.
 
+## Step 0b: Full or Partial Scan
+
+A full scan costs hundreds of thousands of tokens; after the first one, re-analyze only what changed.
+
+```bash
+prisme changes --json
+```
+
+It compares the code with the commit the last scan analyzed, without AI, and says what to do in `recommend`:
+
+- `full` (no previous scan, not a git repository, history rewritten, more than a third of the elements changed): run every step below. Also run a full scan when the user asks for it ("full scan", "rescan everything").
+- `none`: nothing to re-analyze. Tell the user, then stop (do not record the scan again).
+- `partial`: follow [Partial Scan](#partial-scan) instead of Steps 1 to 3, then Step 4 only for the guides it lists, then Step 6.
+
+If `prisme changes` is not a known command, the CLI is too old: run a full scan and tell the user to run `prisme update`.
+
 ## Step 1: Explore the Codebase
 
 Use Glob and Read to understand the project:
@@ -156,6 +172,8 @@ The viewer shows the title instead of the ID. Keep it short (a few words, at mos
 
    Then repeat step 3c for each element in this diagram.
 
+**Depth limit.** `prisme config scan.max_depth` (3 by default) is the deepest level of elements: a perspective is level 0, its elements level 1, and so on. At the last level, every element stays a leaf, even when it has inner structure: say what it contains in its description instead of drawing it.
+
 ### Example recursion
 
 ```text
@@ -269,7 +287,29 @@ The CLI refuses a guide that points at a missing element. Read the errors, fix t
 
 ## Step 5: Summarize
 
-Report what was created/updated, including the beginner guide (its title, its parts and number of steps, and the questions it could not answer), say that the viewer will offer it on the first visit, and suggest `prisme view` to view.
+Report what was created/updated, including the beginner guide (its title, its parts and number of steps, and the questions it could not answer), say that the viewer will offer it on the first visit, and suggest `prisme view` to view. After a partial scan, say which elements were re-analyzed and why.
+
+## Step 6: Record the Scan
+
+Once the docs match the code, record the commit they describe, so the next scan can be partial:
+
+```bash
+prisme changes --mark
+```
+
+The scan describes the files as they are on disk. When there are uncommitted changes, they will be listed again by the next `prisme changes`; that is expected.
+
+## Partial Scan
+
+Use the report of `prisme changes --json`; read the elements it names with `prisme read` and the files it lists, nothing else.
+
+1. **`changed`**: for each element, read the files listed and the element's fields, then rewrite only what the change made wrong (description, other fields, title, label and edges in the parent diagram, its own diagram if it is a group). An element whose files changed in a way its docs do not mention needs no write.
+2. **`orphans`**: new files no element covers. Find the element they belong to (usually the one covering their folder's neighbors) and add them to its label and description, or create a new element in the right diagram when they form a new part, following Step 3c.
+3. **`removed`**: paths cited by an element that no longer exist. Fix the label and the description; when the whole element is gone, delete it (`prisme delete <path>`) and remove its node and edges from the parent diagram.
+4. **`onboarding`**: re-read the files that changed (README, scripts, CI, `.env.example`, roadmap…) and update the onboarding perspectives listed.
+5. **`guides`**: run `prisme validate`; rewrite `start-here` (Step 4) only when it is listed, and tell the user about other listed guides that `prisme validate` reports invalid.
+
+All the usual rules apply (language, plain first sentence, roles, real paths, field definitions). Then Steps 5 and 6.
 
 ## Onboarding Perspectives
 

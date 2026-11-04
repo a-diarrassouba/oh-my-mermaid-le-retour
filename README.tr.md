@@ -90,6 +90,7 @@ prisme setup                       # Becerileri AI araçlarınıza kaydedin
 prisme view                        # Etkileşimli görüntüleyiciyi açın
 prisme config language fr          # Belgelerin ve arayüzün dilini ayarlayın
 prisme guide list                  # Rehberleri listele
+prisme changes                     # Son taramadan bu yana değişenler
 prisme update                      # En son sürüme güncelleyin
 ```
 

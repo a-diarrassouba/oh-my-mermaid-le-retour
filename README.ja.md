@@ -90,6 +90,7 @@ prisme setup                       # AI ツールにスキルを登録
 prisme view                        # インタラクティブビューアを開く
 prisme config language fr          # ドキュメントとインターフェースの言語を設定
 prisme guide list                  # ガイド一覧を表示
+prisme changes                     # 前回のスキャン以降の変更
 prisme update                      # 最新バージョンに更新
 ```
 

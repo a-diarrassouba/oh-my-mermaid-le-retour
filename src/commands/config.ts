@@ -7,27 +7,10 @@
  *   prisme config language fr      Set language to fr (a language code)
  */
 
-import fs from 'node:fs';
-import path from 'node:path';
 import YAML from 'yaml';
-import { ensureOmmForWrite, getOmmDir } from '../lib/store.js';
+import { CONFIG_DEFAULTS, readConfig, writeConfig } from '../lib/config.js';
 import { DEFAULT_LANGUAGE, getLanguage, normalizeLanguage } from '../lib/language.js';
 import { msg } from '../lib/messages.js';
-import type { OmmConfig } from '../types.js';
-
-const CONFIG_FILE = 'config.yaml';
-
-function readConfig(cwd?: string): OmmConfig {
-  const filePath = path.join(getOmmDir(cwd), CONFIG_FILE);
-  if (!fs.existsSync(filePath)) return { version: '0.1.0' };
-  return YAML.parse(fs.readFileSync(filePath, 'utf-8')) as OmmConfig;
-}
-
-function writeConfig(config: OmmConfig, cwd?: string): void {
-  ensureOmmForWrite(cwd);
-  const filePath = path.join(getOmmDir(cwd), CONFIG_FILE);
-  fs.writeFileSync(filePath, YAML.stringify(config), 'utf-8');
-}
 
 export function commandConfig(args: string[]): void {
   const key = args[0];
@@ -35,8 +18,7 @@ export function commandConfig(args: string[]): void {
 
   // prisme config — show all
   if (!key) {
-    const config = readConfig();
-    process.stdout.write(YAML.stringify(config));
+    process.stdout.write(YAML.stringify(readConfig()));
     return;
   }
 
@@ -50,7 +32,7 @@ export function commandConfig(args: string[]): void {
       process.stdout.write(getLanguage() + '\n');
       return;
     }
-    const val = (config as Record<string, unknown>)[key];
+    const val = config[key] ?? CONFIG_DEFAULTS[key];
     process.stdout.write((val !== undefined ? String(val) : msg('configNotSet')) + '\n');
     return;
   }
@@ -66,7 +48,7 @@ export function commandConfig(args: string[]): void {
     stored = code;
   }
   const config = readConfig();
-  (config as Record<string, unknown>)[key] = stored;
+  config[key] = stored;
   writeConfig(config);
   process.stderr.write(msg('configSet', { key, value: stored }) + '\n');
 }
