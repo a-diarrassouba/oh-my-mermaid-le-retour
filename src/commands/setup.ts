@@ -5,7 +5,7 @@ export async function commandSetup(args: string[]): Promise<void> {
   const listOnly = args.includes('--list');
   const platformId = args.find(a => !a.startsWith('--'));
 
-  // omm setup --list
+  // prisme setup --list
   if (listOnly) {
     process.stderr.write('Detected platforms:\n');
     for (const p of ALL_PLATFORMS) {
@@ -17,7 +17,7 @@ export async function commandSetup(args: string[]): Promise<void> {
     return;
   }
 
-  // omm setup <platform>
+  // prisme setup <platform>
   if (platformId) {
     const platform = getPlatformById(platformId);
     if (!platform) {
@@ -42,7 +42,7 @@ export async function commandSetup(args: string[]): Promise<void> {
     return;
   }
 
-  // omm setup (auto-detect all)
+  // prisme setup (auto-detect all)
   const detected = getDetectedPlatforms();
 
   if (detected.length === 0) {

@@ -24,22 +24,22 @@ function createVersionFixture(version: string, overrides?: {
   lockfileVersion?: string;
   rootPackageVersion?: string;
 }): string {
-  tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'omm-version-sync-'));
+  tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'prisme-version-sync-'));
 
-  writeJson(path.join(tmpDir, 'package.json'), { name: 'oh-my-mermaid', version });
+  writeJson(path.join(tmpDir, 'package.json'), { name: 'prisme', version });
   writeJson(path.join(tmpDir, '.claude-plugin', 'plugin.json'), {
-    name: 'oh-my-mermaid',
+    name: 'prisme',
     version: overrides?.pluginVersion ?? version,
   });
   writeJson(path.join(tmpDir, '.claude-plugin', 'marketplace.json'), {
-    plugins: [{ name: 'oh-my-mermaid', version: overrides?.marketplaceVersion ?? version }],
+    plugins: [{ name: 'prisme', version: overrides?.marketplaceVersion ?? version }],
   });
   writeJson(path.join(tmpDir, 'package-lock.json'), {
-    name: 'oh-my-mermaid',
+    name: 'prisme',
     version: overrides?.lockfileVersion ?? version,
     packages: {
       '': {
-        name: 'oh-my-mermaid',
+        name: 'prisme',
         version: overrides?.rootPackageVersion ?? overrides?.lockfileVersion ?? version,
       },
     },

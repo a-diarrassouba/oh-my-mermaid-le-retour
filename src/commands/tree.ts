@@ -1,5 +1,5 @@
 /**
- * omm tree <path> — show element hierarchy as indented tree.
+ * prisme tree <path> — show element hierarchy as indented tree.
  */
 
 import { ensureOmmForRead, listNodes, listClasses } from '../lib/store.js';

@@ -75,12 +75,12 @@ export const cursor: Platform = {
     // Copy agents into .cursor-plugin/agents/ (if available)
     const agentsSource = getAgentsSource();
     const manifest: Record<string, unknown> = {
-      name: 'oh-my-mermaid',
-      displayName: 'oh-my-mermaid',
+      name: 'prisme',
+      displayName: 'prisme',
       description: 'Turn complex codebases into clear, navigable architecture diagrams',
       version: getPackageVersion() || '0.0.0',
-      author: { name: 'oh-my-mermaid' },
-      homepage: 'https://github.com/oh-my-mermaid/oh-my-mermaid',
+      author: { name: 'prisme' },
+      homepage: 'https://github.com/a-diarrassouba/oh-my-mermaid-le-retour',
       license: 'MIT',
       skills: `./${PLUGIN_DIR}/skills/`,
     };

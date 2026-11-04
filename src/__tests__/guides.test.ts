@@ -28,7 +28,7 @@ const FLOW = `graph LR
 `;
 
 function write(rel: string, content: string) {
-  const file = path.join(tmpDir, '.omm', rel);
+  const file = path.join(tmpDir, '.prisme', rel);
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, content);
 }
@@ -43,7 +43,7 @@ const warningsOf = (issues: { level: string; rule: string }[]) =>
   issues.filter(i => i.level === 'warning').map(i => i.rule);
 
 beforeEach(() => {
-  tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'omm-guides-'));
+  tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'prisme-guides-'));
   write('flow/diagram.mmd', FLOW);
   for (const id of ['a', 'b', 'c', 'd']) write(`flow/${id}/description.md`, id);
   write('other/description.md', 'no diagram');
@@ -258,8 +258,8 @@ describe('guide files', () => {
     write('.guides', 'not a folder');
     expect(listGuideIds(tmpDir)).toEqual([]);
     expect(loadGuides(tmpDir)).toEqual([]);
-    fs.rmSync(path.join(tmpDir, '.omm', 'flow', 'diagram.mmd'));
-    fs.mkdirSync(path.join(tmpDir, '.omm', 'flow', 'diagram.mmd'));
+    fs.rmSync(path.join(tmpDir, '.prisme', 'flow', 'diagram.mmd'));
+    fs.mkdirSync(path.join(tmpDir, '.prisme', 'flow', 'diagram.mmd'));
     const t = guide({ steps: [{ element: 'flow/b', edge: 'a --> b', say: 'x' }] });
     expect(errorsOf(validateGuide(t, ['t'], tmpDir))).toEqual(['edge']);
   });

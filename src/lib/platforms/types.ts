@@ -5,10 +5,10 @@ export interface Platform {
   id: string;
   /** Is the tool binary installed on this machine? */
   detect(): boolean;
-  /** Are omm skills already registered? */
+  /** Are prisme skills already registered? */
   isSetup(): boolean;
-  /** Register omm skills/plugin */
+  /** Register prisme skills/plugin */
   setup(): Promise<void>;
-  /** Unregister omm skills/plugin */
+  /** Unregister prisme skills/plugin */
   teardown(): void;
 }

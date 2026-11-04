@@ -4,9 +4,9 @@ import YAML from 'yaml';
 import { getOmmDir, nodeDir } from './store.js';
 import { isPlainOmmPath, readOmmFile, removeOmmPath, writeOmmFile } from './omm-fs.js';
 
-// A guide is an ordered walk through existing elements of .omm/. It holds no
+// A guide is an ordered walk through existing elements of .prisme/. It holds no
 // content of its own: only the order, what to look at (an edge, a few nodes)
-// and one sentence per step. Guides live in .omm/.guides/<id>.yaml; the leading
+// and one sentence per step. Guides live in .prisme/.guides/<id>.yaml; the leading
 // dot keeps them out of listClasses() and listNodes().
 
 export const GUIDES_DIR = '.guides';
@@ -278,8 +278,8 @@ export function parseStepEdge(edge: string): { from: string; to: string } | null
   return { from: nodeIdOf(parts[0])!, to: nodeIdOf(parts[2])! };
 }
 
-// Element names are folder names written by omm: no separators, no leading
-// dot, so an element path can never leave .omm/ (on Windows either).
+// Element names are folder names written by prisme: no separators, no leading
+// dot, so an element path can never leave .prisme/ (on Windows either).
 const ELEMENT_SEGMENT = /^[\w-][\w.-]*$/;
 
 function isSafeElementPath(elementPath: string): boolean {
@@ -302,7 +302,7 @@ function readDiagram(elementPath: string, cwd?: string): string | null {
 // --- Validation ---
 
 /**
- * Checks a parsed guide against .omm/: elements exist, edges and focus nodes
+ * Checks a parsed guide against .prisme/: elements exist, edges and focus nodes
  * are in the parent diagram, a trace follows edges from steps already seen,
  * and "after" names known guides.
  */
@@ -334,7 +334,7 @@ export function validateGuide(guide: Guide, knownGuideIds: string[], cwd?: strin
       warn('details', `"details" is ${step.details.length} characters; keep it under ${MAX_DETAILS_LENGTH}: a few short paragraphs`, n);
 
     if (!elementExists(step.element, cwd)) {
-      error('element', `Element "${step.element}" not found in .omm/`, n);
+      error('element', `Element "${step.element}" not found in .prisme/`, n);
       return;
     }
     const segments = step.element.split('/');
@@ -431,7 +431,7 @@ export function loadGuide(id: string, cwd?: string): GuideResult | null {
 
 /**
  * Writes a guide after checking it, alone and with the other guides. Nothing
- * is written when the guide has errors, so a broken guide never reaches .omm/.
+ * is written when the guide has errors, so a broken guide never reaches .prisme/.
  */
 export function writeGuide(id: string, source: string, cwd?: string): { written: boolean; issues: GuideIssue[] } {
   const { guide, issues } = parseGuide(id, source);

@@ -1,10 +1,10 @@
 /**
- * omm config <key> [value] — read/write project config (.omm/config.yaml)
+ * prisme config <key> [value] — read/write project config (.prisme/config.yaml)
  *
  * Usage:
- *   omm config                  Show all config
- *   omm config language         Show language setting
- *   omm config language fr      Set language to fr (a language code)
+ *   prisme config                  Show all config
+ *   prisme config language         Show language setting
+ *   prisme config language fr      Set language to fr (a language code)
  */
 
 import fs from 'node:fs';
@@ -33,14 +33,14 @@ export function commandConfig(args: string[]): void {
   const key = args[0];
   const value = args[1];
 
-  // omm config — show all
+  // prisme config — show all
   if (!key) {
     const config = readConfig();
     process.stdout.write(YAML.stringify(config));
     return;
   }
 
-  // omm config <key> — read
+  // prisme config <key> — read
   if (!value) {
     const config = readConfig();
     if (key === 'language') {
@@ -55,7 +55,7 @@ export function commandConfig(args: string[]): void {
     return;
   }
 
-  // omm config <key> <value> — write
+  // prisme config <key> <value> — write
   let stored = value;
   if (key === 'language') {
     const code = normalizeLanguage(value);

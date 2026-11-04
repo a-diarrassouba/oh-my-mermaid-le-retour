@@ -1,12 +1,12 @@
 {
-  "name": "oh-my-mermaid",
-  "description": "Turn complex codebases into clear, navigable architecture diagrams",
+  "name": "prisme",
+  "description": "Understand any codebase, from beginner to senior developer: AI-written docs, diagrams and guided walks",
   "version": "0.2.0",
   "author": {
-    "name": "oh-my-mermaid"
+    "name": "a-diarrassouba"
   },
-  "homepage": "https://github.com/oh-my-mermaid/oh-my-mermaid",
-  "repository": "https://github.com/oh-my-mermaid/oh-my-mermaid",
+  "homepage": "https://github.com/a-diarrassouba/oh-my-mermaid-le-retour",
+  "repository": "https://github.com/a-diarrassouba/oh-my-mermaid-le-retour",
   "license": "MIT",
   "keywords": [
     "architecture",

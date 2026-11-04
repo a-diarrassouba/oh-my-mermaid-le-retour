@@ -1,64 +1,56 @@
 [English](./README.md) | [Türkçe](./README.tr.md) | [한국어](./README.ko.md) | [日本語](./README.ja.md) | [中文](./README.zh.md)
 
-> 本文档翻译自英文 README。部分表述可能不够自然。
+> 本文档翻译自英文 README，部分表述可能不够自然。
+
+<h1 align="center">prisme</h1>
 
 <p align="center">
-  <img src="./docs/logo.jpg" alt="omm logo" width="80"/>
-</p>
-
-<h1 align="center">Oh-my-mermaid</h1>
-
-<p align="center">
-  <a href="https://www.npmjs.com/package/oh-my-mermaid"><img src="https://img.shields.io/npm/v/oh-my-mermaid" alt="npm version"/></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"/></a>
 </p>
 
 <p align="center">
-  AI 几秒钟就能写出代码。人类理解它需要几个小时。<br/>
-  跳过理解，代码库就变成了黑盒 — 即使对你自己而言。<br/><br/>
-  <strong>omm 弥合了这个差距 — 由 AI 生成的、为人类准备的架构文档。</strong>
+  棱镜将白光分解为清晰的色彩。<br/>
+  <strong>prisme 将复杂的项目分解为任何人都能理解的部分——从初学者到资深开发者。</strong>
 </p>
 
 ---
 
 ## 快速开始
 
-在终端中粘贴：
+prisme 尚未发布到 npm。请从 GitHub 安装，然后将技能注册到你的 AI 编程工具中：
 
 ```bash
-npm install -g oh-my-mermaid && omm setup
+npm install -g github:a-diarrassouba/oh-my-mermaid-le-retour && prisme setup
 ```
 
-打开你的 AI 编码工具，使用 `/omm-scan` 技能：
-
-```
-/omm-scan
-```
-
-就这样。查看结果：
+在你想要理解的项目中，选择文档的语言（可选，默认为英文）：
 
 ```bash
-omm view
+prisme config language fr
 ```
 
-## 示例
+然后在该项目中打开你的 AI 编程工具，运行 `/prisme-scan` 技能：
 
-> omm 扫描了自己。这是它发现的结果。
+```
+/prisme-scan
+```
 
-<table><tr>
-<td width="50%"><img src="./docs/screenshot.png" alt="omm viewer"/></td>
-<td width="50%"><img src="./docs/demo.gif" alt="omm scan demo"/></td>
-</tr></table>
+查看结果，并跟随查看器推荐的欢迎导览：
+
+```bash
+prisme view
+```
 
 ## 工作原理
 
-AI 分析代码库并生成 **视角（perspective）** — 观察架构的不同镜头（结构、数据流、外部集成等）。每个视角包含 Mermaid 图表和文档字段。
+AI 阅读代码库并编写**视角**——从不同角度看待项目：它做什么、为谁服务，如何构建，数据如何流动，如何保护，如何运行、测试和发布，以及当前状态。每个视角都包含 Mermaid 图表和文档字段，使用你选择的语言。
 
-每个节点都会被**递归分析**。复杂的节点会成为具有自己图表的嵌套子元素。简单的节点保持为叶子节点。文件系统直接反映树结构：
+每个元素都会被**递归分析**。复杂的元素成为拥有自己图表的嵌套元素，简单的保留为叶节点。文件系统反映了这个树结构：
 
 ```
-.omm/
-├── overall-architecture/           ← 视角
+.prisme/
+├── functional-overview/            ← 视角
+├── overall-architecture/
 │   ├── description.md
 │   ├── diagram.mmd
 │   ├── context.md
@@ -70,76 +62,71 @@ AI 分析代码库并生成 **视角（perspective）** — 观察架构的不�
 │   └── renderer/
 │       └── ...
 ├── data-flow/
-├── external-integrations/
+├── operations/
+├── project-status/
 └── .guides/                        ← 导览（逐步引导）
 ```
 
 查看器自动从文件系统检测嵌套 — 有子元素的元素渲染为可展开的组，其他渲染为节点。
 
-每个元素最多包含 7 个字段：`description`、`diagram`、`context`、`constraint`、`concern`、`todo`、`note`。
+每个元素最多包含 7 个字段：`description`、`diagram`、`context`、`constraint`、`concern`、`todo`、`note`，以及一个显示标题。
 
 ### 导览
 
-**导览**是逐步浏览图表的引导：查看器会打开每个元素，淡化其余部分，并高亮正在跟随的连线。在 AI 工具中使用 `/omm-guide` 请求一个（例如 `/omm-guide 用户注册时会发生什么？`）。`/omm-scan` 还会编写欢迎导览 `start-here`，分为三部分（项目做什么、如何构建、如何运行、测试和发布），查看器会在首次访问时推荐它。导览保存在 `.omm/.guides/` 中，当新的扫描破坏了某个导览时，`omm validate` 会提示你。
+**导览**是逐步浏览图表的引导：查看器会打开每个元素，淡化其余部分，并高亮正在跟随的连线。在 AI 工具中使用 `/prisme-guide` 请求一个（例如 `/prisme-guide 用户注册时会发生什么？`）。`/prisme-scan` 还会编写欢迎导览 `start-here`，分为三部分（项目做什么、如何构建、如何运行、测试和发布），查看器会在首次访问时推荐它。导览保存在 `.prisme/.guides/` 中，当新的扫描破坏了某个导览时，`prisme validate` 会提示你。
+
+### 提问
+
+在查看器的提问栏中输入问题（例如"凭据存储在哪里？"）：匹配的元素会在图表上高亮显示。
 
 ## CLI
 
 ```bash
-omm setup                          # 向 AI 工具注册技能
-omm view                           # 打开交互式查看器
-omm config language zh             # 设置内容语言
-omm guide list                     # 列出导览
-omm update                         # 更新到最新版本
+prisme setup                       # 将技能注册到 AI 工具
+prisme view                        # 打开交互式查看器
+prisme config language fr          # 设置文档和界面的语言
+prisme guide list                  # 列出导览
+prisme update                      # 更新到最新版本
 ```
 
-完整命令列表请运行 `omm help`。
+运行 `prisme help` 查看完整命令列表。
 
 ## 技能
 
-技能是在 **AI 编码工具内部**运行的命令（不是终端）。以 `/` 开头。
+技能是在 **AI 编程工具内部**（而非终端）运行的命令，以 `/` 开头。
 
 | 技能 | 功能 |
 | --- | --- |
-| `/omm-scan` | 分析代码库 → 生成架构文档 |
-| `/omm-guide` | 编写回答问题的逐步导览 → 在查看器中播放 |
-| `/omm-push` | 一步完成登录 + 链接 + 推送到云端 |
-
-## 云端
-
-通过 [ohmymermaid.com](https://ohmymermaid.com) 将架构存储在云端。
-
-```bash
-omm login && omm link && omm push
-```
-
-默认为私有。可以与团队共享，或像[这个示例](https://ohmymermaid.com/share/c47e20a7063c231760361ed9cb9ec4b6)一样公开。
+| `/prisme-scan` | 分析代码库 → 编写文档和欢迎导览 |
+| `/prisme-guide` | 编写回答问题的逐步导览 → 在查看器中播放 |
+| `/prisme-view` | 打开查看器 |
 
 ## 支持的 AI 工具
 
 | 平台 | 设置 |
 | --- | --- |
-| Claude Code | `omm setup claude` |
-| Codex | `omm setup codex` |
-| Cursor | `omm setup cursor` |
-| OpenClaw | `omm setup openclaw` |
-| Antigravity | `omm setup antigravity` |
+| Claude Code | `prisme setup claude` |
+| Codex | `prisme setup codex` |
+| Cursor | `prisme setup cursor` |
+| OpenClaw | `prisme setup openclaw` |
+| Antigravity | `prisme setup antigravity` |
 
-运行 `omm setup` 自动检测并配置所有已安装的工具。
+运行 `prisme setup` 自动检测并配置所有已安装的工具。
 
-## 路线图
-
-请参阅 [docs/ROADMAP.md](./docs/ROADMAP.md)。
-
-## 开发 & 贡献
+## 开发与贡献
 
 ```bash
-git clone https://github.com/oh-my-mermaid/oh-my-mermaid.git
-cd oh-my-mermaid
+git clone https://github.com/a-diarrassouba/oh-my-mermaid-le-retour.git
+cd oh-my-mermaid-le-retour
 npm install && npm run build
 npm test
 ```
 
 欢迎提交 Issue 和 PR。请使用 [Conventional Commits](https://www.conventionalcommits.org/)。
+
+## 致谢
+
+prisme 最初是 [oh-my-mermaid](https://github.com/oh-my-mermaid/oh-my-mermaid) 的一个分支，该项目由其作者以 MIT 许可证发布。
 
 ## 许可证
 

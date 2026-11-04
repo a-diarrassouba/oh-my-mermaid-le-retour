@@ -1,145 +1,132 @@
 [English](./README.md) | [Türkçe](./README.tr.md) | [한국어](./README.ko.md) | [日本語](./README.ja.md) | [中文](./README.zh.md)
 
-> このドキュメントは英語のREADMEから翻訳されたものです。一部の表現が不自然な場合があります。
+> このドキュメントは英語の README から翻訳されたものです。一部不自然な表現がある場合があります。
+
+<h1 align="center">prisme</h1>
 
 <p align="center">
-  <img src="./docs/logo.jpg" alt="omm logo" width="80"/>
-</p>
-
-<h1 align="center">Oh-my-mermaid</h1>
-
-<p align="center">
-  <a href="https://www.npmjs.com/package/oh-my-mermaid"><img src="https://img.shields.io/npm/v/oh-my-mermaid" alt="npm version"/></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"/></a>
 </p>
 
 <p align="center">
-  AIは数秒でコードを書きます。人間が理解するには数時間かかります。<br/>
-  理解をスキップすると、コードベースはブラックボックスになります — あなた自身にとっても。<br/><br/>
-  <strong>ommがそのギャップを埋めます — AIが生成した、人間のためのアーキテクチャドキュメント。</strong>
+  プリズムは白い光を鮮やかな色に分けます。<br/>
+  <strong>prisme は複雑なプロジェクトを、初心者からシニア開発者まで誰でも理解できる部分に分けます。</strong>
 </p>
 
 ---
 
 ## クイックスタート
 
-ターミナルに貼り付けてください：
+prisme はまだ npm にありません。GitHub からインストールし、AI コーディングツールにスキルを登録してください:
 
 ```bash
-npm install -g oh-my-mermaid && omm setup
+npm install -g github:a-diarrassouba/oh-my-mermaid-le-retour && prisme setup
 ```
 
-AIコーディングツールを開き、`/omm-scan`スキルを実行：
-
-```
-/omm-scan
-```
-
-以上です。結果を表示：
+理解したいプロジェクトで、ドキュメントの言語を選びます（任意、デフォルトは英語）:
 
 ```bash
-omm view
+prisme config language fr
 ```
 
-## 例
+そのプロジェクトで AI コーディングツールを開き、`/prisme-scan` スキルを実行します:
 
-> ommが自分自身をスキャンしました。これがその結果です。
+```
+/prisme-scan
+```
 
-<table><tr>
-<td width="50%"><img src="./docs/screenshot.png" alt="omm viewer"/></td>
-<td width="50%"><img src="./docs/demo.gif" alt="omm scan demo"/></td>
-</tr></table>
+結果を表示し、ビューアが提案するウェルカムガイドに従ってください:
+
+```bash
+prisme view
+```
 
 ## 仕組み
 
-AIがコードベースを分析し、**パースペクティブ**を生成します — アーキテクチャを見るための様々なレンズ（構造、データフロー、外部連携など）。各パースペクティブにはMermaidダイアグラムとドキュメントフィールドが含まれます。
+AI がコードベースを読み、**パースペクティブ**を作成します。パースペクティブはプロジェクトを見るさまざまな視点です：何をするのか・誰のためのものか、どう作られているか、データがどう流れるか、どう保護されているか、どう実行・テスト・デプロイするか、そして現在の状態。各パースペクティブは、選んだ言語で Mermaid ダイアグラムとドキュメントフィールドを持ちます。
 
-すべてのノードが**再帰的に分析**されます。複雑なノードは独自のダイアグラムを持つネストされた子エレメントになります。シンプルなノードはリーフとして残ります。ファイルシステムがツリーを直接反映します：
+すべてのエレメントは**再帰的に分析**されます。複雑なものは独自のダイアグラムを持つネストされたエレメントになり、単純なものはリーフのままです。ファイルシステムがツリーを反映します:
 
 ```
-.omm/
-├── overall-architecture/           ← パースペクティブ
+.prisme/
+├── functional-overview/            ← パースペクティブ
+├── overall-architecture/
 │   ├── description.md
 │   ├── diagram.mmd
 │   ├── context.md
 │   ├── main-process/               ← ネストされたエレメント
 │   │   ├── description.md
 │   │   ├── diagram.mmd
-│   │   └── auth-service/           ← より深いネスト
+│   │   └── auth-service/           ← さらに深いネスト
 │   │       └── ...
 │   └── renderer/
 │       └── ...
 ├── data-flow/
-├── external-integrations/
+├── operations/
+├── project-status/
 └── .guides/                        ← ガイド（ステップごとの案内）
 ```
 
 ビューアはファイルシステムからネストを自動検出します — 子を持つエレメントは展開可能なグループとして、それ以外はノードとしてレンダリングされます。
 
-各エレメントは最大7つのフィールドを持ちます：`description`、`diagram`、`context`、`constraint`、`concern`、`todo`、`note`。
+各エレメントは最大7つのフィールド（`description`、`diagram`、`context`、`constraint`、`concern`、`todo`、`note`）と表示タイトルを持ちます。
 
 ### ガイド
 
-**ガイド**はダイアグラムを一歩ずつたどる案内です。ビューアは各エレメントを開き、それ以外を薄く表示し、たどっている矢印を強調します。AIツールで `/omm-guide` を使って依頼してください（例：`/omm-guide ユーザーが登録すると何が起きる？`）。`/omm-scan` はウェルカムガイド `start-here` も作成します。3つのパート（プロジェクトの役割、構成、実行・テスト・デプロイの方法）からなり、ビューアは初回訪問時にそれを提案します。ガイドは `.omm/.guides/` に保存され、新しいスキャンでガイドが壊れると `omm validate` が知らせます。
+**ガイド**はダイアグラムを一歩ずつたどる案内です。ビューアは各エレメントを開き、それ以外を薄く表示し、たどっている矢印を強調します。AIツールで `/prisme-guide` を使って依頼してください（例：`/prisme-guide ユーザーが登録すると何が起きる？`）。`/prisme-scan` はウェルカムガイド `start-here` も作成します。3つのパート（プロジェクトの役割、構成、実行・テスト・デプロイの方法）からなり、ビューアは初回訪問時にそれを提案します。ガイドは `.prisme/.guides/` に保存され、新しいスキャンでガイドが壊れると `prisme validate` が知らせます。
+
+### 質問
+
+ビューアの質問バーに質問を入力してください（例：「認証情報はどこに保存されている？」）：一致するエレメントがダイアグラム上で強調されます。
 
 ## CLI
 
 ```bash
-omm setup                          # AIツールにスキルを登録
-omm view                           # インタラクティブビューアを開く
-omm config language ja             # コンテンツ言語を設定
-omm guide list                     # ガイド一覧を表示
-omm update                         # 最新バージョンに更新
+prisme setup                       # AI ツールにスキルを登録
+prisme view                        # インタラクティブビューアを開く
+prisme config language fr          # ドキュメントとインターフェースの言語を設定
+prisme guide list                  # ガイド一覧を表示
+prisme update                      # 最新バージョンに更新
 ```
 
-完全なコマンドリストは`omm help`を参照してください。
+全コマンド一覧は `prisme help` を実行してください。
 
 ## スキル
 
-スキルは**AIコーディングツール内で**実行するコマンドです（ターミナルではありません）。`/`で始まります。
+スキルは**AI コーディングツール内で**実行するコマンドです（ターミナルではありません）。`/` で始まります。
 
 | スキル | 機能 |
 | --- | --- |
-| `/omm-scan` | コードベース分析 → アーキテクチャドキュメント生成 |
-| `/omm-guide` | 質問に答えるステップごとのガイドを作成 → ビューアで再生 |
-| `/omm-push` | ログイン + リンク + クラウドプッシュを一度に |
+| `/prisme-scan` | コードベース分析 → ドキュメントとウェルカムガイドを作成 |
+| `/prisme-guide` | 質問に答えるステップごとのガイドを作成 → ビューアで再生 |
+| `/prisme-view` | ビューアを開く |
 
-## クラウド
-
-[ohmymermaid.com](https://ohmymermaid.com)を通じてアーキテクチャをクラウドに保存できます。
-
-```bash
-omm login && omm link && omm push
-```
-
-デフォルトではプライベートです。チームと共有したり、[この例](https://ohmymermaid.com/share/c47e20a7063c231760361ed9cb9ec4b6)のように公開できます。
-
-## 対応AIツール
+## 対応 AI ツール
 
 | プラットフォーム | セットアップ |
 | --- | --- |
-| Claude Code | `omm setup claude` |
-| Codex | `omm setup codex` |
-| Cursor | `omm setup cursor` |
-| OpenClaw | `omm setup openclaw` |
-| Antigravity | `omm setup antigravity` |
+| Claude Code | `prisme setup claude` |
+| Codex | `prisme setup codex` |
+| Cursor | `prisme setup cursor` |
+| OpenClaw | `prisme setup openclaw` |
+| Antigravity | `prisme setup antigravity` |
 
-`omm setup`を実行すると、インストール済みのすべてのツールを自動検出して設定します。
+`prisme setup` を実行すると、インストール済みのすべてのツールを自動検出して設定します。
 
-## ロードマップ
-
-[docs/ROADMAP.md](./docs/ROADMAP.md)を参照してください。
-
-## 開発 & 貢献
+## 開発 & コントリビュート
 
 ```bash
-git clone https://github.com/oh-my-mermaid/oh-my-mermaid.git
-cd oh-my-mermaid
+git clone https://github.com/a-diarrassouba/oh-my-mermaid-le-retour.git
+cd oh-my-mermaid-le-retour
 npm install && npm run build
 npm test
 ```
 
-IssueとPRを歓迎します。[Conventional Commits](https://www.conventionalcommits.org/)を使用してください。
+Issue と PR を歓迎します。[Conventional Commits](https://www.conventionalcommits.org/) を使用してください。
+
+## クレジット
+
+prisme は MIT ライセンスで公開されている [oh-my-mermaid](https://github.com/oh-my-mermaid/oh-my-mermaid) のフォークから始まりました。
 
 ## ライセンス
 
