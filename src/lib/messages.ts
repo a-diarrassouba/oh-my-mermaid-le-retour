@@ -58,6 +58,25 @@ const en = {
   'guideNeeded': "error: guide '{id}' not deleted: {ids} name it in \"after\"",
   'guideDeleted': "guide '{id}' deleted",
   'validateGuide': 'guide {id}:',
+  'changesFull': 'Full scan recommended:',
+  'changesPartial': 'Partial scan recommended:',
+  'changesNone': 'Nothing to rescan:',
+  'changesReasonNoElements': 'no documentation yet.',
+  'changesReasonNotGit': 'the project is not a git repository.',
+  'changesReasonNoPrevious': 'no previous scan recorded.',
+  'changesReasonBaseMissing': 'the commit of the last scan is no longer in the history.',
+  'changesReasonNoChanges': 'the code has not changed since the last scan.',
+  'changesReasonTooMany': '{count} of {total} elements changed.',
+  'changesReasonUndocumented': 'the changed files are not cited by any element.',
+  'changesReasonSome': '{count} of {total} elements changed.',
+  'changesBase': 'Last scan: commit {commit}.',
+  'changesChanged': 'Elements to re-analyze ({count}):',
+  'changesOrphans': 'New files no element covers ({count}):',
+  'changesRemoved': 'Cited paths that no longer exist ({count}):',
+  'changesOnboarding': 'Onboarding perspectives to review ({count}):',
+  'changesGuides': 'Guides that walk through a changed element ({count}):',
+  'changesMarked': 'Last scan recorded at commit {commit}.',
+  'changesMarkFailed': 'error: cannot record the scan: the project is not a git repository with a commit.',
   'guideUsage': `usage:
   prisme guide list                List guides and whether they are valid
   prisme guide show <id>           Print a guide and its validation
@@ -81,6 +100,7 @@ Usage:
   prisme diff <path>                   Compare current vs previous diagram
   prisme refs <path>                   Show elements that reference this element
   prisme validate [path]               Validate diagram(s) and guides
+  prisme changes [--json | --mark]     What changed since the last scan (--mark records a scan)
   prisme guide list|show|write|delete  Manage guides, step-by-step walks (.prisme/.guides/)
   prisme config [key] [value]          Read or set project settings (e.g. language fr)
   prisme view [--port <port>]          Start web viewer (default: 3000)
@@ -151,6 +171,25 @@ const fr: Record<MessageKey, string> = {
   'guideNeeded': "erreur : parcours '{id}' non supprimé : {ids} le cite dans \"after\"",
   'guideDeleted': "parcours '{id}' supprimé",
   'validateGuide': 'parcours {id} :',
+  'changesFull': 'Scan complet conseillé :',
+  'changesPartial': 'Scan partiel conseillé :',
+  'changesNone': 'Rien à réanalyser :',
+  'changesReasonNoElements': 'aucune documentation pour le moment.',
+  'changesReasonNotGit': "le projet n'est pas un dépôt git.",
+  'changesReasonNoPrevious': 'aucun scan précédent enregistré.',
+  'changesReasonBaseMissing': "le commit du dernier scan n'est plus dans l'historique.",
+  'changesReasonNoChanges': "le code n'a pas changé depuis le dernier scan.",
+  'changesReasonTooMany': '{count} éléments sur {total} ont changé.',
+  'changesReasonUndocumented': 'les fichiers modifiés ne sont cités par aucun élément.',
+  'changesReasonSome': '{count} éléments sur {total} ont changé.',
+  'changesBase': 'Dernier scan : commit {commit}.',
+  'changesChanged': 'Éléments à réanalyser ({count}) :',
+  'changesOrphans': 'Nouveaux fichiers sans élément ({count}) :',
+  'changesRemoved': "Chemins cités qui n'existent plus ({count}) :",
+  'changesOnboarding': "Perspectives d'accueil à revoir ({count}) :",
+  'changesGuides': 'Parcours qui traversent un élément modifié ({count}) :',
+  'changesMarked': 'Dernier scan enregistré au commit {commit}.',
+  'changesMarkFailed': "erreur : impossible d'enregistrer le scan : le projet n'est pas un dépôt git avec au moins un commit.",
   'guideUsage': `utilisation :
   prisme guide list                Lister les parcours et dire s'ils sont valides
   prisme guide show <id>           Afficher un parcours et sa validation
@@ -174,6 +213,7 @@ Utilisation :
   prisme diff <chemin>                 Comparer le diagramme actuel au précédent
   prisme refs <chemin>                 Voir les éléments qui référencent cet élément
   prisme validate [chemin]             Vérifier les diagrammes et les parcours
+  prisme changes [--json | --mark]     Ce qui a changé depuis le dernier scan (--mark enregistre un scan)
   prisme guide list|show|write|delete  Gérer les parcours guidés (.prisme/.guides/)
   prisme config [clé] [valeur]         Lire ou régler le projet (ex. : language fr)
   prisme view [--port <port>]          Lancer le viewer web (port 3000 par défaut)

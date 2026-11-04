@@ -60,7 +60,7 @@ function collectDocs(): Doc[] {
     const title = (data.meta && typeof data.meta.title === 'string' && data.meta.title.trim()) || id;
     const fields: Doc['fields'] = {};
     for (const f of FIELDS) {
-      const raw = (data as Record<string, unknown>)[f];
+      const raw = (data as unknown as Record<string, unknown>)[f];
       if (typeof raw === 'string' && raw.trim()) fields[f] = { raw, norm: normalize(raw) };
     }
     docs.push({ cls, title, normTitle: normalize(title), fields });

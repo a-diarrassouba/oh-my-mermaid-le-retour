@@ -88,6 +88,7 @@ prisme setup                       # Register skills with your AI tools
 prisme view                        # Open the interactive viewer
 prisme config language fr          # Set the language of the docs and the interface
 prisme guide list                  # List guides (step-by-step walks)
+prisme changes                     # What changed since the last scan
 prisme update                      # Update to the latest version
 ```
 

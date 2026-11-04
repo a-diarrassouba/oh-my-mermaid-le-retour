@@ -90,6 +90,7 @@ prisme setup                       # 将技能注册到 AI 工具
 prisme view                        # 打开交互式查看器
 prisme config language fr          # 设置文档和界面的语言
 prisme guide list                  # 列出导览
+prisme changes                     # 自上次扫描以来的变更
 prisme update                      # 更新到最新版本
 ```
 
