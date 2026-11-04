@@ -1,10 +1,12 @@
 import path from 'node:path';
+import { spawn } from 'node:child_process';
 import { createRequire } from 'node:module';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { VALID_FIELDS, type Field } from '../types.js';
 import { readNodeField, readNodeMeta } from '../lib/store.js';
 import { listElements, type ElementInfo, type Role } from '../lib/elements.js';
-import { loadGuides } from '../lib/guides.js';
+import { deleteGuide, loadGuides } from '../lib/guides.js';
+import { readProjectFile } from '../lib/project-files.js';
 import { searchElements } from '../lib/search.js';
 import { getLanguage } from '../lib/language.js';
 import { readConfig } from '../lib/config.js';
@@ -22,8 +24,10 @@ export const API_VERSION = 1;
 
 export interface ApiContext {
   port: number;
-  /** Secret the page must send to run Claude; null when questions to Claude are off */
-  token: string | null;
+  /** Secret handed to the page: required for anything that runs something (Claude, a security check) or deletes */
+  token: string;
+  /** Whether the viewer may send questions to Claude (prisme view --no-ai turns it off) */
+  ai: boolean;
   cwd?: string;
 }
 
@@ -121,7 +125,7 @@ export function apiElements(cwd?: string): ApiElement[] {
 }
 
 
-export function apiProject(ctx: Pick<ApiContext, 'token' | 'cwd'>) {
+export function apiProject(ctx: Pick<ApiContext, 'ai' | 'cwd'>) {
   const elements = listElements(ctx.cwd);
   const guides = loadGuides(ctx.cwd);
   const supported = askSupported();
@@ -147,7 +151,7 @@ export function apiProject(ctx: Pick<ApiContext, 'token' | 'cwd'>) {
         ? { available: true, date: evolve.date, code: evolve.code.length, products: evolve.market?.products.length ?? 0, ideas: evolve.market?.ideas.length ?? 0 }
         : { available: false },
     },
-    ai: ctx.token === null
+    ai: !ctx.ai
       ? { available: false, reason: msg('aiOff') }
       : supported.ok ? { available: true } : { available: false, reason: supported.reason },
   };
@@ -158,10 +162,31 @@ function json(res: ServerResponse, data: unknown, status = 200): void {
   res.end(JSON.stringify(data));
 }
 
+/** A request sent by the viewer page itself: same origin and the page's token. */
+function fromThePage(req: IncomingMessage, ctx: ApiContext): boolean {
+  return isLocalOrigin(req.headers.origin, ctx.port) && sameToken(req.headers['x-prisme-token'], ctx.token);
+}
+
+// POST /api/v1/security/run: the viewer computes the score itself. It runs
+// `prisme security` in a child process, so the server keeps answering
+// (npm audit or semgrep can take a while).
+let securityRun: Promise<{ ok: boolean; error?: string }> | null = null;
+
+function runSecurityCheck(cwd: string): Promise<{ ok: boolean; error?: string }> {
+  return new Promise(resolve => {
+    const cli = process.argv[1];
+    const child = spawn(process.execPath, [cli, 'security', '--json'], { cwd, stdio: ['ignore', 'ignore', 'pipe'] });
+    let stderr = '';
+    child.stderr.on('data', (c: Buffer) => { stderr = (stderr + c.toString()).slice(-4000); });
+    child.on('error', e => resolve({ ok: false, error: e.message }));
+    child.on('close', code => resolve(code === 0 ? { ok: true } : { ok: false, error: stderr.trim().split('\n').slice(-2).join(' ') || `exit ${code}` }));
+  });
+}
+
 /** POST /api/v1/ask/ai and its job routes: same origin and the page's token only. */
 function handleAskAi(req: IncomingMessage, res: ServerResponse, url: URL, ctx: ApiContext): void {
-  if (!ctx.token) return json(res, { error: 'questions to Claude are turned off' }, 404);
-  if (!isLocalOrigin(req.headers.origin, ctx.port) || !sameToken(req.headers['x-prisme-token'], ctx.token))
+  if (!ctx.ai) return json(res, { error: 'questions to Claude are turned off' }, 404);
+  if (!fromThePage(req, ctx))
     return json(res, { error: 'forbidden' }, 403);
 
   // The question being answered, so a reloaded page can pick it up again.
@@ -200,8 +225,43 @@ export function handleApiV1(req: IncomingMessage, res: ServerResponse, ctx: ApiC
     handleAskAi(req, res, url, ctx);
     return true;
   }
+  // DELETE /api/v1/guides/ask-…: the reader throws away the answer to one of their questions.
+  const answerMatch = route.match(/^\/api\/v1\/guides\/(ask-[a-z0-9-]+)$/);
+  if (req.method === 'DELETE' && answerMatch) {
+    if (!fromThePage(req, ctx)) {
+      json(res, { error: 'forbidden' }, 403);
+      return true;
+    }
+    const result = deleteGuide(answerMatch[1], ctx.cwd);
+    if (result.deleted) json(res, { deleted: answerMatch[1] });
+    else json(res, { error: result.reason }, result.reason === 'not-found' ? 404 : 409);
+    return true;
+  }
+
+  if (req.method === 'POST' && route === '/api/v1/security/run') {
+    if (!fromThePage(req, ctx)) {
+      json(res, { error: 'forbidden' }, 403);
+      return true;
+    }
+    securityRun ??= runSecurityCheck(ctx.cwd ?? process.cwd()).finally(() => { securityRun = null; });
+    securityRun.then(result => {
+      const report = result.ok ? apiSecurity(ctx.cwd) : null;
+      if (report) json(res, report);
+      else json(res, { error: result.error || 'the security check failed' }, 500);
+    });
+    return true;
+  }
+
   if (req.method !== 'GET') {
     json(res, { error: 'method not allowed' }, 405);
+    return true;
+  }
+
+  // GET /api/v1/file?path=src/a.ts — a project file a guide step shows (never secrets, .git or symlinks).
+  if (route === '/api/v1/file') {
+    const read = readProjectFile(url.searchParams.get('path') ?? '', ctx.cwd);
+    if ('error' in read) json(res, read, 404);
+    else json(res, read);
     return true;
   }
 

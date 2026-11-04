@@ -81,7 +81,11 @@ Her element en fazla 7 alan (`description`, `diagram`, `context`, `constraint`, 
 
 ### Sorular
 
-Görüntüleyicinin soru çubuğuna bir soru yazın (örneğin "kimlik bilgileri nerede saklanıyor?"): eşleşen elementler diyagramda vurgulanır.
+Görüntüleyicinin soru çubuğuna istediğiniz soruyu yazın (örneğin "`prisme write` çalıştırınca ne olur?" veya "oturum nerede kontrol ediliyor?"). Claude Code diyagram üzerinde yanıtlar: okları izleyerek yolu çizer, bakılacak blokları vurgular ya da dosyayı ilgili satırlarda açar; her adımın bir açıklaması vardır. Bu sırada sorunuzdaki kelimelerle eşleşen elementler vurgulanır. Yanıtlar sol paneldeki "Sorularınız" bölümünde saklanır.
+
+Bunun için `prisme view` çalıştıran makinede Claude Code kurulu ve oturum açılmış olmalıdır (`claude`, ardından `/login`); görüntüleyiciyi yalnızca açanlar için hiçbir şey gerekmez. Claude projeyi yalnızca okur (`.env` dosyalarını veya anahtarları asla okumaz), hiçbir şeyi değiştirmez. `prisme view --no-ai` soruları kapatır.
+
+Ana ekrandaki güvenlik kutucuğu, tek tıkla, yapay zekâ olmadan ve hiçbir şey kurmadan puanı hesaplar.
 
 ## CLI
 

@@ -53,7 +53,7 @@ describe('evolve report', () => {
     expect(written).toBe(true);
     expect(report).toMatchObject({ version: 1, code: [{ kind: 'simplify', elements: ['arch/store'] }], market: { products: [{ name: 'Alpha' }] } });
     expect(readEvolve(dir)?.market?.ideas[0].seenIn).toEqual(['Alpha']);
-    expect(apiProject({ token: null, cwd: dir }).categories.evolve).toMatchObject({ available: true, code: 1, products: 1, ideas: 1 });
+    expect(apiProject({ ai: false, cwd: dir }).categories.evolve).toMatchObject({ available: true, code: 1, products: 1, ideas: 1 });
   });
 
   it('accepts one level alone', () => {

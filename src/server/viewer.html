@@ -133,6 +133,30 @@ body.light #ask-bar { background: rgba(255,255,255,0.85); }
 .ask-ai-btn:disabled { opacity: .5; cursor: default; }
 .ask-ai-note { font-size: 11.5px; color: var(--text-dim); flex: 1; min-width: 180px; }
 .ask-ai-note.err { color: #f38ba8; }
+.ask-ai { margin: 0 0 10px; padding: 0 0 10px; border-top: 0; border-bottom: 1px solid var(--border); }
+.ask-ai.running .ask-ai-note { color: var(--text); }
+.ask-ai-spin { width: 14px; height: 14px; border-radius: 50%; border: 2px solid color-mix(in srgb, var(--accent) 30%, transparent); border-top-color: var(--accent); animation: ask-spin .9s linear infinite; flex-shrink: 0; }
+@keyframes ask-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .ask-ai-spin { animation: none; } }
+/* File panel: the code a guide step points at, its lines lit */
+#file-panel { margin: 0 16px 14px; max-height: 50vh; display: flex; flex-direction: column;
+  background: var(--surface); border: 1px solid var(--border-hi); border-top: 3px solid var(--accent); border-radius: 10px; }
+#sidebar.with-file { width: min(720px, 62vw); }
+#sidebar.open.with-file ~ #guide-bar { right: calc(min(720px, 62vw) + 12px); }
+#file-panel[hidden] { display: none; }
+.fp-head { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+.fp-path { font-family: var(--mono); font-size: 12px; color: var(--text); overflow-wrap: anywhere; flex: 1; }
+.fp-lines { font-family: var(--mono); font-size: 10.5px; color: var(--accent); flex-shrink: 0; }
+.fp-body { overflow: auto; padding: 6px 0; scrollbar-width: thin; }
+.fp-code { font-family: var(--mono); font-size: 11.5px; line-height: 1.6; color: var(--text-mid); min-width: max-content; }
+.fp-line { display: flex; padding-right: 14px; }
+.fp-line .n { width: 44px; text-align: right; padding-right: 12px; color: var(--text-dim); user-select: none; flex-shrink: 0; }
+.fp-line .c { white-space: pre; }
+.fp-line.lit { background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--text); box-shadow: inset 3px 0 0 var(--accent); }
+.fp-error { padding: 12px; font-size: 12px; color: #f38ba8; }
+@media (max-width: 768px) { #sidebar.with-file { width: auto; } #file-panel { margin: 0 10px 12px; max-height: 40vh; } }
+.guide-item .guide-del { margin-left: 4px; color: var(--text-dim); font-style: normal; padding: 0 4px; border-radius: 4px; }
+.guide-item .guide-del:hover { color: #f38ba8; }
 
 #canvas-wrap {
   flex: 1; position: relative; overflow: hidden; cursor: grab; margin-left: 200px;
@@ -560,6 +584,7 @@ body.light .reg-node:hover .nshape { stroke: #000 !important; }
   <div id="sb-head"><div id="sb-title"></div><button id="sb-close" onclick="closeSidebar()" data-i18n-title="close">×</button></div>
   <div id="sb-body">
     <div class="sb-step" id="sb-step" hidden></div>
+    <div id="file-panel" role="region" hidden></div>
     <div class="sb-diagram" id="sb-diagram"></div>
     <div class="sb-fields" id="sb-fields"></div>
   </div>
@@ -568,7 +593,7 @@ body.light .reg-node:hover .nshape { stroke: #000 !important; }
 <div id="home" role="dialog" aria-modal="true" data-i18n-aria="home" hidden></div>
 <div id="security" role="dialog" aria-modal="true" data-i18n-aria="tileSecurity" hidden></div>
 <div id="evolve" role="dialog" aria-modal="true" data-i18n-aria="tileEvolve" hidden></div>
-<div id="guide-bar" role="region" data-i18n-aria="guides" hidden></div>
+ <div id="guide-bar" role="region" data-i18n-aria="guides" hidden></div>
 <div id="guide-spark" aria-hidden="true"></div>
 
 <script type="module">
@@ -591,8 +616,9 @@ const I18N = {
     askOtherMatches: 'Also relevant', askClose: 'Close', askField_description: 'Description',
     askField_context: 'Context', askField_constraint: 'Constraints', askField_concern: "Concerns",
     askField_todo: 'Todo', askField_note: 'Notes',
-    askAiBtn: '✦ Ask Claude for a guide', askAiNote: 'Claude Code on this machine writes a guide that answers the question (up to 4 min).',
-    askAiRunning: 'Claude is writing the guide… (up to 4 min)', askAiFailed: 'Claude could not answer: {reason}',
+    askAiRetry: 'Try again', askAiRunning: 'Claude is looking for the answer in the map and the code… (up to 4 min)',
+    askAiFailed: 'Claude could not answer: {reason}', askMeanwhile: 'Meanwhile, what matches your words', askNoWords: 'No element matches your words yet.',
+    yourQuestions: 'Your questions', deleteAnswer: 'Delete this answer', fileLines: 'lines {range}', fileClose: 'Close the file',
     levelNovice: 'Beginner', levelJunior: 'Junior', levelSenior: 'Senior', levelsAria: 'Explanation level',
     explain: 'Explanation', deeper: 'Learn more',
     home: 'Home', homeTitle: 'What do you want to do?', homeLevel: 'Your level',
@@ -601,6 +627,8 @@ const I18N = {
     tileUnderstandState: '{n} elements · {g} guides', tileUnderstandEmpty: 'Not scanned yet: run {cmd} in Claude Code.',
     tileSecurity: 'Security score', tileSecurityText: 'A grade from A to E, what puts the project at risk and how to fix it.',
     tileEvolve: 'Make it evolve', tileEvolveText: 'Ideas to simplify, speed up and go further, and what similar products do.',
+    secCompute: 'Not computed yet: click to get your score (a few seconds, no AI).', secRunning: 'Computing the score…',
+    secRecompute: '↻ Compute again', secFailed: 'The security check failed: {reason}',
     secBack: '← Home', secMap: 'Open the map', secOutOf: '{score}/100 · {date}',
     secHow: 'Computed without AI by {cmd}, from the project files. For explanations in plain words and fixes, run {skill} in Claude Code.',
     secNothing: 'Nothing found by the checks that ran.', secWhy: 'Why it matters', secFix: 'How to fix it', secSeeMap: 'See {name} on the map',
@@ -631,8 +659,9 @@ const I18N = {
     askOtherMatches: 'Également pertinent', askClose: 'Fermer', askField_description: 'Description',
     askField_context: 'Contexte', askField_constraint: 'Contraintes', askField_concern: "Points d'attention",
     askField_todo: 'À faire', askField_note: 'Notes',
-    askAiBtn: '✦ Demander un parcours à Claude', askAiNote: 'Claude Code, sur cette machine, écrit un parcours qui répond à la question (4 min au plus).',
-    askAiRunning: 'Claude écrit le parcours… (4 min au plus)', askAiFailed: "Claude n'a pas pu répondre : {reason}",
+    askAiRetry: 'Réessayer', askAiRunning: 'Claude cherche la réponse dans la carte et le code… (4 min au plus)',
+    askAiFailed: "Claude n'a pas pu répondre : {reason}", askMeanwhile: 'En attendant, ce qui correspond à vos mots', askNoWords: 'Aucun élément ne correspond encore à vos mots.',
+    yourQuestions: 'Vos questions', deleteAnswer: 'Supprimer cette réponse', fileLines: 'lignes {range}', fileClose: 'Fermer le fichier',
     levelNovice: 'Débutant', levelJunior: 'Junior', levelSenior: 'Senior', levelsAria: "Niveau d'explication",
     explain: 'Explication', deeper: 'Approfondir',
     home: 'Accueil', homeTitle: 'Que voulez-vous faire ?', homeLevel: 'Votre niveau',
@@ -641,6 +670,8 @@ const I18N = {
     tileUnderstandState: '{n} éléments · {g} parcours', tileUnderstandEmpty: 'Pas encore scanné : lancez {cmd} dans Claude Code.',
     tileSecurity: 'Score de sécurité', tileSecurityText: 'Une note de A à E, ce qui met le projet en danger et comment le corriger.',
     tileEvolve: 'Faire évoluer', tileEvolveText: 'Des idées pour simplifier, accélérer et aller plus loin, et ce que font les produits proches.',
+    secCompute: 'Pas encore calculé : cliquez pour obtenir votre score (quelques secondes, sans IA).', secRunning: 'Calcul du score…',
+    secRecompute: '↻ Recalculer', secFailed: 'La vérification de sécurité a échoué : {reason}',
     secBack: '← Accueil', secMap: 'Ouvrir la carte', secOutOf: '{score}/100 · {date}',
     secHow: "Calculé sans IA par {cmd}, à partir des fichiers du projet. Pour des explications en mots simples et des corrections, lancez {skill} dans Claude Code.",
     secNothing: 'Rien trouvé par les vérifications lancées.', secWhy: "Pourquoi c'est important", secFix: 'Comment corriger', secSeeMap: 'Voir {name} sur la carte',
@@ -1483,6 +1514,9 @@ window.__openSb = function(cls, frameCls) {
   selectedCls=cls;
   const onStep = !!(activeGuide && cls === activeGuide.guide.steps[guideStep].element);
   sbStep.hidden = !onStep;
+  // The step's file belongs to the step: hide it on another element, bring it back on the step.
+  if (!onStep) setFilePanel(false);
+  else if (activeGuide.guide.steps[guideStep].file && filePanel.hidden && filePanel.innerHTML) setFilePanel(true);
   // Coming back to the step's element opens on its explanation.
   if (onStep) sidebar.classList.remove('show-full');
   setGuidePanel(onStep);
@@ -1966,7 +2000,34 @@ function renderGuideList() {
 
   const start = guides.find(g => g.valid && g.guide.start);
   if (start) navGuides.appendChild(startCard(start));
-  for (const g of guides) if (g !== start) navGuides.appendChild(guideItem(g));
+  const isAnswer = g => g.id.startsWith('ask-') && !!g.guide?.question;
+  for (const g of guides) if (g !== start && !isAnswer(g)) navGuides.appendChild(guideItem(g));
+  // Answers to the reader's questions, newest first, each with a delete button.
+  const answers = guides.filter(isAnswer).reverse();
+  if (answers.length) {
+    const sub = document.createElement('div');
+    sub.className = 'nav-section';
+    sub.textContent = t('yourQuestions');
+    navGuides.appendChild(sub);
+    for (const g of answers) {
+      const item = guideItem(g);
+      if (PAGE_TOKEN) {
+        const del = document.createElement('i');
+        del.className = 'guide-del';
+        del.textContent = '×';
+        del.title = t('deleteAnswer');
+        del.onclick = async e => {
+          e.stopPropagation();
+          const { ok } = await aiFetch('/api/v1/guides/' + encodeURIComponent(g.id), { method: 'DELETE' });
+          if (!ok) return;
+          if (activeGuide?.id === g.id) exitGuide();
+          await loadGuidesIntoViewer();
+        };
+        item.appendChild(del);
+      }
+      navGuides.appendChild(item);
+    }
+  }
 }
 
 function guideMeta(g) {
@@ -2052,6 +2113,7 @@ function exitGuide() {
   paintGuideStep();
   guideBar.hidden = true;
   sbStep.hidden = true;
+  setFilePanel(false);
   setGuidePanel(false);
   if (location.hash.startsWith('#guide=')) history.replaceState(null, '', location.pathname + location.search);
   renderGuideList();
@@ -2123,6 +2185,52 @@ function flyGuideSpark(prevElement) {
   }, 700);
 }
 
+// ── file panel ──
+const filePanel = document.getElementById('file-panel');
+const fileCache = new Map();
+
+// The sidebar widens while it shows a file, so the code and its explanation sit side by side with the map.
+function setFilePanel(on) {
+  filePanel.hidden = !on;
+  sidebar.classList.toggle('with-file', on);
+}
+
+async function showStepFile(step) {
+  if (!step || !step.file) { setFilePanel(false); return; }
+  const { path, lines } = step.file;
+  let data = fileCache.get(path);
+  if (!data) {
+    data = await api('/api/v1/file?path=' + encodeURIComponent(path));
+    if (data && !data.error) fileCache.set(path, data);
+  }
+  // The reader may have moved on while the file loaded.
+  if (!activeGuide || activeGuide.guide.steps[guideStep] !== step) return;
+  const m = /^(\d+)(?:-(\d+))?$/.exec(lines || '');
+  const start = m ? +m[1] : 0, end = m ? +(m[2] || m[1]) : 0;
+  const head = `<div class="fp-head"><span class="fp-path">${esc(path)}</span>${m ? `<span class="fp-lines">${esc(t('fileLines', { range: lines }))}</span>` : ''}<button type="button" class="ask-close" data-action="close-file" aria-label="${esc(t('fileClose'))}">×</button></div>`;
+  if (!data || data.error) {
+    filePanel.innerHTML = head + `<div class="fp-error">${esc(data?.error || '')}</div>`;
+  } else {
+    const rows = data.content.replace(/\n$/, '').split('\n').map((c, i) => {
+      const n = i + 1;
+      return `<div class="fp-line${n >= start && n <= end ? ' lit' : ''}" data-n="${n}"><span class="n">${n}</span><span class="c">${esc(c) || ' '}</span></div>`;
+    }).join('');
+    filePanel.innerHTML = head + `<div class="fp-body"><div class="fp-code">${rows}</div></div>`;
+  }
+  filePanel.setAttribute('aria-label', path);
+  setFilePanel(true);
+  const first = filePanel.querySelector('.fp-line.lit');
+  if (first) {
+    // A few lines of context above the lit ones.
+    const body = filePanel.querySelector('.fp-body');
+    body.scrollTop += first.getBoundingClientRect().top - body.getBoundingClientRect().top - 3 * first.offsetHeight;
+  }
+}
+
+filePanel.addEventListener('click', e => {
+  if (e.target.closest('[data-action="close-file"]')) setFilePanel(false);
+});
+
 // Opens the step's element, framing its parent diagram so the edge is in view.
 function showGuideStep(prevElement) {
   const step = activeGuide.guide.steps[guideStep];
@@ -2134,6 +2242,7 @@ function showGuideStep(prevElement) {
   paintGuideStep();
   renderGuideList();
   flyGuideSpark(prevElement);
+  showStepFile(step);
 }
 
 // Marks what the guide has walked so far. Safe to call after any re-render.
@@ -2310,27 +2419,30 @@ function clearSearch() {
 }
 
 // Questions to Claude: only when the server handed this page its token.
-const AI = window.__prismeAI || null;
+const AI = window.__prismeAI === true;
+const PAGE_TOKEN = window.__prismeToken || '';
 let aiJob = null;
 
+// Claude's state at the top of the panel: working on the question, or why it could not answer.
 function askAiBlock() {
-  if (!AI) return '';
-  if (aiJob && aiJob.state === 'running')
-    return `<div class="ask-ai"><button type="button" class="ask-ai-btn" disabled>${esc(t('askAiBtn'))}</button><span class="ask-ai-note">${esc(t('askAiRunning'))}</span></div>`;
-  const failed = aiJob && aiJob.state === 'failed';
-  const note = failed ? t('askAiFailed', { reason: aiJob.error || '' }) : t('askAiNote');
-  return `<div class="ask-ai"><button type="button" class="ask-ai-btn" data-action="ask-ai">${esc(t('askAiBtn'))}</button><span class="ask-ai-note${failed ? ' err' : ''}">${esc(note)}</span></div>`;
+  if (!AI || !aiJob) return '';
+  if (aiJob.state === 'running')
+    return `<div class="ask-ai running"><span class="ask-ai-spin" aria-hidden="true"></span><span class="ask-ai-note">${esc(t('askAiRunning'))}</span></div>`;
+  if (aiJob.state === 'failed')
+    return `<div class="ask-ai"><span class="ask-ai-note err">${esc(t('askAiFailed', { reason: aiJob.error || '' }))}</span><button type="button" class="ask-ai-btn" data-action="ask-ai">${esc(t('askAiRetry'))}</button></div>`;
+  return '';
 }
 
 function aiFetch(path, init = {}) {
-  return fetch(path, { ...init, headers: { 'Content-Type': 'application/json', 'X-Prisme-Token': AI.token, ...(init.headers || {}) } })
+  return fetch(path, { ...init, headers: { 'Content-Type': 'application/json', 'X-Prisme-Token': PAGE_TOKEN, ...(init.headers || {}) } })
     .then(r => r.json().catch(() => ({})).then(body => ({ ok: r.ok, body })));
 }
 
 function refreshAskAi() {
   const block = askPanel.querySelector('.ask-ai');
-  if (block) block.outerHTML = askAiBlock();
-  else if (!askPanel.hidden) askPanel.insertAdjacentHTML('beforeend', askAiBlock());
+  const html = askAiBlock();
+  if (block) block.outerHTML = html;
+  else if (!askPanel.hidden && html) askPanel.insertAdjacentHTML('afterbegin', html);
 }
 
 async function followAiJob() {
@@ -2349,9 +2461,8 @@ async function followAiJob() {
   }
 }
 
-async function askClaude() {
-  const question = askInput.value.trim();
-  if (!AI || !question || (aiJob && aiJob.state === 'running')) return;
+async function askClaude(question = askInput.value.trim()) {
+  if (!AI || question.length < 3 || (aiJob && aiJob.state === 'running')) return;
   aiJob = { state: 'running' };
   refreshAskAi();
   const { ok, body } = await aiFetch('/api/v1/ask/ai', { method: 'POST', body: JSON.stringify({ question }) });
@@ -2368,16 +2479,19 @@ if (AI) aiFetch('/api/v1/ask/ai/current').then(({ ok, body }) => {
 
 function renderAskPanel(results) {
   askPanel.hidden = false;
+  const close = `<button type="button" class="ask-close" data-action="close" aria-label="${esc(t('askClose'))}">×</button>`;
+  // While Claude works, the word search is only a preview.
+  const meanwhile = aiJob && aiJob.state === 'running' ? `<div class="ask-others-label">${esc(t('askMeanwhile'))}</div>` : '';
   if (!results.length) {
-    askPanel.innerHTML = `<div class="ask-empty">${esc(t('askNoResults'))}</div>` + askAiBlock();
+    askPanel.innerHTML = askAiBlock() + `<div class="ask-answer-head"><span class="ask-empty">${esc(t(meanwhile ? 'askNoWords' : 'askNoResults'))}</span>${close}</div>`;
     return;
   }
   const [top, ...rest] = results;
-  let html = `<div class="ask-answer">
+  let html = askAiBlock() + meanwhile + `<div class="ask-answer">
     <div class="ask-answer-head">
       <span class="ask-answer-title" data-go="${esc(top.cls)}">${esc(top.title)}</span>
       <span class="ask-answer-field">${esc(fieldLabel(top.field))}</span>
-      <button type="button" class="ask-close" data-action="close">×</button>
+      ${close}
     </div>
     <div class="ask-answer-snippet">${esc(top.snippet)}</div>
   </div>`;
@@ -2386,7 +2500,7 @@ function renderAskPanel(results) {
     html += rest.map(r => `<div class="ask-other" data-go="${esc(r.cls)}">${esc(r.title)}</div>`).join('');
     html += `</div>`;
   }
-  askPanel.innerHTML = html + askAiBlock();
+  askPanel.innerHTML = html;
 }
 
 askPanel.addEventListener('click', e => {
@@ -2397,9 +2511,11 @@ askPanel.addEventListener('click', e => {
   if (go) window.__openSb(go.dataset.go);
 });
 
+// Enter: Claude answers on the map (when it can), the word search shows something meanwhile.
 async function runSearch() {
   const q = askInput.value.trim();
   if (!q) { clearSearch(); return; }
+  if (AI && q.length >= 3 && !(aiJob && aiJob.state === 'running')) askClaude(q);
   const data = await api('/api/ask?q=' + encodeURIComponent(q));
   const results = (data && data.results) || [];
   searchActive = true;
@@ -2518,8 +2634,13 @@ function homeHtml() {
       state: understand
         ? `<div class="home-tile-state ok">${esc(t('tileUnderstandState', { n: p.counts.elements ?? 0, g: p.counts.guides ?? 0 }))}</div>`
         : `<div class="home-tile-state">${withCmd('tileUnderstandEmpty', '/prisme-scan')}</div>` },
-    { key: 'security', icon: '🛡️', name: t('tileSecurity'), text: t('tileSecurityText'), ready: !!p.categories.security?.available,
-      state: state(!!p.categories.security?.available, t('tileGrade', { grade: p.categories.security?.grade, score: p.categories.security?.score }), 'prisme security') },
+    // Always open: without a report, a click computes the score (a few seconds, no AI).
+    { key: 'security', icon: '🛡️', name: t('tileSecurity'), text: t('tileSecurityText'), ready: true,
+      state: securityBusy
+        ? `<div class="home-tile-state ok">${esc(t('secRunning'))}</div>`
+        : p.categories.security?.available
+          ? `<div class="home-tile-state ok">${esc(t('tileGrade', { grade: p.categories.security.grade, score: p.categories.security.score }))}</div>`
+          : `<div class="home-tile-state ok">${esc(t('secCompute'))}</div>` },
     { key: 'evolve', icon: '🌱', name: t('tileEvolve'), text: t('tileEvolveText'), ready: !!p.categories.evolve?.available,
       state: state(!!p.categories.evolve?.available, t('tileEvolveState', { n: (p.categories.evolve?.code ?? 0) + (p.categories.evolve?.ideas ?? 0), p: p.categories.evolve?.products ?? 0 }), '/prisme-evolve', 'tileNotYetClaude') },
   ].map(tile => `<button type="button" class="home-tile" data-tile="${tile.key}"${tile.ready ? '' : ' disabled'}>
@@ -2561,7 +2682,10 @@ homeEl.addEventListener('click', e => {
   }
   const tile = e.target.closest('[data-tile]');
   if (tile && !tile.disabled && tile.dataset.tile === 'understand') enterUnderstand();
-  if (tile && !tile.disabled && tile.dataset.tile === 'security') openSecurity();
+  if (tile && !tile.disabled && tile.dataset.tile === 'security') {
+    if (project?.categories?.security?.available) openSecurity();
+    else computeSecurity();
+  }
   if (tile && !tile.disabled && tile.dataset.tile === 'evolve') openEvolve();
 });
 
@@ -2661,8 +2785,26 @@ function securityItem(f) {
   </details>`;
 }
 
-async function openSecurity() {
-  const r = await api('/api/v1/security');
+// Runs prisme security from the viewer, then shows the page.
+let securityBusy = false;
+async function computeSecurity() {
+  if (securityBusy) return;
+  securityBusy = true;
+  if (!homeEl.hidden) homeEl.innerHTML = homeHtml();
+  const recompute = securityEl.querySelector('[data-act="recompute"]');
+  if (recompute) { recompute.disabled = true; recompute.textContent = t('secRunning'); }
+  const { ok, body } = await aiFetch('/api/v1/security/run', { method: 'POST' });
+  securityBusy = false;
+  if (!ok) {
+    if (!homeEl.hidden) { homeEl.innerHTML = homeHtml(); }
+    alert(t('secFailed', { reason: body.error || '' }));
+    return;
+  }
+  openSecurity(body);
+}
+
+async function openSecurity(report) {
+  const r = report || await api('/api/v1/security');
   if (!r || r.error) return;
   const date = r.date ? new Date(r.date).toLocaleString(document.documentElement.lang) : '';
   const chips = SEVS.filter(s => r.counts?.[s]).map(s => `<span class="sec-chip sev-${s}">${r.counts[s]} · ${esc(t('sev_' + s))}</span>`).join('');
@@ -2675,7 +2817,7 @@ async function openSecurity() {
   const ignored = (r.ignored || []).length
     ? `<div><div class="sec-group-title">${esc(t('secIgnored', { count: r.ignored.length }))}</div>${r.ignored.map(securityItem).join('')}</div>` : '';
   securityEl.innerHTML = `<div class="sec-box">
-    <div class="sec-nav"><button type="button" class="hbtn" data-act="home">${esc(t('secBack'))}</button><button type="button" class="hbtn" data-act="map">${esc(t('secMap'))}</button></div>
+    <div class="sec-nav"><button type="button" class="hbtn" data-act="home">${esc(t('secBack'))}</button><button type="button" class="hbtn" data-act="map">${esc(t('secMap'))}</button><button type="button" class="hbtn" data-act="recompute">${esc(t('secRecompute'))}</button></div>
     <div class="sec-head">
       <div class="sec-grade g-${esc(r.grade)}">${esc(r.grade)}</div>
       <div class="sec-summary">
@@ -2699,6 +2841,7 @@ securityEl.addEventListener('click', e => {
   const act = e.target.closest('[data-act]')?.dataset.act;
   if (act === 'home') { securityEl.hidden = true; openHome(); return; }
   if (act === 'map') { securityEl.hidden = true; return; }
+  if (act === 'recompute') { computeSecurity(); return; }
   const go = e.target.closest('[data-go]');
   if (go) { securityEl.hidden = true; window.__openSb(go.dataset.go); }
 });

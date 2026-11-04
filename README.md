@@ -79,7 +79,11 @@ A **guide** is a step-by-step walk through the diagrams: the viewer opens each e
 
 ### Questions
 
-Type a question in the viewer's question bar (for example "where are credentials stored?"): the matching elements light up on the diagram.
+Type any question in the viewer's question bar (for example "what happens when I run `prisme write`?" or "where is the session checked?"). Claude Code answers on the map: it traces the path along the arrows, lights the blocks to look at, or opens the file at the right lines, each step with its explanation. Meanwhile the elements that match your words light up. Answers are kept under "Your questions" in the left panel.
+
+This needs Claude Code installed and logged in (`claude`, then `/login`) on the machine that runs `prisme view`; people who only open the viewer need nothing. Claude may only read the project (never `.env` files or keys), never change it. `prisme view --no-ai` turns questions off.
+
+The security tile of the home screen computes the score on a click, without AI and without installing anything.
 
 ## CLI
 

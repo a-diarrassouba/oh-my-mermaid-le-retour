@@ -60,6 +60,7 @@ describe('scanText', () => {
 
   it('weighs less in tests', () => {
     expect(scanText('src/__tests__/a.test.ts', `const k = "${AWS}";`)[0].severity).toBe('medium');
+    expect(scanText('src/__tests__/a.test.ts', 'const fn = new Function(body);\nel.innerHTML = html;')).toEqual([]);
   });
 });
 
