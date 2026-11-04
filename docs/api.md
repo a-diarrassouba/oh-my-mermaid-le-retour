@@ -24,7 +24,7 @@ Every route below is `GET` unless noted. Errors are `{ "error": "<reason>" }` wi
   "categories": {
     "understand": { "available": true },
     "security": { "available": true, "grade": "B", "score": 82, "date": "…", "counts": { "critical": 0, "high": 1, "medium": 0, "low": 1 } },
-    "evolve": { "available": false }
+    "evolve": { "available": true, "date": "…", "code": 5, "products": 4, "ideas": 6 }
   },
   "ai": { "available": true }
 }
@@ -107,6 +107,30 @@ The last report of `prisme security`, `404` before the first one:
 - `elements`: up to three elements whose label cites the finding's file, deepest first, to show it on the map.
 - `ignored`: findings left out by `.prisme/security.yaml` (`ignore: [{ rule, file?, line?, reason }]`, written by `/prisme-security` with the user's agreement), with the reason. They do not count in the grade.
 - `source`: `prisme` (base checks), `npm-audit`, `gitleaks`, `osv-scanner` or `semgrep`. `tools` says which ran, which are not installed (`missing`), failed or were skipped (`--no-tools`).
+
+## `GET /api/v1/evolve`
+
+The ideas `/prisme-evolve` wrote (checked by `prisme evolve write`), `404` before the first ones:
+
+```json
+{
+  "version": 1, "date": "…", "commit": "…",
+  "summary": "Markdown: where the project stands and what to do first",
+  "code": [{
+    "kind": "speed", "title": "…", "why": "…", "how": "Markdown steps",
+    "effort": "small", "impact": "high",
+    "elements": ["overall-architecture/server"], "files": ["src/server/api.ts"]
+  }],
+  "market": {
+    "products": [{ "name": "…", "url": "https://…", "what": "…", "similar": "…" }],
+    "ideas": [{ "kind": "design", "title": "…", "why": "…", "how": "…", "effort": "small", "impact": "medium", "seenIn": ["…"] }]
+  }
+}
+```
+
+- `code`: level 1, the project itself. `kind` is `simplify`, `speed` or `further`.
+- `market`: level 2, 3 to 5 similar products the AI found on the web and the ideas they suggest; `kind` is `feature` or `design`, `seenIn` names products of `products`. `null` when only level 1 was written.
+- `effort`: `small`, `medium`, `large`; `impact`: `low`, `medium`, `high`; `elements`: existing element paths.
 
 ## `GET /api/v1/ask?q=<question>`
 

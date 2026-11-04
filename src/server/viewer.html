@@ -473,6 +473,17 @@ body.light .reg-node:hover .nshape { stroke: #000 !important; }
 .home-tile-state.ok { color: var(--accent); }
 @media (prefers-reduced-motion: reduce) { .home-tile { transition: none; } }
 /* Security page: the report of prisme security */
+#evolve { position: fixed; inset: 0; z-index: 610; background: var(--bg); overflow-y: auto; display: flex; justify-content: center; padding: 32px 16px 64px; }
+#evolve[hidden] { display: none; }
+.ev-head { display: flex; flex-direction: column; gap: 4px; }
+.ev-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.ev-tab { border: 1px solid var(--border-hi); background: var(--surface); color: var(--text-mid); border-radius: 8px; padding: 7px 14px; font-size: 13px; cursor: pointer; font-family: var(--font); }
+.ev-tab.on { border-color: var(--accent); color: var(--text); background: color-mix(in srgb, var(--accent) 14%, var(--surface)); }
+.ev-products { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.ev-product { border: 1px solid var(--border); background: var(--surface); border-radius: 10px; padding: 12px 14px; font-size: 12.5px; line-height: 1.6; color: var(--text-mid); display: flex; flex-direction: column; gap: 4px; }
+.ev-product a { color: var(--text); font-weight: 600; font-size: 14px; text-decoration: none; }
+.ev-product a:hover { text-decoration: underline; }
+.ev-md p { margin-bottom: 6px; } .ev-md ul, .ev-md ol { padding-left: 18px; } .ev-md code { font-family: var(--mono); background: var(--surface-2); padding: 1px 5px; border-radius: 4px; font-size: 11.5px; color: var(--text); }
 #security { position: fixed; inset: 0; z-index: 610; background: var(--bg); overflow-y: auto; display: flex; justify-content: center; padding: 32px 16px 64px; }
 #security[hidden] { display: none; }
 .sec-box { width: 100%; max-width: 860px; display: flex; flex-direction: column; gap: 22px; }
@@ -556,6 +567,7 @@ body.light .reg-node:hover .nshape { stroke: #000 !important; }
 
 <div id="home" role="dialog" aria-modal="true" data-i18n-aria="home" hidden></div>
 <div id="security" role="dialog" aria-modal="true" data-i18n-aria="tileSecurity" hidden></div>
+<div id="evolve" role="dialog" aria-modal="true" data-i18n-aria="tileEvolve" hidden></div>
 <div id="guide-bar" role="region" data-i18n-aria="guides" hidden></div>
 <div id="guide-spark" aria-hidden="true"></div>
 
@@ -594,6 +606,12 @@ const I18N = {
     secNothing: 'Nothing found by the checks that ran.', secWhy: 'Why it matters', secFix: 'How to fix it', secSeeMap: 'See {name} on the map',
     secTools: 'Tools', secReason: 'Why it was left out', secIgnored: 'Left out ({count}), with the reason', sev_critical: 'Critical', sev_high: 'High', sev_medium: 'Medium', sev_low: 'Low',
     tool_ran: 'ran', tool_missing: 'not installed', tool_failed: 'failed', tool_skipped: 'skipped', secFiles: '{count} files read',
+    evCodeTab: 'In the code', evMarketTab: 'Around you', evCodeIntro: 'What the AI suggests from reading the code: simplify, speed up, go further.',
+    evMarketIntro: 'Similar products the AI found, and the ideas they suggest for features and design.', evNoMarket: 'No comparison yet: run {cmd} in Claude Code.',
+    ev_simplify: 'Simplify', ev_speed: 'Speed up', ev_further: 'Go further', ev_feature: 'Features', ev_design: 'Design & UX',
+    evWhy: 'What it brings', evHow: 'How', evEffort: 'Effort: {v}', evImpact: 'Impact: {v}', evSeenIn: 'Seen in: {names}', evFiles: 'Files: {files}',
+    lvl_small: 'small', lvl_medium: 'medium', lvl_large: 'large', lvl_low: 'low', lvl_high: 'high', evDate: 'Written on {date}', evProducts: 'Compared with',
+    tileEvolveState: '{n} ideas · {p} products',
     tileReady: 'Ready', tileNotYet: 'Not analyzed yet: run {cmd} in a terminal.', tileNotYetClaude: 'Not analyzed yet: run {cmd} in Claude Code.', tileGrade: 'Grade {grade} · {score}/100',
   },
   fr: {
@@ -628,6 +646,12 @@ const I18N = {
     secNothing: 'Rien trouvé par les vérifications lancées.', secWhy: "Pourquoi c'est important", secFix: 'Comment corriger', secSeeMap: 'Voir {name} sur la carte',
     secTools: 'Outils', secReason: 'Pourquoi elle est écartée', secIgnored: 'Écartées ({count}), avec la raison', sev_critical: 'Critique', sev_high: 'Élevé', sev_medium: 'Moyen', sev_low: 'Faible',
     tool_ran: 'lancé', tool_missing: 'non installé', tool_failed: 'en échec', tool_skipped: 'ignoré', secFiles: '{count} fichiers lus',
+    evCodeTab: 'Dans le code', evMarketTab: 'Autour de vous', evCodeIntro: "Ce que l'IA propose après avoir lu le code : simplifier, accélérer, aller plus loin.",
+    evMarketIntro: "Des produits proches trouvés par l'IA, et les idées qu'ils donnent pour les fonctionnalités et le design.", evNoMarket: 'Pas encore de comparaison : lancez {cmd} dans Claude Code.',
+    ev_simplify: 'Simplifier', ev_speed: 'Accélérer', ev_further: 'Aller plus loin', ev_feature: 'Fonctionnalités', ev_design: 'Design et UX',
+    evWhy: 'Ce que ça apporte', evHow: 'Comment', evEffort: 'Effort : {v}', evImpact: 'Impact : {v}', evSeenIn: 'Vu chez : {names}', evFiles: 'Fichiers : {files}',
+    lvl_small: 'petit', lvl_medium: 'moyen', lvl_large: 'grand', lvl_low: 'faible', lvl_high: 'fort', evDate: 'Écrit le {date}', evProducts: 'Comparé à',
+    tileEvolveState: '{n} idées · {p} produits',
     tileReady: 'Prêt', tileNotYet: 'Pas encore analysé : lancez {cmd} dans un terminal.', tileNotYetClaude: 'Pas encore analysé : lancez {cmd} dans Claude Code.', tileGrade: 'Note {grade} · {score}/100',
   },
 };
@@ -2497,7 +2521,7 @@ function homeHtml() {
     { key: 'security', icon: '🛡️', name: t('tileSecurity'), text: t('tileSecurityText'), ready: !!p.categories.security?.available,
       state: state(!!p.categories.security?.available, t('tileGrade', { grade: p.categories.security?.grade, score: p.categories.security?.score }), 'prisme security') },
     { key: 'evolve', icon: '🌱', name: t('tileEvolve'), text: t('tileEvolveText'), ready: !!p.categories.evolve?.available,
-      state: state(!!p.categories.evolve?.available, t('tileReady'), '/prisme-evolve', 'tileNotYetClaude') },
+      state: state(!!p.categories.evolve?.available, t('tileEvolveState', { n: (p.categories.evolve?.code ?? 0) + (p.categories.evolve?.ideas ?? 0), p: p.categories.evolve?.products ?? 0 }), '/prisme-evolve', 'tileNotYetClaude') },
   ].map(tile => `<button type="button" class="home-tile" data-tile="${tile.key}"${tile.ready ? '' : ' disabled'}>
       <span class="home-tile-icon" aria-hidden="true">${tile.icon}</span>
       <span class="home-tile-name">${esc(tile.name)}</span>
@@ -2538,7 +2562,84 @@ homeEl.addEventListener('click', e => {
   const tile = e.target.closest('[data-tile]');
   if (tile && !tile.disabled && tile.dataset.tile === 'understand') enterUnderstand();
   if (tile && !tile.disabled && tile.dataset.tile === 'security') openSecurity();
+  if (tile && !tile.disabled && tile.dataset.tile === 'evolve') openEvolve();
 });
+
+// ── evolve page ───────────────────────────────────────────
+const evolveEl = document.getElementById('evolve');
+let evolveData = null;
+let evolveTab = 'code';
+
+function evolveItem(i) {
+  const chips = `<span class="sec-chip">${esc(t('evEffort', { v: t('lvl_' + i.effort) }))}</span><span class="sec-chip${i.impact === 'high' ? ' sev-high' : ''}">${esc(t('evImpact', { v: t('lvl_' + i.impact) }))}</span>`;
+  const links = (i.elements || []).map(p => `<button type="button" class="sec-link" data-go="${esc(p)}">${esc(t('secSeeMap', { name: displayTitle(p) }))}</button>`).join('');
+  return `<details class="sec-item">
+    <summary><span class="sec-item-title">${esc(i.title)}</span>${chips}</summary>
+    <div class="sec-item-body">
+      <div><b>${esc(t('evWhy'))}</b>${esc(i.why)}</div>
+      <div class="ev-md"><b>${esc(t('evHow'))}</b>${safeMarkdown(i.how)}</div>
+      ${i.seenIn && i.seenIn.length ? `<div>${esc(t('evSeenIn', { names: i.seenIn.join(', ') }))}</div>` : ''}
+      ${i.files && i.files.length ? `<div class="sec-item-where">${esc(t('evFiles', { files: i.files.join(', ') }))}</div>` : ''}
+      ${links ? `<div class="sec-links">${links}</div>` : ''}
+    </div>
+  </details>`;
+}
+
+function evolveGroups(items, kinds) {
+  return kinds.map(k => {
+    const list = items.filter(i => i.kind === k);
+    return list.length ? `<div><div class="sec-group-title">${esc(t('ev_' + k))} · ${list.length}</div>${list.map(evolveItem).join('')}</div>` : '';
+  }).join('');
+}
+
+function renderEvolve() {
+  const r = evolveData;
+  const date = r.date ? new Date(r.date).toLocaleDateString(document.documentElement.lang) : '';
+  const tab = (key, label) => `<button type="button" class="ev-tab${evolveTab === key ? ' on' : ''}" data-tab="${key}">${esc(t(label))}</button>`;
+  let body;
+  if (evolveTab === 'code') {
+    body = `<div class="sec-sub">${esc(t('evCodeIntro'))}</div>${evolveGroups(r.code || [], ['simplify', 'speed', 'further'])}`;
+  } else if (r.market) {
+    const products = r.market.products.map(p => {
+      const safeUrl = /^https?:\/\//.test(p.url) ? p.url : '#';
+      return `<div class="ev-product"><a href="${esc(safeUrl)}" target="_blank" rel="noopener noreferrer">${esc(p.name)} ↗</a><span>${esc(p.what)}</span><span>${esc(p.similar)}</span></div>`;
+    }).join('');
+    body = `<div class="sec-sub">${esc(t('evMarketIntro'))}</div>
+      <div><div class="sec-group-title">${esc(t('evProducts'))}</div><div class="ev-products">${products}</div></div>
+      ${evolveGroups(r.market.ideas || [], ['feature', 'design'])}`;
+  } else {
+    body = `<div class="sec-empty">${esc(t('evNoMarket', { cmd: '\u0001' })).replace('\u0001', '<code>/prisme-evolve</code>')}</div>`;
+  }
+  evolveEl.innerHTML = `<div class="sec-box">
+    <div class="sec-nav"><button type="button" class="hbtn" data-act="home">${esc(t('secBack'))}</button><button type="button" class="hbtn" data-act="map">${esc(t('secMap'))}</button></div>
+    <div class="ev-head"><div class="sec-title">🌱 ${esc(t('tileEvolve'))}</div><div class="sec-sub">${esc(t('evDate', { date }))}</div></div>
+    <div class="sec-sub ev-md">${safeMarkdown(r.summary || '')}</div>
+    <div class="ev-tabs">${tab('code', 'evCodeTab')}${tab('market', 'evMarketTab')}</div>
+    ${body}
+  </div>`;
+}
+
+async function openEvolve() {
+  const r = await api('/api/v1/evolve');
+  if (!r || r.error) return;
+  evolveData = r;
+  renderEvolve();
+  closeHome();
+  evolveEl.hidden = false;
+  evolveEl.scrollTop = 0;
+  evolveEl.querySelector('[data-act="home"]')?.focus();
+}
+
+evolveEl.addEventListener('click', e => {
+  const tabBtn = e.target.closest('[data-tab]');
+  if (tabBtn) { evolveTab = tabBtn.dataset.tab; renderEvolve(); return; }
+  const act = e.target.closest('[data-act]')?.dataset.act;
+  if (act === 'home') { evolveEl.hidden = true; openHome(); return; }
+  if (act === 'map') { evolveEl.hidden = true; return; }
+  const go = e.target.closest('[data-go]');
+  if (go) { evolveEl.hidden = true; window.__openSb(go.dataset.go); }
+});
+evolveEl.addEventListener('keydown', e => { if (e.key === 'Escape') evolveEl.hidden = true; });
 
 // ── security page ─────────────────────────────────────────
 const securityEl = document.getElementById('security');

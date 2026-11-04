@@ -93,6 +93,7 @@ prisme config language fr          # ドキュメントとインターフェー�
 prisme guide list                  # ガイド一覧を表示
 prisme changes                     # 前回のスキャン以降の変更
 prisme security                    # AI なしのセキュリティスコア A–E（gitleaks、osv-scanner、semgrep があれば使用）
+prisme evolve show                 # /prisme-evolve が書いたプロジェクト改善のアイデア
 prisme update                      # 最新バージョンに更新
 ```
 
@@ -107,6 +108,7 @@ prisme update                      # 最新バージョンに更新
 | `/prisme-scan` | コードベース分析 → ドキュメントとウェルカムガイドを作成 |
 | `/prisme-guide` | 質問に答えるステップごとのガイドを作成 → ビューアで再生 |
 | `/prisme-security` | `prisme security` を実行し、評価をやさしい言葉で説明、各項目を確認して同意したものを修正 |
+| `/prisme-evolve` | コードを簡素化・高速化・発展させるアイデアと、類似製品 3〜5 件の機能・デザインの比較 |
 | `/prisme-view` | ビューアを開く |
 
 ## 対応 AI ツール
