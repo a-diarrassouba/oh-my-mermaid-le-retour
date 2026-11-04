@@ -1,0 +1,130 @@
+import { createContext, useContext } from 'react';
+
+// Interface texts in the project's language (`prisme config language`):
+// French or English, English for any other language.
+
+const en = {
+  welcome: 'Welcome',
+  levelTitle: 'Before you start, what is your level?',
+  levelSub: 'prisme adapts every explanation to you. You can change it at any time.',
+  level_novice: 'Beginner', level_junior: 'Junior', level_senior: 'Senior',
+  who_novice: 'I am new to code: explain with everyday images.',
+  who_junior: 'I code, but this project is new to me.',
+  who_senior: 'I know code well: go straight to the details.',
+  sampleLabel: 'Example: the .prisme folder',
+  sample_novice: 'Imagine a big cabinet with drawers: each part of the project keeps its cards in one.',
+  sample_junior: 'The store.ts module reads and writes each element\'s cards in the .prisme folder, with functions such as writeNodeField.',
+  sample_senior: 'File storage under .prisme/<path>/; writes are not atomic, no lock between two processes.',
+  continue: 'Continue', chosen: 'Chosen level: {level}',
+  project: 'Project {name} · {n} elements',
+  levelPill: 'Level: {level}', change: 'change',
+  spacesTitle: 'What do you want to do?',
+  understand: 'Understand my code', understandText: 'The map of the project, explained at your level. Ask your questions: the answer shows on the map.',
+  understandState: '{n} elements · {g} guides', openMap: 'Open the map', notScanned: 'Not scanned yet: run {cmd} in Claude Code.',
+  security: 'Security score', securityText: 'A grade from A to E, what puts the project at risk, and how to fix it. An automatic check, in a few seconds.',
+  securityState: '{n} findings · computed {date}', securityNone: 'Not computed yet: click to get your score.', seeDetail: 'See the details', compute: 'Compute my score', computing: 'Computing the score…',
+  evolve: 'Make it evolve', evolveText: 'Simplify, speed up, go further, and what products close to yours do.',
+  evolveState: '{n} ideas · {p} products compared', evolveNone: 'No ideas yet: run {cmd} in Claude Code.', seeIdeas: 'See the ideas',
+  newHere: 'New to this project?', startGuide: 'Start the guide', guideMeta: '{n} steps',
+  nav_home: 'Home', nav_map: 'Understand', nav_security: 'Security', nav_evolve: 'Make it evolve',
+  gradeHead_A: 'Nothing serious was found', gradeHead_B: 'A few small things to fix', gradeHead_C: 'One real problem to fix', gradeHead_D: 'A secret or a critical flaw is exposed', gradeHead_E: 'Several critical problems',
+  outOf: '{score} out of 100 · {files} files read · computed {date}',
+  howCheck: 'prisme checks a list of known risks, like a vehicle inspection. It can miss subtle problems or raise false alarms: to have an AI review each finding and help fix it, run {cmd} in Claude Code.',
+  recompute: 'Compute again',
+  scale_A: 'nothing serious', scale_B: 'small things', scale_C: 'a real problem', scale_D: 'an exposed secret', scale_E: 'several critical',
+  sev_critical: 'Critical', sev_high: 'High', sev_medium: 'Medium', sev_low: 'Low',
+  findingsTitle: 'What was found · {n}', nothingFound: 'Nothing found by the checks that ran.',
+  why: 'Why it matters', fix: 'How to fix it', seeOnMap: 'See {name} on the map', places: '{n} places',
+  ignored: 'Left out by the team ({n})', ignoredWhy: 'Why it was left out',
+  tools: 'Tools', tool_ran: 'ran', tool_missing: 'not installed (optional)', tool_failed: 'failed', tool_skipped: 'skipped',
+  threatsTitle: 'Threats by element', threatsIntro: 'Written by Claude with /prisme-security from the map: the realistic threats on each element, and what protects against them.',
+  threatsNone: 'No threat model yet: run {cmd} in Claude Code.',
+  assets: 'To protect', boundaries: 'Where the project meets the outside',
+  st_open: 'To handle', st_mitigated: 'Protected', st_accepted: 'Accepted', protects: 'What protects against it', todo: 'What to do', accepted: 'Why it is accepted',
+  likelihood: 'Likelihood: {v}', impact: 'Impact: {v}', lvl_low: 'low', lvl_medium: 'medium', lvl_high: 'high', eff_small: 'small', eff_medium: 'medium', eff_large: 'large',
+  stride_S: 'Spoofing', stride_T: 'Tampering', stride_R: 'Repudiation', stride_I: 'Information disclosure', stride_D: 'Denial of service', stride_E: 'Elevation of privilege',
+  stride_S_help: 'someone pretends to be another user, a service or the server', stride_T_help: 'someone changes data, code or a request on the way',
+  stride_R_help: 'someone does something and nothing proves who', stride_I_help: 'data or secrets reach someone who should not see them',
+  stride_D_help: 'someone makes it slow or unavailable', stride_E_help: 'someone gets rights they should not have',
+  questionsTitle: 'Design questions', questionsIntro: 'What the team should be able to answer about the design. Claude answered the ones it could check in the code.',
+  q_answered: 'Found in the code', q_open: 'To ask the team',
+  evolveTitle: 'Make the project evolve', writtenOn: 'Written by /prisme-evolve on {date}',
+  tab_code: 'In the code', tab_market: 'Around you', codeIntro: 'What the AI suggests from reading the code.', marketIntro: 'Similar products the AI found, and the ideas they give for features and design.',
+  noMarket: 'No comparison yet: run {cmd} in Claude Code.', comparedWith: 'Compared with', seenIn: 'Seen in: {names}', files: 'Files: {files}',
+  kind_simplify: 'Simplify', kind_speed: 'Speed up', kind_further: 'Go further', kind_feature: 'Features', kind_design: 'Design & UX',
+  brings: 'What it brings', how: 'How', effort: 'Effort: {v}', ideaImpact: 'Impact: {v}', imp_low: 'low', imp_medium: 'medium', imp_high: 'high',
+  loading: 'Loading…', back: 'Back', failed: 'It did not work: {reason}',
+};
+
+type Key = keyof typeof en;
+
+const fr: Record<Key, string> = {
+  welcome: 'Bienvenue',
+  levelTitle: 'Avant de commencer, quel est votre niveau ?',
+  levelSub: 'prisme adapte toutes ses explications à vous. Vous pourrez en changer à tout moment.',
+  level_novice: 'Débutant', level_junior: 'Junior', level_senior: 'Senior',
+  who_novice: 'Je découvre le code : expliquez-moi avec des images du quotidien.',
+  who_junior: 'Je code, mais ce projet est nouveau pour moi.',
+  who_senior: 'Je connais bien le code : allez droit aux détails.',
+  sampleLabel: 'Exemple : le dossier .prisme',
+  sample_novice: 'Imaginez une grande armoire à tiroirs : chaque partie du projet y range ses fiches.',
+  sample_junior: 'Le module store.ts lit et écrit les fiches de chaque élément dans le dossier .prisme, avec des fonctions comme writeNodeField.',
+  sample_senior: 'Stockage en fichiers sous .prisme/<chemin>/ ; écritures non atomiques, aucun verrou entre deux processus.',
+  continue: 'Continuer', chosen: 'Niveau choisi : {level}',
+  project: 'Projet {name} · {n} éléments',
+  levelPill: 'Niveau : {level}', change: 'changer',
+  spacesTitle: 'Que voulez-vous faire ?',
+  understand: 'Comprendre mon code', understandText: "La carte du projet, expliquée à votre niveau. Posez vos questions : la réponse s'affiche sur la carte.",
+  understandState: '{n} éléments · {g} parcours', openMap: 'Ouvrir la carte', notScanned: 'Pas encore scanné : lancez {cmd} dans Claude Code.',
+  security: 'Score de sécurité', securityText: 'Une note de A à E, ce qui met le projet en danger, et comment le corriger. Vérification automatique en quelques secondes.',
+  securityState: '{n} alertes · calculé {date}', securityNone: 'Pas encore calculé : cliquez pour obtenir votre score.', seeDetail: 'Voir le détail', compute: 'Calculer mon score', computing: 'Calcul du score…',
+  evolve: 'Faire évoluer', evolveText: 'Simplifier, accélérer, aller plus loin, et ce que font les produits proches du vôtre.',
+  evolveState: '{n} idées · {p} produits comparés', evolveNone: "Pas encore d'idées : lancez {cmd} dans Claude Code.", seeIdeas: 'Voir les idées',
+  newHere: 'Nouveau sur ce projet ?', startGuide: 'Commencer le parcours', guideMeta: '{n} étapes',
+  nav_home: 'Accueil', nav_map: 'Comprendre', nav_security: 'Sécurité', nav_evolve: 'Faire évoluer',
+  gradeHead_A: "Rien de grave n'a été trouvé", gradeHead_B: 'Quelques petites choses à corriger', gradeHead_C: 'Un vrai problème à corriger', gradeHead_D: 'Un secret ou une faille critique est exposé', gradeHead_E: 'Plusieurs problèmes critiques',
+  outOf: '{score} sur 100 · {files} fichiers lus · calculé {date}',
+  howCheck: "prisme vérifie une liste de risques connus, comme un contrôle technique. Il peut manquer un problème subtil ou donner une fausse alerte : pour qu'une IA relise chaque alerte et aide à corriger, lancez {cmd} dans Claude Code.",
+  recompute: 'Recalculer',
+  scale_A: 'rien de grave', scale_B: 'petites choses', scale_C: 'un vrai problème', scale_D: 'un secret exposé', scale_E: 'plusieurs critiques',
+  sev_critical: 'Critique', sev_high: 'Élevé', sev_medium: 'Moyen', sev_low: 'Faible',
+  findingsTitle: 'Ce qui a été trouvé · {n}', nothingFound: 'Rien trouvé par les vérifications lancées.',
+  why: "Pourquoi c'est important", fix: 'Comment corriger', seeOnMap: 'Voir {name} sur la carte', places: '{n} endroits',
+  ignored: "Écartées par l'équipe ({n})", ignoredWhy: 'Pourquoi elle est écartée',
+  tools: 'Outils', tool_ran: 'lancé', tool_missing: 'non installé (facultatif)', tool_failed: 'en échec', tool_skipped: 'ignoré',
+  threatsTitle: 'Menaces par bloc', threatsIntro: 'Écrit par Claude avec /prisme-security à partir de la carte : les menaces réalistes sur chaque bloc, et ce qui protège contre elles.',
+  threatsNone: 'Pas encore de modèle de menaces : lancez {cmd} dans Claude Code.',
+  assets: 'À protéger', boundaries: "Là où le projet touche l'extérieur",
+  st_open: 'À traiter', st_mitigated: 'Protégé', st_accepted: 'Accepté', protects: 'Ce qui protège', todo: 'À faire', accepted: "Pourquoi on l'accepte",
+  likelihood: 'Probabilité : {v}', impact: 'Gravité : {v}', lvl_low: 'faible', lvl_medium: 'moyenne', lvl_high: 'forte', eff_small: 'petit', eff_medium: 'moyen', eff_large: 'grand',
+  stride_S: 'Usurpation', stride_T: 'Falsification', stride_R: 'Répudiation', stride_I: "Fuite d'information", stride_D: 'Déni de service', stride_E: 'Élévation de privilèges',
+  stride_S_help: "quelqu'un se fait passer pour un autre utilisateur, un service ou le serveur", stride_T_help: "quelqu'un modifie des données, du code ou une requête en chemin",
+  stride_R_help: "quelqu'un agit et rien ne prouve que c'est lui", stride_I_help: "des données ou des secrets arrivent chez quelqu'un qui ne devrait pas les voir",
+  stride_D_help: "quelqu'un rend le service lent ou indisponible", stride_E_help: "quelqu'un obtient des droits qu'il ne devrait pas avoir",
+  questionsTitle: 'Questions de conception', questionsIntro: "Ce que l'équipe doit savoir répondre sur la conception. Claude a répondu à celles qu'il a pu vérifier dans le code.",
+  q_answered: 'Trouvé dans le code', q_open: "À demander à l'équipe",
+  evolveTitle: 'Faire évoluer le projet', writtenOn: 'Écrit par /prisme-evolve le {date}',
+  tab_code: 'Dans le code', tab_market: 'Autour de vous', codeIntro: "Ce que l'IA propose après avoir lu le code.", marketIntro: "Des produits proches trouvés par l'IA, et les idées qu'ils donnent pour les fonctionnalités et le design.",
+  noMarket: 'Pas encore de comparaison : lancez {cmd} dans Claude Code.', comparedWith: 'Comparé à', seenIn: 'Vu chez : {names}', files: 'Fichiers : {files}',
+  kind_simplify: 'Simplifier', kind_speed: 'Accélérer', kind_further: 'Aller plus loin', kind_feature: 'Fonctionnalités', kind_design: 'Design et UX',
+  brings: 'Ce que ça apporte', how: 'Comment', effort: 'Effort : {v}', ideaImpact: 'Impact : {v}', imp_low: 'faible', imp_medium: 'moyen', imp_high: 'fort',
+  loading: 'Chargement…', back: 'Retour', failed: "Ça n'a pas marché : {reason}",
+};
+
+export type Lang = 'fr' | 'en';
+const TEXTS: Record<Lang, Record<Key, string>> = { en, fr };
+
+export function langOf(code: string | undefined): Lang {
+  return String(code ?? '').toLowerCase().split('-')[0] === 'fr' ? 'fr' : 'en';
+}
+
+export function makeT(lang: Lang) {
+  // Keys built at run time (`level_${id}`) are accepted; an unknown one shows as is.
+  return (key: Key | (string & {}), vars: Record<string, string | number> = {}): string =>
+    (TEXTS[lang][key as Key] ?? en[key as Key] ?? key).replace(/\{(\w+)\}/g, (_, k) => String(vars[k] ?? ''));
+}
+
+export type T = ReturnType<typeof makeT>;
+export const I18n = createContext<{ t: T; lang: Lang }>({ t: makeT('fr'), lang: 'fr' });
+export const useI18n = () => useContext(I18n);
+export type { Key as TextKey };

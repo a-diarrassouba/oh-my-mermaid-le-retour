@@ -91,7 +91,7 @@ AI가 코드베이스를 읽고 **perspective**를 작성합니다. perspective�
 
 ```bash
 prisme setup                       # AI 도구에 스킬 등록
-prisme view                        # 인터랙티브 뷰어 열기
+prisme view                        # 뷰어 열기: 수준을 고른 뒤 세 가지 공간 (지도는 /map)
 prisme view --no-ai                # Claude Code 질문 없이 열기 (API: docs/api.md)
 prisme config language fr          # 문서와 인터페이스 언어 설정
 prisme guide list                  # 가이드 목록 보기

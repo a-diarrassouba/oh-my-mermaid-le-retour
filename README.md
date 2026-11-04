@@ -89,7 +89,7 @@ The security tile of the home screen computes the score on a click: an automatic
 
 ```bash
 prisme setup                       # Register skills with your AI tools
-prisme view                        # Open the interactive viewer
+prisme view                        # Open the viewer: choose your level, then the three spaces (map at /map)
 prisme view --no-ai                # Same, without the questions to Claude Code (API: docs/api.md)
 prisme config language fr          # Set the language of the docs and the interface
 prisme guide list                  # List guides (step-by-step walks)

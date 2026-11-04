@@ -91,7 +91,7 @@ Ana ekrandaki güvenlik kutucuğu tek tıkla puanı hesaplar: bilinen riskleri (
 
 ```bash
 prisme setup                       # Becerileri AI araçlarınıza kaydedin
-prisme view                        # Etkileşimli görüntüleyiciyi açın
+prisme view                        # Görüntüleyiciyi açın: seviyenizi seçin, ardından üç alan (harita /map adresinde)
 prisme view --no-ai                # Claude Code'a soru sormadan açın (API: docs/api.md)
 prisme config language fr          # Belgelerin ve arayüzün dilini ayarlayın
 prisme guide list                  # Rehberleri listele
