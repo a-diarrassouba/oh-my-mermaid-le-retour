@@ -43,6 +43,19 @@ const en = {
   'configSet': 'config: {key}={value}',
   'portInUse': 'Port {port} in use, trying {next}...',
   'viewerRunning': 'prisme viewer running at {url}',
+  'aiWindows': 'questions to Claude are not available on Windows yet',
+  'aiNotInstalled': 'Claude Code (the `claude` command) is not installed on this machine',
+  'aiNotLoggedIn': 'Claude Code is not logged in on this machine: run `claude` in a terminal, then /login.',
+  'aiNoAnswer': 'Claude did not answer',
+  'aiNoAnswerDetail': 'Claude did not answer: {detail}',
+  'aiTimeout': 'Claude took longer than 4 minutes',
+  'aiInvalidTwice': 'Claude wrote a guide that is not valid, twice',
+  'aiBusy': 'a question is already being answered',
+  'aiNoSkill': 'the prisme-guide skill was not found next to this prisme',
+  'aiOff': 'questions to Claude are turned off (prisme view --no-ai)',
+  'viewerAiOn': 'Questions to Claude: on. Each one runs Claude Code on this machine (turn off with --no-ai).',
+  'viewerAiOff': 'Questions to Claude: off (--no-ai).',
+  'viewerForbidden': 'Forbidden: the viewer only answers at http://localhost:{port}/ or http://127.0.0.1:{port}/ on this machine.',
   'guideStep': 'step {n}:',
   'guideNone': 'No guides yet. Write one with: prisme guide write <id> < guide.yaml',
   'guideSteps.one': '{count} step',
@@ -103,7 +116,7 @@ Usage:
   prisme changes [--json | --mark]     What changed since the last scan (--mark records a scan)
   prisme guide list|show|write|delete  Manage guides, step-by-step walks (.prisme/.guides/)
   prisme config [key] [value]          Read or set project settings (e.g. language fr)
-  prisme view [--port <port>]          Start web viewer (default: 3000)
+  prisme view [--port <port>] [--no-ai] Start web viewer (default: 3000)
 
 
 Paths: use / for nested elements (e.g. overall-architecture/main-process)
@@ -156,6 +169,19 @@ const fr: Record<MessageKey, string> = {
   'configSet': 'config : {key}={value}',
   'portInUse': 'Le port {port} est occupé, essai du port {next}...',
   'viewerRunning': 'Viewer prisme lancé sur {url}',
+  'aiWindows': 'les questions à Claude ne sont pas encore disponibles sous Windows',
+  'aiNotInstalled': "Claude Code (la commande `claude`) n'est pas installé sur cette machine",
+  'aiNotLoggedIn': "Claude Code n'est pas connecté sur cette machine : lancez `claude` dans un terminal, puis /login.",
+  'aiNoAnswer': "Claude n'a pas répondu",
+  'aiNoAnswerDetail': "Claude n'a pas répondu : {detail}",
+  'aiTimeout': 'Claude a mis plus de 4 minutes',
+  'aiInvalidTwice': "Claude a écrit deux fois un parcours qui n'est pas valide",
+  'aiBusy': 'une question est déjà en cours',
+  'aiNoSkill': "le skill prisme-guide est introuvable à côté de ce prisme",
+  'aiOff': 'les questions à Claude sont désactivées (prisme view --no-ai)',
+  'viewerAiOn': "Questions à Claude : activées. Chacune lance Claude Code sur cette machine (désactiver avec --no-ai).",
+  'viewerAiOff': 'Questions à Claude : désactivées (--no-ai).',
+  'viewerForbidden': "Interdit : le viewer ne répond qu'à http://localhost:{port}/ ou http://127.0.0.1:{port}/ sur cette machine.",
   'guideStep': 'étape {n} :',
   'guideNone': 'Aucun parcours pour le moment. Écrivez-en un avec : prisme guide write <id> < parcours.yaml',
   'guideSteps.one': '{count} étape',
@@ -216,7 +242,7 @@ Utilisation :
   prisme changes [--json | --mark]     Ce qui a changé depuis le dernier scan (--mark enregistre un scan)
   prisme guide list|show|write|delete  Gérer les parcours guidés (.prisme/.guides/)
   prisme config [clé] [valeur]         Lire ou régler le projet (ex. : language fr)
-  prisme view [--port <port>]          Lancer le viewer web (port 3000 par défaut)
+  prisme view [--port <port>] [--no-ai] Lancer le viewer web (port 3000 par défaut)
 
 
 Chemins : utilisez / pour les éléments imbriqués (ex. : overall-architecture/main-process)

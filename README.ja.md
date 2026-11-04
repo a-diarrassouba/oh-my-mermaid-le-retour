@@ -88,6 +88,7 @@ AI がコードベースを読み、**パースペクティブ**を作成しま�
 ```bash
 prisme setup                       # AI ツールにスキルを登録
 prisme view                        # インタラクティブビューアを開く
+prisme view --no-ai                # Claude Code への質問なしで開く (API: docs/api.md)
 prisme config language fr          # ドキュメントとインターフェースの言語を設定
 prisme guide list                  # ガイド一覧を表示
 prisme changes                     # 前回のスキャン以降の変更

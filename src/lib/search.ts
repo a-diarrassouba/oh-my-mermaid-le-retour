@@ -48,12 +48,12 @@ interface Doc {
   fields: Partial<Record<Field, { raw: string; norm: string }>>;
 }
 
-function collectDocs(): Doc[] {
+function collectDocs(cwd?: string): Doc[] {
   const docs: Doc[] = [];
   const FIELDS: Field[] = ['description', 'context', 'constraint', 'concern', 'todo', 'note'];
 
   function walk(perspective: string, nodePath: string[]): void {
-    const data = showNode(perspective, nodePath);
+    const data = showNode(perspective, nodePath, cwd);
     if (!data) return;
     const cls = [perspective, ...nodePath].join('/');
     const id = nodePath.length ? nodePath[nodePath.length - 1] : perspective;
@@ -64,10 +64,10 @@ function collectDocs(): Doc[] {
       if (typeof raw === 'string' && raw.trim()) fields[f] = { raw, norm: normalize(raw) };
     }
     docs.push({ cls, title, normTitle: normalize(title), fields });
-    for (const child of listNodes(perspective, nodePath)) walk(perspective, [...nodePath, child]);
+    for (const child of listNodes(perspective, nodePath, cwd)) walk(perspective, [...nodePath, child]);
   }
 
-  for (const perspective of listClasses()) walk(perspective, []);
+  for (const perspective of listClasses(cwd)) walk(perspective, []);
   return docs;
 }
 
@@ -85,11 +85,11 @@ function bestSnippet(text: string, norm: string, tokens: string[]): string {
   return prefix + text.slice(start, end).trim() + suffix;
 }
 
-export function searchElements(query: string): SearchResult[] {
+export function searchElements(query: string, cwd?: string): SearchResult[] {
   const tokens = [...new Set(tokenize(query))];
   if (!tokens.length) return [];
 
-  const docs = collectDocs();
+  const docs = collectDocs(cwd);
   const scored: SearchResult[] = [];
 
   for (const doc of docs) {

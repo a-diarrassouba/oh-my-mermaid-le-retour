@@ -127,6 +127,12 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); disp
 .ask-other { font-size: 12px; color: var(--text-mid); padding: 4px 8px; background: var(--surface-2); border-radius: 6px; cursor: pointer; }
 .ask-other:hover { color: var(--text); }
 body.light #ask-bar { background: rgba(255,255,255,0.85); }
+.ask-ai { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ask-ai-btn { border: 1px solid var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--text); font-family: var(--font); font-size: 12px; padding: 5px 10px; border-radius: 6px; cursor: pointer; }
+.ask-ai-btn:hover { background: color-mix(in srgb, var(--accent) 26%, transparent); }
+.ask-ai-btn:disabled { opacity: .5; cursor: default; }
+.ask-ai-note { font-size: 11.5px; color: var(--text-dim); flex: 1; min-width: 180px; }
+.ask-ai-note.err { color: #f38ba8; }
 
 #canvas-wrap {
   flex: 1; position: relative; overflow: hidden; cursor: grab; margin-left: 200px;
@@ -498,6 +504,8 @@ const I18N = {
     askOtherMatches: 'Also relevant', askClose: 'Close', askField_description: 'Description',
     askField_context: 'Context', askField_constraint: 'Constraints', askField_concern: "Concerns",
     askField_todo: 'Todo', askField_note: 'Notes',
+    askAiBtn: '✦ Ask Claude for a guide', askAiNote: 'Claude Code on this machine writes a guide that answers the question (up to 4 min).',
+    askAiRunning: 'Claude is writing the guide… (up to 4 min)', askAiFailed: 'Claude could not answer: {reason}',
   },
   fr: {
     zoomOut: 'Zoom arrière', zoomIn: 'Zoom avant', fit: 'ajuster', fitTitle: "Ajuster à l'écran",
@@ -516,6 +524,8 @@ const I18N = {
     askOtherMatches: 'Également pertinent', askClose: 'Fermer', askField_description: 'Description',
     askField_context: 'Contexte', askField_constraint: 'Contraintes', askField_concern: "Points d'attention",
     askField_todo: 'À faire', askField_note: 'Notes',
+    askAiBtn: '✦ Demander un parcours à Claude', askAiNote: 'Claude Code, sur cette machine, écrit un parcours qui répond à la question (4 min au plus).',
+    askAiRunning: 'Claude écrit le parcours… (4 min au plus)', askAiFailed: "Claude n'a pas pu répondre : {reason}",
   },
 };
 let lang = 'en';
@@ -2122,10 +2132,67 @@ function clearSearch() {
   }
 }
 
+// Questions to Claude: only when the server handed this page its token.
+const AI = window.__prismeAI || null;
+let aiJob = null;
+
+function askAiBlock() {
+  if (!AI) return '';
+  if (aiJob && aiJob.state === 'running')
+    return `<div class="ask-ai"><button type="button" class="ask-ai-btn" disabled>${esc(t('askAiBtn'))}</button><span class="ask-ai-note">${esc(t('askAiRunning'))}</span></div>`;
+  const failed = aiJob && aiJob.state === 'failed';
+  const note = failed ? t('askAiFailed', { reason: aiJob.error || '' }) : t('askAiNote');
+  return `<div class="ask-ai"><button type="button" class="ask-ai-btn" data-action="ask-ai">${esc(t('askAiBtn'))}</button><span class="ask-ai-note${failed ? ' err' : ''}">${esc(note)}</span></div>`;
+}
+
+function aiFetch(path, init = {}) {
+  return fetch(path, { ...init, headers: { 'Content-Type': 'application/json', 'X-Prisme-Token': AI.token, ...(init.headers || {}) } })
+    .then(r => r.json().catch(() => ({})).then(body => ({ ok: r.ok, body })));
+}
+
+function refreshAskAi() {
+  const block = askPanel.querySelector('.ask-ai');
+  if (block) block.outerHTML = askAiBlock();
+  else if (!askPanel.hidden) askPanel.insertAdjacentHTML('beforeend', askAiBlock());
+}
+
+async function followAiJob() {
+  while (aiJob && aiJob.state === 'running') {
+    await new Promise(r => setTimeout(r, 3000));
+    const { ok, body } = await aiFetch('/api/v1/ask/ai/' + aiJob.id);
+    if (!ok) { aiJob = { state: 'failed', error: body.error || '' }; break; }
+    aiJob = body;
+  }
+  refreshAskAi();
+  if (aiJob && aiJob.state === 'done') {
+    const id = aiJob.guideId;
+    await loadGuidesIntoViewer();
+    clearSearch();
+    startGuide(id, 0);
+  }
+}
+
+async function askClaude() {
+  const question = askInput.value.trim();
+  if (!AI || !question || (aiJob && aiJob.state === 'running')) return;
+  aiJob = { state: 'running' };
+  refreshAskAi();
+  const { ok, body } = await aiFetch('/api/v1/ask/ai', { method: 'POST', body: JSON.stringify({ question }) });
+  // 409: a question is already being answered (another tab): follow that one.
+  aiJob = ok ? body : body.job ? body.job : { state: 'failed', error: body.error || '' };
+  refreshAskAi();
+  followAiJob();
+}
+
+// A reloaded page picks up the question being answered.
+if (AI) aiFetch('/api/v1/ask/ai/current').then(({ ok, body }) => {
+  if (ok && body && body.state === 'running') { aiJob = body; followAiJob(); }
+});
+
 function renderAskPanel(results) {
   askPanel.hidden = false;
   if (!results.length) {
-    askPanel.innerHTML = `<div class="ask-empty">${esc(t('askNoResults'))}</div>`;
+    askPanel.innerHTML = `<div class="ask-empty">${esc(t('askNoResults'))}</div>` + askAiBlock();
     return;
   }
   const [top, ...rest] = results;
@@ -2142,12 +2209,13 @@ function renderAskPanel(results) {
     html += rest.map(r => `<div class="ask-other" data-go="${esc(r.cls)}">${esc(r.title)}</div>`).join('');
     html += `</div>`;
   }
-  askPanel.innerHTML = html;
+  askPanel.innerHTML = html + askAiBlock();
 }
 
 askPanel.addEventListener('click', e => {
   const close = e.target.closest('[data-action="close"]');
   if (close) { clearSearch(); return; }
+  if (e.target.closest('[data-action="ask-ai"]')) { askClaude(); return; }
   const go = e.target.closest('[data-go]');
   if (go) window.__openSb(go.dataset.go);
 });
