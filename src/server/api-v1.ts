@@ -9,6 +9,7 @@ import { loadGuides } from '../lib/guides.js';
 import { searchElements } from '../lib/search.js';
 import { getLanguage } from '../lib/language.js';
 import { readConfig } from '../lib/config.js';
+import { readExplain, readIcon, type Explain, type Icon } from '../lib/explain.js';
 import { askSupported, getJob, runningJob, startAsk, validateQuestion } from './ask.js';
 import { isLocalOrigin, sameToken } from './local.js';
 import { msg } from '../lib/messages.js';
@@ -33,15 +34,15 @@ export interface ApiElement {
   title: string;
   kind: 'perspective' | 'group' | 'leaf';
   role: Role | null;
-  /** Filled by the scan from step 3 on; null until then */
-  icon: string | null;
+  /** One word from ICONS (src/lib/explain.ts), null when the scan gave none */
+  icon: Icon | null;
   /** Files, folders or external names the element covers */
   files: string[];
   depth: number;
   children: string[];
   fields: Partial<Record<Field, string>>;
-  /** Explanations by reader level, from step 3 on; null until then */
-  explain: Record<string, unknown> | null;
+  /** novice, deeper (novice's "learn more") and junior; the senior level is fields.description */
+  explain: Explain | null;
   updated: string | null;
 }
 
@@ -76,12 +77,12 @@ function toApiElement(el: ElementInfo, cwd?: string): ApiElement {
     title: displayTitle(el),
     kind: el.depth === 0 ? 'perspective' : el.children.length ? 'group' : 'leaf',
     role: el.role,
-    icon: null,
+    icon: readIcon(perspective, nodePath, cwd),
     files: el.locations,
     depth: el.depth,
     children: el.children,
     fields,
-    explain: null,
+    explain: readExplain(perspective, nodePath, cwd),
     updated: readNodeMeta(perspective, nodePath, cwd)?.updated ?? null,
   };
 }

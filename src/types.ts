@@ -23,6 +23,8 @@ export interface ClassMeta {
   prev_diagram?: string;
   kind?: NodeKind;
   title?: string;
+  /** One word from ICONS (src/lib/explain.ts) */
+  icon?: string;
   children?: string[];
   parentPath?: string[];
 }
@@ -37,6 +39,8 @@ export interface ClassData {
   todo?: string;
   note?: string;
   meta?: ClassMeta;
+  /** novice, deeper, junior explanations (explain.yaml) */
+  explain?: Record<string, string> | null;
 }
 
 export interface OmmConfig {

@@ -5,6 +5,7 @@ import { getIncomingRefs, getOutgoingRefs } from '../lib/refs.js';
 import { getLanguage } from '../lib/language.js';
 import { loadGuides } from '../lib/guides.js';
 import { searchElements } from '../lib/search.js';
+import { readExplain } from '../lib/explain.js';
 
 function json(res: ServerResponse, data: unknown, status = 200): void {
   res.writeHead(status, { 'Content-Type': 'application/json' });
@@ -57,7 +58,7 @@ export function handleApi(req: IncomingMessage, res: ServerResponse): boolean {
     if (!data) {
       json(res, { error: 'class not found' }, 404);
     } else {
-      json(res, data);
+      json(res, { ...data, explain: readExplain(classMatch[1], []) });
     }
     return true;
   }
@@ -115,7 +116,7 @@ export function handleApi(req: IncomingMessage, res: ServerResponse): boolean {
       json(res, { error: 'node not found' }, 404);
     } else {
       const children = listNodes(perspective, nodePath);
-      json(res, { ...data, children });
+      json(res, { ...data, explain: readExplain(perspective, nodePath), children });
     }
     return true;
   }
