@@ -558,7 +558,7 @@ const I18N = {
     tileUnderstandState: '{n} elements · {g} guides', tileUnderstandEmpty: 'Not scanned yet: run {cmd} in Claude Code.',
     tileSecurity: 'Security score', tileSecurityText: 'A grade from A to E, what puts the project at risk and how to fix it.',
     tileEvolve: 'Make it evolve', tileEvolveText: 'Ideas to simplify, speed up and go further, and what similar products do.',
-    tileReady: 'Ready', tileNotYet: 'Not analyzed yet: run {cmd} in Claude Code.',
+    tileReady: 'Ready', tileNotYet: 'Not analyzed yet: run {cmd} in a terminal.', tileNotYetClaude: 'Not analyzed yet: run {cmd} in Claude Code.', tileGrade: 'Grade {grade} · {score}/100',
   },
   fr: {
     zoomOut: 'Zoom arrière', zoomIn: 'Zoom avant', fit: 'ajuster', fitTitle: "Ajuster à l'écran",
@@ -587,7 +587,7 @@ const I18N = {
     tileUnderstandState: '{n} éléments · {g} parcours', tileUnderstandEmpty: 'Pas encore scanné : lancez {cmd} dans Claude Code.',
     tileSecurity: 'Score de sécurité', tileSecurityText: 'Une note de A à E, ce qui met le projet en danger et comment le corriger.',
     tileEvolve: 'Faire évoluer', tileEvolveText: 'Des idées pour simplifier, accélérer et aller plus loin, et ce que font les produits proches.',
-    tileReady: 'Prêt', tileNotYet: 'Pas encore analysé : lancez {cmd} dans Claude Code.',
+    tileReady: 'Prêt', tileNotYet: 'Pas encore analysé : lancez {cmd} dans un terminal.', tileNotYetClaude: 'Pas encore analysé : lancez {cmd} dans Claude Code.', tileGrade: 'Note {grade} · {score}/100',
   },
 };
 let lang = 'en';
@@ -2444,9 +2444,9 @@ function homeHtml() {
   }).join('');
   // The command goes in as a marker, so it can be shown as code once escaped.
   const withCmd = (key, c) => esc(t(key, { cmd: '\u0001' })).replace('\u0001', `<code>${esc(c)}</code>`);
-  const state = (ready, okText, cmdName) => ready
+  const state = (ready, okText, cmdName, key = 'tileNotYet') => ready
     ? `<div class="home-tile-state ok">${esc(okText)}</div>`
-    : `<div class="home-tile-state">${withCmd('tileNotYet', cmdName)}</div>`;
+    : `<div class="home-tile-state">${withCmd(key, cmdName)}</div>`;
   const understand = !!p.categories.understand?.available;
   const tiles = [
     { key: 'understand', icon: '🧭', name: t('tileUnderstand'), text: t('tileUnderstandText'), ready: understand,
@@ -2454,9 +2454,9 @@ function homeHtml() {
         ? `<div class="home-tile-state ok">${esc(t('tileUnderstandState', { n: p.counts.elements ?? 0, g: p.counts.guides ?? 0 }))}</div>`
         : `<div class="home-tile-state">${withCmd('tileUnderstandEmpty', '/prisme-scan')}</div>` },
     { key: 'security', icon: '🛡️', name: t('tileSecurity'), text: t('tileSecurityText'), ready: !!p.categories.security?.available,
-      state: state(!!p.categories.security?.available, t('tileReady'), '/prisme-security') },
+      state: state(!!p.categories.security?.available, t('tileGrade', { grade: p.categories.security?.grade, score: p.categories.security?.score }), 'prisme security') },
     { key: 'evolve', icon: '🌱', name: t('tileEvolve'), text: t('tileEvolveText'), ready: !!p.categories.evolve?.available,
-      state: state(!!p.categories.evolve?.available, t('tileReady'), '/prisme-evolve') },
+      state: state(!!p.categories.evolve?.available, t('tileReady'), '/prisme-evolve', 'tileNotYetClaude') },
   ].map(tile => `<button type="button" class="home-tile" data-tile="${tile.key}"${tile.ready ? '' : ' disabled'}>
       <span class="home-tile-icon" aria-hidden="true">${tile.icon}</span>
       <span class="home-tile-name">${esc(tile.name)}</span>

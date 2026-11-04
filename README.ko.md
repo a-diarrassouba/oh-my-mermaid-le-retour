@@ -92,6 +92,7 @@ prisme view --no-ai                # Claude Code 질문 없이 열기 (API: docs
 prisme config language fr          # 문서와 인터페이스 언어 설정
 prisme guide list                  # 가이드 목록 보기
 prisme changes                     # 마지막 스캔 이후 변경 사항
+prisme security                    # AI 없이 보안 점수 A–E (gitleaks, osv-scanner, semgrep이 설치되어 있으면 사용)
 prisme update                      # 최신 버전으로 업데이트
 ```
 

@@ -43,6 +43,21 @@ const en = {
   'configSet': 'config: {key}={value}',
   'portInUse': 'Port {port} in use, trying {next}...',
   'viewerRunning': 'prisme viewer running at {url}',
+  'securityScore': 'Security score: {grade} ({score}/100)',
+  'securityNone': 'Nothing found by the checks that ran.',
+  'securitySeverity_critical': '{count} critical',
+  'securitySeverity_high': '{count} high',
+  'securitySeverity_medium': '{count} medium',
+  'securitySeverity_low': '{count} low',
+  'securityFiles': '{count} files read.',
+  'securityMore': '… and {count} more in the report.',
+  'securityTools': 'Tools: {tools}',
+  'securityTool_ran': 'ran',
+  'securityTool_missing': 'not installed',
+  'securityTool_failed': 'failed',
+  'securityTool_skipped': 'skipped',
+  'securityReport': 'Report: {file}',
+  'securityNext': 'Explanations and fixes: /prisme-security in Claude Code. In the viewer: prisme view.',
   'iconSet': 'icon of {path}: {icon}',
   'iconRemoved': 'icon of {path} removed',
   'explainWritten': 'wrote the explanations of {path}',
@@ -119,6 +134,7 @@ Usage:
   prisme refs <path>                   Show elements that reference this element
   prisme validate [path]               Validate diagram(s) and guides
   prisme changes [--json | --mark]     What changed since the last scan (--mark records a scan)
+  prisme security [--json] [--no-tools] Security score A–E, report in .prisme/.reports/
   prisme guide list|show|write|delete  Manage guides, step-by-step walks (.prisme/.guides/)
   prisme config [key] [value]          Read or set project settings (e.g. language fr)
   prisme view [--port <port>] [--no-ai] Start web viewer (default: 3000)
@@ -176,6 +192,21 @@ const fr: Record<MessageKey, string> = {
   'configSet': 'config : {key}={value}',
   'portInUse': 'Le port {port} est occupé, essai du port {next}...',
   'viewerRunning': 'Viewer prisme lancé sur {url}',
+  'securityScore': 'Score de sécurité : {grade} ({score}/100)',
+  'securityNone': "Rien trouvé par les vérifications lancées.",
+  'securitySeverity_critical': '{count} critique(s)',
+  'securitySeverity_high': '{count} élevé(s)',
+  'securitySeverity_medium': '{count} moyen(s)',
+  'securitySeverity_low': '{count} faible(s)',
+  'securityFiles': '{count} fichiers lus.',
+  'securityMore': '… et {count} autres dans le rapport.',
+  'securityTools': 'Outils : {tools}',
+  'securityTool_ran': 'lancé',
+  'securityTool_missing': 'non installé',
+  'securityTool_failed': 'en échec',
+  'securityTool_skipped': 'ignoré',
+  'securityReport': 'Rapport : {file}',
+  'securityNext': 'Explications et corrections : /prisme-security dans Claude Code. Dans le viewer : prisme view.',
   'iconSet': 'icône de {path} : {icon}',
   'iconRemoved': 'icône de {path} supprimée',
   'explainWritten': 'explications de {path} écrites',
@@ -252,6 +283,7 @@ Utilisation :
   prisme refs <chemin>                 Voir les éléments qui référencent cet élément
   prisme validate [chemin]             Vérifier les diagrammes et les parcours
   prisme changes [--json | --mark]     Ce qui a changé depuis le dernier scan (--mark enregistre un scan)
+  prisme security [--json] [--no-tools] Score de sécurité A–E, rapport dans .prisme/.reports/
   prisme guide list|show|write|delete  Gérer les parcours guidés (.prisme/.guides/)
   prisme config [clé] [valeur]         Lire ou régler le projet (ex. : language fr)
   prisme view [--port <port>] [--no-ai] Lancer le viewer web (port 3000 par défaut)

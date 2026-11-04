@@ -92,6 +92,7 @@ prisme view --no-ai                # Claude Code'a soru sormadan açın (API: do
 prisme config language fr          # Belgelerin ve arayüzün dilini ayarlayın
 prisme guide list                  # Rehberleri listele
 prisme changes                     # Son taramadan bu yana değişenler
+prisme security                    # Yapay zekâ olmadan güvenlik notu A–E (kuruluysa gitleaks, osv-scanner, semgrep kullanılır)
 prisme update                      # En son sürüme güncelleyin
 ```
 
