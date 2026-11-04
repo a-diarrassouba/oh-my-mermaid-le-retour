@@ -10,7 +10,7 @@ import { searchElements } from '../lib/search.js';
 import { getLanguage } from '../lib/language.js';
 import { readConfig } from '../lib/config.js';
 import { readExplain, readIcon, type Explain, type Icon } from '../lib/explain.js';
-import { readSecurityReport, reportPath } from '../lib/security.js';
+import { readSecurityReport, reportPath, type SecurityReport } from '../lib/security.js';
 import { askSupported, getJob, runningJob, startAsk, validateQuestion } from './ask.js';
 import { isLocalOrigin, sameToken } from './local.js';
 import { msg } from '../lib/messages.js';
@@ -85,6 +85,34 @@ function toApiElement(el: ElementInfo, cwd?: string): ApiElement {
     fields,
     explain: readExplain(perspective, nodePath, cwd),
     updated: readNodeMeta(perspective, nodePath, cwd)?.updated ?? null,
+  };
+}
+
+const covers = (location: string, file: string) =>
+  location.endsWith('/') ? file.startsWith(location) : file === location || file.startsWith(location + '/');
+
+/** The security report, each finding with the elements whose label cites its file (deepest first). */
+export function apiSecurity(cwd?: string): (SecurityReport & { findings: (SecurityReport['findings'][number] & { elements: string[] })[] }) | null {
+  const report = readSecurityReport(cwd);
+  if (!report) return null;
+  const elements = listElements(cwd).filter(e => e.locations.length).sort((a, b) => b.depth - a.depth);
+  // A bare name after a path ("src/a.ts, b.ts") is in the folder of the path before it.
+  const located = elements.map(e => {
+    let dir = '';
+    const paths = e.locations.map(raw => {
+      const loc = raw.replace(/^\.\//, '').replace(/^`|`$/g, '');
+      const full = !loc.includes('/') && dir ? dir + loc : loc;
+      if (full.includes('/')) dir = full.endsWith('/') ? full : full.slice(0, full.lastIndexOf('/') + 1);
+      return full;
+    });
+    return { path: e.path, paths };
+  });
+  return {
+    ...report,
+    findings: report.findings.map(f => ({
+      ...f,
+      elements: f.file ? located.filter(e => e.paths.some(p => covers(p, f.file!))).map(e => e.path).slice(0, 3) : [],
+    })),
   };
 }
 
@@ -210,7 +238,7 @@ export function handleApiV1(req: IncomingMessage, res: ServerResponse, ctx: ApiC
   }
 
   if (route === '/api/v1/security') {
-    const report = readSecurityReport(ctx.cwd);
+    const report = apiSecurity(ctx.cwd);
     if (report) json(res, report);
     else json(res, { error: 'no security report: run prisme security' }, 404);
     return true;

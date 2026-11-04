@@ -106,6 +106,7 @@ prisme update                      # 更新到最新版本
 | --- | --- |
 | `/prisme-scan` | 分析代码库 → 编写文档和欢迎导览 |
 | `/prisme-guide` | 编写回答问题的逐步导览 → 在查看器中播放 |
+| `/prisme-security` | 运行 `prisme security`，用通俗的话解释评分，逐项核实并修复你同意的问题 |
 | `/prisme-view` | 打开查看器 |
 
 ## 支持的 AI 工具

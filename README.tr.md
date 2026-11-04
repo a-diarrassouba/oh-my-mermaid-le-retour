@@ -106,6 +106,7 @@ Beceriler, **AI kodlama aracınızın içinde** (terminalde değil) çalıştır
 | --- | --- |
 | `/prisme-scan` | Kod tabanını analiz eder → belgeleri ve karşılama rehberini yazar |
 | `/prisme-guide` | Bir soruyu yanıtlayan adım adım rehber yazar → görüntüleyicide oynatılır |
+| `/prisme-security` | `prisme security` çalıştırır, notu sade bir dille açıklar, her bulguyu kontrol eder ve onayladıklarınızı düzeltir |
 | `/prisme-view` | Görüntüleyiciyi açar |
 
 ## Desteklenen AI Araçları

@@ -11,6 +11,7 @@ function printReport(r: SecurityReport, file: string): void {
   const counts = SEVERITIES.filter(s => r.counts[s]).map(s => msg(`securitySeverity_${s}` as const, { count: r.counts[s] }));
   out.push(counts.length ? counts.join(' · ') : msg('securityNone'));
   out.push(msg('securityFiles', { count: r.files }));
+  if (r.ignored.length) out.push(msg('securityIgnored', { count: r.ignored.length }));
   if (r.findings.length) out.push('');
   for (const f of r.findings.slice(0, MAX_SHOWN)) {
     const where = f.file ? ` — ${f.file}${f.line ? `:${f.line}` : ''}` : '';

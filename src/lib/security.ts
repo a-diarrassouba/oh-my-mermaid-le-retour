@@ -5,6 +5,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { getOmmDir } from './store.js';
 import { getLanguage } from './language.js';
 import { readOmmFile, writeOmmFile } from './omm-fs.js';
+import YAML from 'yaml';
 
 // `prisme security`: a security score from A to E, without AI and without
 // installing anything. Base checks read the project's files (secrets,
@@ -39,6 +40,9 @@ export interface Finding {
 export type ToolStatus = 'ran' | 'missing' | 'failed' | 'skipped';
 export interface ToolRun { name: string; status: ToolStatus; findings: number; note?: string }
 
+/** A finding the team checked and decided to leave, from .prisme/security.yaml */
+export interface IgnoreRule { rule: string; file?: string; line?: number; reason: string }
+
 export interface SecurityReport {
   version: 1;
   date: string;
@@ -48,6 +52,8 @@ export interface SecurityReport {
   counts: Record<Severity, number>;
   files: number;
   findings: Finding[];
+  /** Findings left out by .prisme/security.yaml, with the reason */
+  ignored: (Finding & { reason: string })[];
   tools: ToolRun[];
 }
 
@@ -459,6 +465,29 @@ function runSemgrep(cwd: string, lang: 'en' | 'fr'): { run: ToolRun; findings: F
   }
 }
 
+// ── ignored findings ──────────────────────────────────────
+
+export const IGNORE_FILE = 'security.yaml';
+
+/** .prisme/security.yaml: `ignore: [{ rule, file?, line?, reason }]`. Entries without a rule or a reason are dropped. */
+export function readIgnoreRules(cwd?: string): IgnoreRule[] {
+  try {
+    const data = YAML.parse(readOmmFile(getOmmDir(cwd), path.join(getOmmDir(cwd), IGNORE_FILE)) ?? '') as { ignore?: unknown } | null;
+    if (!Array.isArray(data?.ignore)) return [];
+    return data.ignore.filter((x): x is IgnoreRule =>
+      !!x && typeof x === 'object' && typeof (x as IgnoreRule).rule === 'string' && typeof (x as IgnoreRule).reason === 'string' && !!(x as IgnoreRule).reason.trim());
+  } catch {
+    return [];
+  }
+}
+
+/** The ignore entry covering a finding: same rule, same file (or a folder ending in /), same line when given. */
+export function ignoredBy(f: Finding, rules: IgnoreRule[]): IgnoreRule | null {
+  return rules.find(r => r.rule === f.rule
+    && (r.file === undefined || (r.file.endsWith('/') ? (f.file ?? '').startsWith(r.file) : f.file === r.file))
+    && (r.line === undefined || f.line === r.line)) ?? null;
+}
+
 // ── report ────────────────────────────────────────────────
 
 export interface SecurityOptions {
@@ -499,6 +528,13 @@ export function runSecurity(cwd: string = process.cwd(), options: SecurityOption
     for (const name of ['npm audit', 'gitleaks', 'osv-scanner', 'semgrep']) tools.push({ name, status: 'skipped', findings: 0 });
   }
 
+  const ignoreRules = readIgnoreRules(cwd);
+  const ignored: SecurityReport['ignored'] = [];
+  for (let i = findings.length - 1; i >= 0; i--) {
+    const by = ignoredBy(findings[i], ignoreRules);
+    if (by) ignored.unshift({ ...findings.splice(i, 1)[0], reason: by.reason });
+  }
+
   const order = (s: Severity) => SEVERITIES.indexOf(s);
   findings.sort((a, b) => order(a.severity) - order(b.severity) || (a.file ?? '').localeCompare(b.file ?? '') || (a.line ?? 0) - (b.line ?? 0));
   const counts = Object.fromEntries(SEVERITIES.map(s => [s, findings.filter(f => f.severity === s).length])) as Record<Severity, number>;
@@ -507,7 +543,7 @@ export function runSecurity(cwd: string = process.cwd(), options: SecurityOption
     version: 1,
     date: new Date().toISOString(),
     commit: git(['rev-parse', 'HEAD'], cwd)?.trim() ?? null,
-    grade, score, counts, files: contents.size, findings, tools,
+    grade, score, counts, files: contents.size, findings, ignored, tools,
   };
 }
 

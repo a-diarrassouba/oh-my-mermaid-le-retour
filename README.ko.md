@@ -106,6 +106,7 @@ prisme update                      # 최신 버전으로 업데이트
 | --- | --- |
 | `/prisme-scan` | 코드베이스 분석 → 문서와 환영 가이드 작성 |
 | `/prisme-guide` | 질문에 답하는 단계별 가이드 작성 → 뷰어에서 재생 |
+| `/prisme-security` | `prisme security` 실행, 등급을 쉬운 말로 설명, 각 항목 확인 후 동의한 것만 수정 |
 | `/prisme-view` | 뷰어 열기 |
 
 ## 지원 AI 도구
