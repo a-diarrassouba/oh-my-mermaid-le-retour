@@ -22,7 +22,7 @@ A guide holds the order, the edge or nodes to look at, and for each step a short
 prisme guide list
 ```
 
-If it prints an error, the CLI is too old (it reads `guide` as an element and answers `error: invalid field 'list'` or `erreur : champ invalide 'list'`): tell the user to run `prisme update` (or `npm install -g github:a-diarrassouba/oh-my-mermaid-le-retour`), then try again. Never write `.prisme/.guides/` by hand instead.
+If it prints an error, the CLI is too old (it reads `guide` as an element and answers `error: invalid field 'list'` or `erreur : champ invalide 'list'`): tell the user to run `prisme update`, then try again. Never write `.prisme/.guides/` by hand instead.
 
 The list also shows which guide ids are already taken.
 

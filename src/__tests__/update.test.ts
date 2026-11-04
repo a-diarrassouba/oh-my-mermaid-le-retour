@@ -1,38 +1,50 @@
+import path from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const execSync = vi.fn();
 const execFileSync = vi.fn();
 
 vi.mock('node:child_process', () => ({
   execFileSync,
-  execSync,
+  execSync: vi.fn(),
 }));
+
+// The tests run from a clone of the repository: its root holds skills/ and .git.
+const ROOT = path.resolve(__dirname, '..', '..');
 
 describe('commandUpdate', () => {
   beforeEach(() => {
     vi.resetModules();
-    execSync.mockReset();
     execFileSync.mockReset();
   });
 
-  it('re-runs setup through a fresh prisme subprocess after the CLI update succeeds', async () => {
-    execSync.mockReturnValue('updated');
+  it('pulls and rebuilds the clone, then re-runs setup through a fresh prisme subprocess', async () => {
     const stderrWrite = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
     const { commandUpdate } = await import('../commands/update.js');
 
     await commandUpdate();
 
-    expect(execSync).toHaveBeenCalledWith('npm install -g github:a-diarrassouba/oh-my-mermaid-le-retour 2>&1', {
-      encoding: 'utf-8',
-    });
-    expect(execFileSync).toHaveBeenCalledWith('prisme', ['setup'], { stdio: 'inherit' });
+    expect(execFileSync.mock.calls).toEqual([
+      ['git', ['-C', ROOT, 'pull', '--ff-only'], { stdio: 'inherit' }],
+      ['npm', ['install'], { cwd: ROOT, stdio: 'inherit' }],
+      ['prisme', ['setup'], { stdio: 'inherit' }],
+    ]);
+    stderrWrite.mockRestore();
+  });
+
+  it('stops before setup when the pull fails', async () => {
+    execFileSync.mockImplementationOnce(() => { throw new Error('not a fast-forward'); });
+    const stderrWrite = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    const { commandUpdate } = await import('../commands/update.js');
+
+    await commandUpdate();
+
+    expect(execFileSync).toHaveBeenCalledTimes(1);
     stderrWrite.mockRestore();
   });
 
   it('fails when the fresh setup subprocess fails', async () => {
-    execSync.mockReturnValue('updated');
-    execFileSync.mockImplementation(() => {
-      throw new Error('setup failed');
+    execFileSync.mockImplementation((cmd: string) => {
+      if (cmd === 'prisme') throw new Error('setup failed');
     });
     const stderrWrite = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
     const { commandUpdate } = await import('../commands/update.js');

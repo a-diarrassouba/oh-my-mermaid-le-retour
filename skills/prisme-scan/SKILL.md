@@ -16,10 +16,10 @@ Analyze the codebase and generate `.prisme/` architecture documentation using **
 ## Prerequisites
 
 ```bash
-command -v prisme || npm install -g github:a-diarrassouba/oh-my-mermaid-le-retour
+command -v prisme
 ```
 
-If the install fails, tell the user: "Please run `npm install -g github:a-diarrassouba/oh-my-mermaid-le-retour` in your terminal, then try again."
+If it prints nothing, prisme is not installed: stop and tell the user to run, in a terminal, `git clone https://github.com/a-diarrassouba/oh-my-mermaid-le-retour.git prisme && cd prisme && npm install && npm link`, then try again.
 
 ---
 

@@ -15,11 +15,15 @@
 
 ## Quick Start
 
-prisme is not on npm yet. Install it from GitHub, then register its skills with your AI coding tools:
+prisme is not on npm yet. Install it from its source, then register its skills with your AI coding tools:
 
 ```bash
-npm install -g github:a-diarrassouba/oh-my-mermaid-le-retour && prisme setup
+git clone https://github.com/a-diarrassouba/oh-my-mermaid-le-retour.git prisme
+cd prisme && npm install && npm link
+prisme setup
 ```
+
+Later, `prisme update` pulls and rebuilds this clone.
 
 In the project you want to understand, choose the language of the docs (optional, English by default):
 

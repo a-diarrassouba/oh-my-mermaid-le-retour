@@ -17,11 +17,15 @@
 
 ## 빠른 시작
 
-prisme은 아직 npm에 없습니다. GitHub에서 설치한 다음, AI 코딩 도구에 스킬을 등록하세요:
+prisme은 아직 npm에 없습니다. 소스에서 설치한 다음, AI 코딩 도구에 스킬을 등록하세요:
 
 ```bash
-npm install -g github:a-diarrassouba/oh-my-mermaid-le-retour && prisme setup
+git clone https://github.com/a-diarrassouba/oh-my-mermaid-le-retour.git prisme
+cd prisme && npm install && npm link
+prisme setup
 ```
+
+이후 `prisme update`가 이 클론을 가져와 다시 빌드합니다.
 
 이해하고 싶은 프로젝트에서 문서 언어를 선택하세요 (선택 사항, 기본값은 영어):
 

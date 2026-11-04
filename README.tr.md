@@ -17,11 +17,15 @@
 
 ## Hızlı Başlangıç
 
-prisme henüz npm'de değil. GitHub'dan kurun, ardından becerilerini AI kodlama araçlarınıza kaydedin:
+prisme henüz npm'de değil. Kaynaktan kurun, ardından becerilerini AI kodlama araçlarınıza kaydedin:
 
 ```bash
-npm install -g github:a-diarrassouba/oh-my-mermaid-le-retour && prisme setup
+git clone https://github.com/a-diarrassouba/oh-my-mermaid-le-retour.git prisme
+cd prisme && npm install && npm link
+prisme setup
 ```
+
+Daha sonra `prisme update` bu klonu güncelleyip yeniden derler.
 
 Anlamak istediğiniz projede belgelerin dilini seçin (isteğe bağlı, varsayılan İngilizce):
 

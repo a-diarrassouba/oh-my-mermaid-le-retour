@@ -17,11 +17,15 @@
 
 ## クイックスタート
 
-prisme はまだ npm にありません。GitHub からインストールし、AI コーディングツールにスキルを登録してください:
+prisme はまだ npm にありません。ソースからインストールし、AI コーディングツールにスキルを登録してください:
 
 ```bash
-npm install -g github:a-diarrassouba/oh-my-mermaid-le-retour && prisme setup
+git clone https://github.com/a-diarrassouba/oh-my-mermaid-le-retour.git prisme
+cd prisme && npm install && npm link
+prisme setup
 ```
+
+その後は `prisme update` がこのクローンを更新して再ビルドします。
 
 理解したいプロジェクトで、ドキュメントの言語を選びます（任意、デフォルトは英語）:
 

@@ -17,11 +17,15 @@
 
 ## 快速开始
 
-prisme 尚未发布到 npm。请从 GitHub 安装，然后将技能注册到你的 AI 编程工具中：
+prisme 尚未发布到 npm。请从源码安装，然后将技能注册到你的 AI 编程工具中：
 
 ```bash
-npm install -g github:a-diarrassouba/oh-my-mermaid-le-retour && prisme setup
+git clone https://github.com/a-diarrassouba/oh-my-mermaid-le-retour.git prisme
+cd prisme && npm install && npm link
+prisme setup
 ```
+
+之后，`prisme update` 会拉取并重新构建这个克隆。
 
 在你想要理解的项目中，选择文档的语言（可选，默认为英文）：
 
