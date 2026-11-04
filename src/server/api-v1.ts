@@ -1,4 +1,3 @@
-import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import type { IncomingMessage, ServerResponse } from 'node:http';
@@ -10,7 +9,8 @@ import { searchElements } from '../lib/search.js';
 import { getLanguage } from '../lib/language.js';
 import { readConfig } from '../lib/config.js';
 import { readExplain, readIcon, type Explain, type Icon } from '../lib/explain.js';
-import { readSecurityReport, reportPath, type SecurityReport } from '../lib/security.js';
+import { readSecurityReport, type SecurityReport } from '../lib/security.js';
+import { readEvolve } from '../lib/evolve.js';
 import { askSupported, getJob, runningJob, startAsk, validateQuestion } from './ask.js';
 import { isLocalOrigin, sameToken } from './local.js';
 import { msg } from '../lib/messages.js';
@@ -120,14 +120,13 @@ export function apiElements(cwd?: string): ApiElement[] {
   return listElements(cwd).map(el => toApiElement(el, cwd));
 }
 
-// Reports live in .prisme/.reports/ (the dot keeps them out of the elements).
-const reportExists = (name: string, cwd?: string) => fs.existsSync(reportPath(name, cwd));
 
 export function apiProject(ctx: Pick<ApiContext, 'token' | 'cwd'>) {
   const elements = listElements(ctx.cwd);
   const guides = loadGuides(ctx.cwd);
   const supported = askSupported();
   const security = readSecurityReport(ctx.cwd);
+  const evolve = readEvolve(ctx.cwd);
   return {
     api: API_VERSION,
     name: path.basename(ctx.cwd ?? process.cwd()),
@@ -144,7 +143,9 @@ export function apiProject(ctx: Pick<ApiContext, 'token' | 'cwd'>) {
       security: security
         ? { available: true, grade: security.grade, score: security.score, date: security.date, counts: security.counts }
         : { available: false },
-      evolve: { available: reportExists('evolve.json', ctx.cwd) },
+      evolve: evolve
+        ? { available: true, date: evolve.date, code: evolve.code.length, products: evolve.market?.products.length ?? 0, ideas: evolve.market?.ideas.length ?? 0 }
+        : { available: false },
     },
     ai: ctx.token === null
       ? { available: false, reason: msg('aiOff') }
@@ -241,6 +242,13 @@ export function handleApiV1(req: IncomingMessage, res: ServerResponse, ctx: ApiC
     const report = apiSecurity(ctx.cwd);
     if (report) json(res, report);
     else json(res, { error: 'no security report: run prisme security' }, 404);
+    return true;
+  }
+
+  if (route === '/api/v1/evolve') {
+    const report = readEvolve(ctx.cwd);
+    if (report) json(res, report);
+    else json(res, { error: 'no ideas yet: run /prisme-evolve in Claude Code' }, 404);
     return true;
   }
 

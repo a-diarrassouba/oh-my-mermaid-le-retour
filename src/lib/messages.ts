@@ -43,6 +43,14 @@ const en = {
   'configSet': 'config: {key}={value}',
   'portInUse': 'Port {port} in use, trying {next}...',
   'viewerRunning': 'prisme viewer running at {url}',
+  'evolveDate': 'Ideas to make the project evolve ({date})',
+  'evolveCode': 'In the code ({count}):',
+  'evolveEffortImpact': 'effort {effort}, impact {impact}',
+  'evolveProducts': 'Compared with: {names}',
+  'evolveMarket': 'Ideas from similar products ({count}):',
+  'evolveNone': 'No ideas yet: run /prisme-evolve in Claude Code.',
+  'evolveWritten': 'wrote .prisme/.reports/evolve.json',
+  'evolveRefused': 'error: ideas refused, nothing written:',
   'securityScore': 'Security score: {grade} ({score}/100)',
   'securityNone': 'Nothing found by the checks that ran.',
   'securitySeverity_critical': '{count} critical',
@@ -136,6 +144,7 @@ Usage:
   prisme validate [path]               Validate diagram(s) and guides
   prisme changes [--json | --mark]     What changed since the last scan (--mark records a scan)
   prisme security [--json] [--no-tools] Security score A–E, report in .prisme/.reports/
+  prisme evolve show | write -        Ideas to make the project evolve (written by /prisme-evolve)
   prisme guide list|show|write|delete  Manage guides, step-by-step walks (.prisme/.guides/)
   prisme config [key] [value]          Read or set project settings (e.g. language fr)
   prisme view [--port <port>] [--no-ai] Start web viewer (default: 3000)
@@ -193,6 +202,14 @@ const fr: Record<MessageKey, string> = {
   'configSet': 'config : {key}={value}',
   'portInUse': 'Le port {port} est occupé, essai du port {next}...',
   'viewerRunning': 'Viewer prisme lancé sur {url}',
+  'evolveDate': 'Idées pour faire évoluer le projet ({date})',
+  'evolveCode': 'Dans le code ({count}) :',
+  'evolveEffortImpact': 'effort {effort}, impact {impact}',
+  'evolveProducts': 'Comparé à : {names}',
+  'evolveMarket': 'Idées venues de produits proches ({count}) :',
+  'evolveNone': "Pas encore d'idées : lancez /prisme-evolve dans Claude Code.",
+  'evolveWritten': '.prisme/.reports/evolve.json écrit',
+  'evolveRefused': "erreur : idées refusées, rien n'a été écrit :",
   'securityScore': 'Score de sécurité : {grade} ({score}/100)',
   'securityNone': "Rien trouvé par les vérifications lancées.",
   'securitySeverity_critical': '{count} critique(s)',
@@ -286,6 +303,7 @@ Utilisation :
   prisme validate [chemin]             Vérifier les diagrammes et les parcours
   prisme changes [--json | --mark]     Ce qui a changé depuis le dernier scan (--mark enregistre un scan)
   prisme security [--json] [--no-tools] Score de sécurité A–E, rapport dans .prisme/.reports/
+  prisme evolve show | write -        Idées pour faire évoluer le projet (écrites par /prisme-evolve)
   prisme guide list|show|write|delete  Gérer les parcours guidés (.prisme/.guides/)
   prisme config [clé] [valeur]         Lire ou régler le projet (ex. : language fr)
   prisme view [--port <port>] [--no-ai] Lancer le viewer web (port 3000 par défaut)

@@ -19,8 +19,9 @@ import { msg } from './lib/messages.js';
 import { commandGuide } from './commands/guide.js';
 import { commandChanges } from './commands/changes.js';
 import { commandSecurity } from './commands/security.js';
+import { commandEvolve } from './commands/evolve.js';
 
-const GLOBAL_COMMANDS = ['init', 'setup', 'update', 'list', 'show', 'delete', 'status', 'diff', 'refs', 'validate', 'guide', 'changes', 'security', 'view', 'read', 'write', 'tree', 'config', 'help'];
+const GLOBAL_COMMANDS = ['init', 'setup', 'update', 'list', 'show', 'delete', 'status', 'diff', 'refs', 'validate', 'guide', 'changes', 'security', 'evolve', 'view', 'read', 'write', 'tree', 'config', 'help'];
 
 function printHelp(): void {
   process.stdout.write(msg('help') + '\n');
@@ -79,6 +80,10 @@ async function main(): Promise<void> {
 
     case 'security':
       commandSecurity(args.slice(1));
+      return;
+
+    case 'evolve':
+      await commandEvolve(args.slice(1));
       return;
 
     case 'read':
