@@ -97,6 +97,7 @@ prisme config language fr          # 设置文档和界面的语言
 prisme guide list                  # 列出导览
 prisme changes                     # 自上次扫描以来的变更
 prisme security                    # 自动检查的安全评分 A–E（如已安装则使用 gitleaks、osv-scanner、semgrep）
+prisme security threats show       # /prisme-security 写下的威胁模型（按元素的 STRIDE）与设计问题
 prisme evolve show                 # /prisme-evolve 写下的项目改进想法
 prisme update                      # 更新到最新版本
 ```
@@ -111,7 +112,7 @@ prisme update                      # 更新到最新版本
 | --- | --- |
 | `/prisme-scan` | 分析代码库 → 编写文档和欢迎导览 |
 | `/prisme-guide` | 编写回答问题的逐步导览 → 在查看器中播放 |
-| `/prisme-security` | 运行 `prisme security`，用通俗的话解释评分，逐项核实并修复你同意的问题 |
+| `/prisme-security` | 运行 `prisme security`，用通俗的话解释评分，逐项核实并修复你同意的问题；并根据地图写出威胁模型（按元素的 STRIDE）和安全设计问题 |
 | `/prisme-evolve` | 简化、加速、扩展代码的想法，以及 3 到 5 个同类产品的功能与设计对比 |
 | `/prisme-view` | 打开查看器 |
 

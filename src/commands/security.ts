@@ -1,5 +1,6 @@
 import path from 'node:path';
-import { ensureOmmForWrite } from '../lib/store.js';
+import { ensureOmmForRead, ensureOmmForWrite } from '../lib/store.js';
+import { readThreats, writeThreats, type ThreatModel } from '../lib/threats.js';
 import { runSecurity, writeSecurityReport, SEVERITIES, type SecurityReport } from '../lib/security.js';
 import { msg } from '../lib/messages.js';
 
@@ -26,8 +27,56 @@ function printReport(r: SecurityReport, file: string): void {
   process.stdout.write(out.join('\n') + '\n');
 }
 
-/** prisme security [--json] [--no-tools] */
-export function commandSecurity(args: string[]): void {
+async function readStdin(): Promise<string> {
+  const chunks: Buffer[] = [];
+  for await (const chunk of process.stdin) chunks.push(chunk);
+  return Buffer.concat(chunks).toString('utf-8');
+}
+
+function printThreats(m: ThreatModel): void {
+  const out = [msg('threatsDate', { date: m.date.slice(0, 10) }), '', m.summary];
+  if (m.assets.length) out.push('', msg('threatsAssets', { list: m.assets.join(', ') }));
+  if (m.threats.length) {
+    out.push('', msg('threatsList', { count: m.threats.length }));
+    for (const t of m.threats) out.push(`  [${t.stride.join('')}] ${t.element} — ${t.title} (${t.likelihood}/${t.impact}, ${t.status})`);
+  }
+  if (m.questions.length) {
+    const open = m.questions.filter(q => q.status === 'open').length;
+    out.push('', msg('threatsQuestions', { count: m.questions.length, open }));
+  }
+  process.stdout.write(out.join('\n') + '\n');
+}
+
+/** prisme security threats show | write - */
+async function commandThreats(args: string[]): Promise<void> {
+  const [sub] = args;
+  if (sub === 'show') {
+    if (!ensureOmmForRead()) return;
+    const model = readThreats();
+    if (!model) {
+      process.stderr.write(msg('threatsNone') + '\n');
+      process.exit(1);
+    }
+    printThreats(model);
+    return;
+  }
+  if (sub === 'write' && (args[1] === undefined || args[1] === '-')) {
+    ensureOmmForWrite();
+    const { written, issues } = writeThreats(await readStdin());
+    if (!written) {
+      process.stderr.write(msg('threatsRefused') + '\n' + issues.map(i => `  ${i}\n`).join(''));
+      process.exit(1);
+    }
+    process.stderr.write(msg('threatsWritten') + '\n');
+    return;
+  }
+  process.stderr.write(msg('usage', { usage: 'prisme security threats show | prisme security threats write -' }) + '\n');
+  process.exit(1);
+}
+
+/** prisme security [--json] [--no-tools] | prisme security threats … */
+export async function commandSecurity(args: string[]): Promise<void> {
+  if (args[0] === 'threats') return commandThreats(args.slice(1));
   ensureOmmForWrite();
   const report = runSecurity(process.cwd(), { tools: !args.includes('--no-tools') });
   const file = writeSecurityReport(report);

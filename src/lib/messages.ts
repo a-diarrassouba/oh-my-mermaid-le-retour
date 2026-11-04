@@ -44,6 +44,13 @@ const en = {
   'configSet': 'config: {key}={value}',
   'portInUse': 'Port {port} in use, trying {next}...',
   'viewerRunning': 'prisme viewer running at {url}',
+  'threatsDate': 'Threat model ({date})',
+  'threatsAssets': 'To protect: {list}',
+  'threatsList': 'Threats, most worrying first ({count}):',
+  'threatsQuestions': 'Secure-by-design questions: {count}, {open} for the team.',
+  'threatsNone': 'No threat model yet: run /prisme-security in Claude Code.',
+  'threatsWritten': 'wrote .prisme/.reports/threats.json',
+  'threatsRefused': 'error: threat model refused, nothing written:',
   'evolveDate': 'Ideas to make the project evolve ({date})',
   'evolveCode': 'In the code ({count}):',
   'evolveEffortImpact': 'effort {effort}, impact {impact}',
@@ -145,6 +152,7 @@ Usage:
   prisme validate [path]               Validate diagram(s) and guides
   prisme changes [--json | --mark]     What changed since the last scan (--mark records a scan)
   prisme security [--json] [--no-tools] Security score A–E, report in .prisme/.reports/
+  prisme security threats show | write - Threat model and design questions (written by /prisme-security)
   prisme evolve show | write -        Ideas to make the project evolve (written by /prisme-evolve)
   prisme guide list|show|write|delete  Manage guides, step-by-step walks (.prisme/.guides/)
   prisme config [key] [value]          Read or set project settings (e.g. language fr)
@@ -204,6 +212,13 @@ const fr: Record<MessageKey, string> = {
   'configSet': 'config : {key}={value}',
   'portInUse': 'Le port {port} est occupé, essai du port {next}...',
   'viewerRunning': 'Viewer prisme lancé sur {url}',
+  'threatsDate': 'Modèle de menaces ({date})',
+  'threatsAssets': 'À protéger : {list}',
+  'threatsList': 'Menaces, les plus inquiétantes d\'abord ({count}) :',
+  'threatsQuestions': 'Questions de conception : {count}, dont {open} pour l\'équipe.',
+  'threatsNone': "Pas encore de modèle de menaces : lancez /prisme-security dans Claude Code.",
+  'threatsWritten': '.prisme/.reports/threats.json écrit',
+  'threatsRefused': "erreur : modèle de menaces refusé, rien n'a été écrit :",
   'evolveDate': 'Idées pour faire évoluer le projet ({date})',
   'evolveCode': 'Dans le code ({count}) :',
   'evolveEffortImpact': 'effort {effort}, impact {impact}',
@@ -305,6 +320,7 @@ Utilisation :
   prisme validate [chemin]             Vérifier les diagrammes et les parcours
   prisme changes [--json | --mark]     Ce qui a changé depuis le dernier scan (--mark enregistre un scan)
   prisme security [--json] [--no-tools] Score de sécurité A–E, rapport dans .prisme/.reports/
+  prisme security threats show | write - Menaces et questions de conception (écrites par /prisme-security)
   prisme evolve show | write -        Idées pour faire évoluer le projet (écrites par /prisme-evolve)
   prisme guide list|show|write|delete  Gérer les parcours guidés (.prisme/.guides/)
   prisme config [clé] [valeur]         Lire ou régler le projet (ex. : language fr)

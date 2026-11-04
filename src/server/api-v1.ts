@@ -13,6 +13,7 @@ import { readConfig } from '../lib/config.js';
 import { readExplain, readIcon, type Explain, type Icon } from '../lib/explain.js';
 import { readSecurityReport, type SecurityReport } from '../lib/security.js';
 import { readEvolve } from '../lib/evolve.js';
+import { readThreats } from '../lib/threats.js';
 import { askSupported, getJob, runningJob, startAsk, validateQuestion } from './ask.js';
 import { isLocalOrigin, sameToken } from './local.js';
 import { msg } from '../lib/messages.js';
@@ -131,6 +132,7 @@ export function apiProject(ctx: Pick<ApiContext, 'ai' | 'cwd'>) {
   const supported = askSupported();
   const security = readSecurityReport(ctx.cwd);
   const evolve = readEvolve(ctx.cwd);
+  const threats = readThreats(ctx.cwd);
   return {
     api: API_VERSION,
     name: path.basename(ctx.cwd ?? process.cwd()),
@@ -145,8 +147,8 @@ export function apiProject(ctx: Pick<ApiContext, 'ai' | 'cwd'>) {
     categories: {
       understand: { available: elements.length > 0 },
       security: security
-        ? { available: true, grade: security.grade, score: security.score, date: security.date, counts: security.counts }
-        : { available: false },
+        ? { available: true, grade: security.grade, score: security.score, date: security.date, counts: security.counts, threats: threats?.threats.length ?? 0, questions: threats?.questions.length ?? 0 }
+        : { available: false, threats: threats?.threats.length ?? 0, questions: threats?.questions.length ?? 0 },
       evolve: evolve
         ? { available: true, date: evolve.date, code: evolve.code.length, products: evolve.market?.products.length ?? 0, ideas: evolve.market?.ideas.length ?? 0 }
         : { available: false },
@@ -302,6 +304,13 @@ export function handleApiV1(req: IncomingMessage, res: ServerResponse, ctx: ApiC
     const report = apiSecurity(ctx.cwd);
     if (report) json(res, report);
     else json(res, { error: 'no security report: run prisme security' }, 404);
+    return true;
+  }
+
+  if (route === '/api/v1/threats') {
+    const model = readThreats(ctx.cwd);
+    if (model) json(res, model);
+    else json(res, { error: 'no threat model yet: run /prisme-security in Claude Code' }, 404);
     return true;
   }
 
