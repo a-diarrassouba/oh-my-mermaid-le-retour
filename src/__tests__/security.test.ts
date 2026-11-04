@@ -105,3 +105,13 @@ describe('runSecurity', () => {
     expect(report.findings[0].title).toBe('Du HTML est inséré sans nettoyage');
   });
 });
+
+describe('ignored findings', () => {
+  it('leaves out what .prisme/security.yaml lists, with the reason', () => {
+    write('src/a.ts', 'el.innerHTML = html;\nexec(`ls ${dir}`);\n');
+    write('.prisme/security.yaml', 'ignore:\n  - rule: html-injection\n    file: src/\n    reason: escaped before\n  - rule: command-injection\n    reason: ""\n');
+    const report = runSecurity(dir, { tools: false });
+    expect(report.findings.map(f => f.rule)).toEqual(['command-injection']);
+    expect(report.ignored).toMatchObject([{ rule: 'html-injection', reason: 'escaped before' }]);
+  });
+});

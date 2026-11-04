@@ -93,8 +93,10 @@ The last report of `prisme security`, `404` before the first one:
   "findings": [{
     "rule": "tls-disabled", "severity": "high",
     "title": "Certificate checks are turned off", "why": "…", "fix": "…",
-    "file": "src/http.ts", "line": 12, "match": "rejectUnauthorized: false", "source": "prisme"
+    "file": "src/http.ts", "line": 12, "match": "rejectUnauthorized: false", "source": "prisme",
+    "elements": ["overall-architecture/http-client"]
   }],
+  "ignored": [{ "rule": "html-injection", "file": "src/view.ts", "line": 40, "reason": "Escaped before.", "…": "…" }],
   "tools": [{ "name": "npm audit", "status": "ran", "findings": 0 }, { "name": "gitleaks", "status": "missing", "findings": 0 }]
 }
 ```
@@ -102,6 +104,8 @@ The last report of `prisme security`, `404` before the first one:
 - `grade`: `A` (≥ 90) to `E` (< 40), from a score that starts at 100 and loses 30 / 15 / 6 / 2 points per critical / high / medium / low finding, at most two findings per rule. Any critical finding caps the grade at `D`, any high one at `C`.
 - `title`, `why`, `fix`: in the project's language when it is French, else English.
 - `match`: what was found; secrets are masked (`AKIA…ZZ`).
+- `elements`: up to three elements whose label cites the finding's file, deepest first, to show it on the map.
+- `ignored`: findings left out by `.prisme/security.yaml` (`ignore: [{ rule, file?, line?, reason }]`, written by `/prisme-security` with the user's agreement), with the reason. They do not count in the grade.
 - `source`: `prisme` (base checks), `npm-audit`, `gitleaks`, `osv-scanner` or `semgrep`. `tools` says which ran, which are not installed (`missing`), failed or were skipped (`--no-tools`).
 
 ## `GET /api/v1/ask?q=<question>`

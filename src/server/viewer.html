@@ -472,6 +472,36 @@ body.light .reg-node:hover .nshape { stroke: #000 !important; }
 .home-tile-state code { font-family: var(--mono); background: var(--surface-2); padding: 1px 5px; border-radius: 4px; color: var(--text); }
 .home-tile-state.ok { color: var(--accent); }
 @media (prefers-reduced-motion: reduce) { .home-tile { transition: none; } }
+/* Security page: the report of prisme security */
+#security { position: fixed; inset: 0; z-index: 610; background: var(--bg); overflow-y: auto; display: flex; justify-content: center; padding: 32px 16px 64px; }
+#security[hidden] { display: none; }
+.sec-box { width: 100%; max-width: 860px; display: flex; flex-direction: column; gap: 22px; }
+.sec-nav { display: flex; gap: 8px; }
+.sec-head { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+.sec-grade { width: 88px; height: 88px; border-radius: 20px; display: grid; place-items: center; font-size: 48px; font-weight: 700; color: #111; flex-shrink: 0; }
+.sec-grade.g-A { background: #a6e3a1; } .sec-grade.g-B { background: #94e2d5; } .sec-grade.g-C { background: #f9e2af; } .sec-grade.g-D { background: #fab387; } .sec-grade.g-E { background: #f38ba8; }
+.sec-summary { flex: 1; min-width: 220px; display: flex; flex-direction: column; gap: 6px; }
+.sec-title { font-size: 22px; font-weight: 650; color: var(--text); }
+.sec-sub { font-size: 12.5px; color: var(--text-mid); line-height: 1.6; }
+.sec-sub code, .sec-item code { font-family: var(--mono); background: var(--surface-2); padding: 1px 5px; border-radius: 4px; color: var(--text); font-size: 11.5px; }
+.sec-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.sec-chip { font-family: var(--mono); font-size: 10.5px; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--border-hi); color: var(--text-mid); }
+.sev-critical { color: #f38ba8; border-color: #f38ba8; } .sev-high { color: #fab387; border-color: #fab387; }
+.sev-medium { color: #f9e2af; border-color: #c9b27f; } .sev-low { color: var(--text-mid); }
+.sec-group-title { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .12em; color: var(--text-dim); margin-bottom: 8px; }
+.sec-item { border: 1px solid var(--border); background: var(--surface); border-radius: 10px; margin-bottom: 8px; }
+.sec-item summary { cursor: pointer; padding: 11px 14px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; list-style: none; }
+.sec-item summary::-webkit-details-marker { display: none; }
+.sec-item[open] summary { border-bottom: 1px solid var(--border); }
+.sec-item-title { font-size: 13px; color: var(--text); font-weight: 550; flex: 1; min-width: 180px; }
+.sec-item-where { font-family: var(--mono); font-size: 11px; color: var(--text-dim); overflow-wrap: anywhere; }
+.sec-item-body { padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; font-size: 12.5px; line-height: 1.65; color: var(--text-mid); }
+.sec-item-body b { color: var(--text); font-weight: 600; display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 2px; }
+.sec-match { font-family: var(--mono); font-size: 11.5px; background: var(--surface-2); padding: 6px 8px; border-radius: 6px; overflow-wrap: anywhere; color: var(--text); }
+.sec-links { display: flex; gap: 6px; flex-wrap: wrap; }
+.sec-link { border: 1px solid var(--accent); background: none; color: var(--text); border-radius: 6px; padding: 4px 10px; font-size: 11.5px; cursor: pointer; font-family: var(--font); }
+.sec-tools { font-size: 12px; color: var(--text-mid); line-height: 1.8; }
+.sec-empty { font-size: 13px; color: var(--text-mid); }
 @media (prefers-reduced-motion: reduce) {
   .edge-flow, .flow-persp .edge-flow { animation: none !important; opacity: 0 !important; }
   #guide-spark { display: none; }
@@ -525,6 +555,7 @@ body.light .reg-node:hover .nshape { stroke: #000 !important; }
 </div>
 
 <div id="home" role="dialog" aria-modal="true" data-i18n-aria="home" hidden></div>
+<div id="security" role="dialog" aria-modal="true" data-i18n-aria="tileSecurity" hidden></div>
 <div id="guide-bar" role="region" data-i18n-aria="guides" hidden></div>
 <div id="guide-spark" aria-hidden="true"></div>
 
@@ -558,6 +589,11 @@ const I18N = {
     tileUnderstandState: '{n} elements · {g} guides', tileUnderstandEmpty: 'Not scanned yet: run {cmd} in Claude Code.',
     tileSecurity: 'Security score', tileSecurityText: 'A grade from A to E, what puts the project at risk and how to fix it.',
     tileEvolve: 'Make it evolve', tileEvolveText: 'Ideas to simplify, speed up and go further, and what similar products do.',
+    secBack: '← Home', secMap: 'Open the map', secOutOf: '{score}/100 · {date}',
+    secHow: 'Computed without AI by {cmd}, from the project files. For explanations in plain words and fixes, run {skill} in Claude Code.',
+    secNothing: 'Nothing found by the checks that ran.', secWhy: 'Why it matters', secFix: 'How to fix it', secSeeMap: 'See {name} on the map',
+    secTools: 'Tools', secReason: 'Why it was left out', secIgnored: 'Left out ({count}), with the reason', sev_critical: 'Critical', sev_high: 'High', sev_medium: 'Medium', sev_low: 'Low',
+    tool_ran: 'ran', tool_missing: 'not installed', tool_failed: 'failed', tool_skipped: 'skipped', secFiles: '{count} files read',
     tileReady: 'Ready', tileNotYet: 'Not analyzed yet: run {cmd} in a terminal.', tileNotYetClaude: 'Not analyzed yet: run {cmd} in Claude Code.', tileGrade: 'Grade {grade} · {score}/100',
   },
   fr: {
@@ -587,6 +623,11 @@ const I18N = {
     tileUnderstandState: '{n} éléments · {g} parcours', tileUnderstandEmpty: 'Pas encore scanné : lancez {cmd} dans Claude Code.',
     tileSecurity: 'Score de sécurité', tileSecurityText: 'Une note de A à E, ce qui met le projet en danger et comment le corriger.',
     tileEvolve: 'Faire évoluer', tileEvolveText: 'Des idées pour simplifier, accélérer et aller plus loin, et ce que font les produits proches.',
+    secBack: '← Accueil', secMap: 'Ouvrir la carte', secOutOf: '{score}/100 · {date}',
+    secHow: "Calculé sans IA par {cmd}, à partir des fichiers du projet. Pour des explications en mots simples et des corrections, lancez {skill} dans Claude Code.",
+    secNothing: 'Rien trouvé par les vérifications lancées.', secWhy: "Pourquoi c'est important", secFix: 'Comment corriger', secSeeMap: 'Voir {name} sur la carte',
+    secTools: 'Outils', secReason: 'Pourquoi elle est écartée', secIgnored: 'Écartées ({count}), avec la raison', sev_critical: 'Critique', sev_high: 'Élevé', sev_medium: 'Moyen', sev_low: 'Faible',
+    tool_ran: 'lancé', tool_missing: 'non installé', tool_failed: 'en échec', tool_skipped: 'ignoré', secFiles: '{count} fichiers lus',
     tileReady: 'Prêt', tileNotYet: 'Pas encore analysé : lancez {cmd} dans un terminal.', tileNotYetClaude: 'Pas encore analysé : lancez {cmd} dans Claude Code.', tileGrade: 'Note {grade} · {score}/100',
   },
 };
@@ -2496,7 +2537,71 @@ homeEl.addEventListener('click', e => {
   }
   const tile = e.target.closest('[data-tile]');
   if (tile && !tile.disabled && tile.dataset.tile === 'understand') enterUnderstand();
+  if (tile && !tile.disabled && tile.dataset.tile === 'security') openSecurity();
 });
+
+// ── security page ─────────────────────────────────────────
+const securityEl = document.getElementById('security');
+const SEVS = ['critical', 'high', 'medium', 'low'];
+
+function securityItem(f) {
+  const where = f.file ? `${f.file}${f.line ? ':' + f.line : ''}` : '';
+  const links = (f.elements || []).map(p =>
+    `<button type="button" class="sec-link" data-go="${esc(p)}">${esc(t('secSeeMap', { name: displayTitle(p) }))}</button>`).join('');
+  return `<details class="sec-item">
+    <summary><span class="sec-chip sev-${esc(f.severity)}">${esc(t('sev_' + f.severity))}</span><span class="sec-item-title">${esc(f.title)}</span><span class="sec-item-where">${esc(where)}</span></summary>
+    <div class="sec-item-body">
+      ${f.match ? `<div class="sec-match">${esc(f.match)}</div>` : ''}
+      <div><b>${esc(t('secWhy'))}</b>${esc(f.why)}</div>
+      <div><b>${esc(t('secFix'))}</b>${esc(f.fix)}</div>
+      ${f.reason ? `<div><b>${esc(t('secReason'))}</b>${esc(f.reason)}</div>` : ''}
+      ${links ? `<div class="sec-links">${links}</div>` : ''}
+    </div>
+  </details>`;
+}
+
+async function openSecurity() {
+  const r = await api('/api/v1/security');
+  if (!r || r.error) return;
+  const date = r.date ? new Date(r.date).toLocaleString(document.documentElement.lang) : '';
+  const chips = SEVS.filter(s => r.counts?.[s]).map(s => `<span class="sec-chip sev-${s}">${r.counts[s]} · ${esc(t('sev_' + s))}</span>`).join('');
+  const how = esc(t('secHow', { cmd: '\u0001', skill: '\u0002' })).replace('\u0001', '<code>prisme security</code>').replace('\u0002', '<code>/prisme-security</code>');
+  const groups = SEVS.map(s => {
+    const items = (r.findings || []).filter(f => f.severity === s);
+    return items.length ? `<div><div class="sec-group-title">${esc(t('sev_' + s))} · ${items.length}</div>${items.map(securityItem).join('')}</div>` : '';
+  }).join('');
+  const tools = (r.tools || []).map(x => `${esc(x.name)} : ${esc(t('tool_' + x.status))}${x.status === 'ran' ? ` (${x.findings})` : ''}`).join(' · ');
+  const ignored = (r.ignored || []).length
+    ? `<div><div class="sec-group-title">${esc(t('secIgnored', { count: r.ignored.length }))}</div>${r.ignored.map(securityItem).join('')}</div>` : '';
+  securityEl.innerHTML = `<div class="sec-box">
+    <div class="sec-nav"><button type="button" class="hbtn" data-act="home">${esc(t('secBack'))}</button><button type="button" class="hbtn" data-act="map">${esc(t('secMap'))}</button></div>
+    <div class="sec-head">
+      <div class="sec-grade g-${esc(r.grade)}">${esc(r.grade)}</div>
+      <div class="sec-summary">
+        <div class="sec-title">${esc(t('tileSecurity'))}</div>
+        <div class="sec-sub">${esc(t('secOutOf', { score: r.score, date }))} · ${esc(t('secFiles', { count: r.files }))}</div>
+        <div class="sec-chips">${chips}</div>
+      </div>
+    </div>
+    <div class="sec-sub">${how}</div>
+    ${groups || `<div class="sec-empty">${esc(t('secNothing'))}</div>`}
+    ${ignored}
+    <div class="sec-tools"><div class="sec-group-title">${esc(t('secTools'))}</div>${tools}</div>
+  </div>`;
+  closeHome();
+  securityEl.hidden = false;
+  securityEl.scrollTop = 0;
+  securityEl.querySelector('[data-act="home"]')?.focus();
+}
+
+securityEl.addEventListener('click', e => {
+  const act = e.target.closest('[data-act]')?.dataset.act;
+  if (act === 'home') { securityEl.hidden = true; openHome(); return; }
+  if (act === 'map') { securityEl.hidden = true; return; }
+  const go = e.target.closest('[data-go]');
+  if (go) { securityEl.hidden = true; window.__openSb(go.dataset.go); }
+});
+securityEl.addEventListener('keydown', e => { if (e.key === 'Escape') securityEl.hidden = true; });
 homeEl.addEventListener('keydown', e => { if (e.key === 'Escape') closeHome(); });
 document.getElementById('home-btn').addEventListener('click', openHome);
 document.getElementById('mobile-home-btn').addEventListener('click', openHome);

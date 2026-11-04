@@ -104,6 +104,7 @@ Skills are commands you run **inside your AI coding tool** (not the terminal). T
 | --- | --- |
 | `/prisme-scan` | Analyze the codebase → write the docs and the welcome guide |
 | `/prisme-guide` | Write a step-by-step guide that answers a question, played in the viewer |
+| `/prisme-security` | Run `prisme security`, explain the grade in plain words, check each finding and fix what you agree to |
 | `/prisme-view` | Open the viewer |
 
 ## Supported AI Tools
