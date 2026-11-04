@@ -3,13 +3,14 @@ import path from 'node:path';
 import { createRequire } from 'node:module';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { VALID_FIELDS, type Field } from '../types.js';
-import { getOmmDir, readNodeField, readNodeMeta } from '../lib/store.js';
+import { readNodeField, readNodeMeta } from '../lib/store.js';
 import { listElements, type ElementInfo, type Role } from '../lib/elements.js';
 import { loadGuides } from '../lib/guides.js';
 import { searchElements } from '../lib/search.js';
 import { getLanguage } from '../lib/language.js';
 import { readConfig } from '../lib/config.js';
 import { readExplain, readIcon, type Explain, type Icon } from '../lib/explain.js';
+import { readSecurityReport, reportPath } from '../lib/security.js';
 import { askSupported, getJob, runningJob, startAsk, validateQuestion } from './ask.js';
 import { isLocalOrigin, sameToken } from './local.js';
 import { msg } from '../lib/messages.js';
@@ -91,12 +92,14 @@ export function apiElements(cwd?: string): ApiElement[] {
   return listElements(cwd).map(el => toApiElement(el, cwd));
 }
 
-const reportExists = (name: string, cwd?: string) => fs.existsSync(path.join(getOmmDir(cwd), name, 'report.json'));
+// Reports live in .prisme/.reports/ (the dot keeps them out of the elements).
+const reportExists = (name: string, cwd?: string) => fs.existsSync(reportPath(name, cwd));
 
 export function apiProject(ctx: Pick<ApiContext, 'token' | 'cwd'>) {
   const elements = listElements(ctx.cwd);
   const guides = loadGuides(ctx.cwd);
   const supported = askSupported();
+  const security = readSecurityReport(ctx.cwd);
   return {
     api: API_VERSION,
     name: path.basename(ctx.cwd ?? process.cwd()),
@@ -110,8 +113,10 @@ export function apiProject(ctx: Pick<ApiContext, 'token' | 'cwd'>) {
     },
     categories: {
       understand: { available: elements.length > 0 },
-      security: { available: reportExists('security', ctx.cwd) },
-      evolve: { available: reportExists('evolve', ctx.cwd) },
+      security: security
+        ? { available: true, grade: security.grade, score: security.score, date: security.date, counts: security.counts }
+        : { available: false },
+      evolve: { available: reportExists('evolve.json', ctx.cwd) },
     },
     ai: ctx.token === null
       ? { available: false, reason: msg('aiOff') }
@@ -201,6 +206,13 @@ export function handleApiV1(req: IncomingMessage, res: ServerResponse, ctx: ApiC
     const guide = loadGuides(ctx.cwd).find(g => g.id === guideMatch[1]);
     if (guide) json(res, guide);
     else json(res, { error: 'guide not found' }, 404);
+    return true;
+  }
+
+  if (route === '/api/v1/security') {
+    const report = readSecurityReport(ctx.cwd);
+    if (report) json(res, report);
+    else json(res, { error: 'no security report: run prisme security' }, 404);
     return true;
   }
 

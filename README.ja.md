@@ -92,6 +92,7 @@ prisme view --no-ai                # Claude Code への質問なしで開く (AP
 prisme config language fr          # ドキュメントとインターフェースの言語を設定
 prisme guide list                  # ガイド一覧を表示
 prisme changes                     # 前回のスキャン以降の変更
+prisme security                    # AI なしのセキュリティスコア A–E（gitleaks、osv-scanner、semgrep があれば使用）
 prisme update                      # 最新バージョンに更新
 ```
 

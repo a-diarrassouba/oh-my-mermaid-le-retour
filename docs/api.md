@@ -23,7 +23,7 @@ Every route below is `GET` unless noted. Errors are `{ "error": "<reason>" }` wi
   "counts": { "perspectives": 8, "elements": 78, "guides": 2 },
   "categories": {
     "understand": { "available": true },
-    "security": { "available": false },
+    "security": { "available": true, "grade": "B", "score": 82, "date": "…", "counts": { "critical": 0, "high": 1, "medium": 0, "low": 1 } },
     "evolve": { "available": false }
   },
   "ai": { "available": true }
@@ -33,7 +33,7 @@ Every route below is `GET` unless noted. Errors are `{ "error": "<reason>" }` wi
 - `language`: the language of the docs (`prisme config language`).
 - `version`: the prisme version serving the API.
 - `lastScan`: the commit the last scan described, `null` before `prisme changes --mark`.
-- `categories.*.available`: whether there is something to show — elements for `understand`, `.prisme/security/report.json` for `security`, `.prisme/evolve/report.json` for `evolve`.
+- `categories.*.available`: whether there is something to show — elements for `understand`, `.prisme/.reports/security.json` (`prisme security`) for `security`, `.prisme/.reports/evolve.json` (`/prisme-evolve`) for `evolve`. `security` also gives the grade, score, date and counts by severity.
 - `ai`: whether the viewer can send questions to Claude Code on this machine; when not, `reason` says why (Claude Code not installed, Windows, `--no-ai`).
 
 ## `GET /api/v1/elements`
@@ -79,6 +79,30 @@ Every guide in `.prisme/.guides/`, with its validation, so a front can show a gu
 ```json
 [{ "id": "start-here", "valid": true, "issues": [], "guide": { "id": "start-here", "title": "…", "kind": "path", "audience": "newcomer", "start": true, "steps": [{ "element": "…", "say": "…", "details": "…", "part": "…" }] } }]
 ```
+
+## `GET /api/v1/security`
+
+The last report of `prisme security`, `404` before the first one:
+
+```json
+{
+  "version": 1, "date": "2026-11-04T10:00:00.000Z", "commit": "2457871…",
+  "grade": "B", "score": 82,
+  "counts": { "critical": 0, "high": 1, "medium": 0, "low": 1 },
+  "files": 89,
+  "findings": [{
+    "rule": "tls-disabled", "severity": "high",
+    "title": "Certificate checks are turned off", "why": "…", "fix": "…",
+    "file": "src/http.ts", "line": 12, "match": "rejectUnauthorized: false", "source": "prisme"
+  }],
+  "tools": [{ "name": "npm audit", "status": "ran", "findings": 0 }, { "name": "gitleaks", "status": "missing", "findings": 0 }]
+}
+```
+
+- `grade`: `A` (≥ 90) to `E` (< 40), from a score that starts at 100 and loses 30 / 15 / 6 / 2 points per critical / high / medium / low finding, at most two findings per rule. Any critical finding caps the grade at `D`, any high one at `C`.
+- `title`, `why`, `fix`: in the project's language when it is French, else English.
+- `match`: what was found; secrets are masked (`AKIA…ZZ`).
+- `source`: `prisme` (base checks), `npm-audit`, `gitleaks`, `osv-scanner` or `semgrep`. `tools` says which ran, which are not installed (`missing`), failed or were skipped (`--no-tools`).
 
 ## `GET /api/v1/ask?q=<question>`
 

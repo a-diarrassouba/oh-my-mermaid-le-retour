@@ -90,6 +90,7 @@ prisme view --no-ai                # Same, without the questions to Claude Code 
 prisme config language fr          # Set the language of the docs and the interface
 prisme guide list                  # List guides (step-by-step walks)
 prisme changes                     # What changed since the last scan
+prisme security                    # Security score A–E, without AI (gitleaks, osv-scanner, semgrep used when installed)
 prisme update                      # Update to the latest version
 ```
 

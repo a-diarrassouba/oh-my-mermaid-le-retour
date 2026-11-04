@@ -92,6 +92,7 @@ prisme view --no-ai                # 不向 Claude Code 提问 (API: docs/api.md
 prisme config language fr          # 设置文档和界面的语言
 prisme guide list                  # 列出导览
 prisme changes                     # 自上次扫描以来的变更
+prisme security                    # 无需 AI 的安全评分 A–E（如已安装则使用 gitleaks、osv-scanner、semgrep）
 prisme update                      # 更新到最新版本
 ```
 
