@@ -3,16 +3,16 @@ import { getLanguage } from './language.js';
 const en = {
   'error': 'error: {message}',
   'usage': 'error: usage: {usage}',
-  'unknownCommand': "error: unknown command '{cmd}'. Run 'omm help' for usage.",
+  'unknownCommand': "error: unknown command '{cmd}'. Run 'prisme help' for usage.",
   'invalidPort': 'error: invalid port number',
   'invalidField': "error: invalid field '{field}'. Valid: {valid}",
   'elementNotFound': "error: element '{path}' not found",
   'fieldEmpty': 'error: {path} is empty',
-  'ommCreated': 'Created .omm/ directory. Add to .gitignore if not wanted.',
-  'ommAlreadyInitialized': '.omm/ already initialized.',
-  'ommMissing': 'No .omm/ directory found. Run /omm-scan in Claude Code to generate architecture docs.',
+  'ommCreated': 'Created .prisme/ directory. Add to .gitignore if not wanted.',
+  'ommAlreadyInitialized': '.prisme/ already initialized.',
+  'ommMissing': 'No .prisme/ directory found. Run /prisme-scan in Claude Code to generate architecture docs.',
   'noPerspectives': 'No perspectives found.',
-  'noPerspectivesScan': 'No perspectives found. Run /omm-scan to generate.',
+  'noPerspectivesScan': 'No perspectives found. Run /prisme-scan to generate.',
   'wrote': 'wrote {file} ({bytes} bytes)',
   'deleted': "deleted element '{path}'",
   'titleSet': 'title of {path}: {title}',
@@ -37,14 +37,14 @@ const en = {
   'warnings.one': '{count} warning',
   'warnings.other': '{count} warnings',
   'validateLine': 'line {line}:',
-  'configWarnLanguage': "warning: '{value}' in .omm/config.yaml is not a language code, using {fallback}. Fix it with: omm config language fr",
+  'configWarnLanguage': "warning: '{value}' in .prisme/config.yaml is not a language code, using {fallback}. Fix it with: prisme config language fr",
   'configBadLanguage': "error: '{value}' is not a language code. Use a code such as fr, en, ko, ja, zh or pt-BR.",
   'configNotSet': '(not set)',
   'configSet': 'config: {key}={value}',
   'portInUse': 'Port {port} in use, trying {next}...',
-  'viewerRunning': 'oh-my-mermaid viewer running at {url}',
+  'viewerRunning': 'prisme viewer running at {url}',
   'guideStep': 'step {n}:',
-  'guideNone': 'No guides yet. Write one with: omm guide write <id> < guide.yaml',
+  'guideNone': 'No guides yet. Write one with: prisme guide write <id> < guide.yaml',
   'guideSteps.one': '{count} step',
   'guideSteps.other': '{count} steps',
   'guideParts.one': '{count} part',
@@ -59,46 +59,36 @@ const en = {
   'guideDeleted': "guide '{id}' deleted",
   'validateGuide': 'guide {id}:',
   'guideUsage': `usage:
-  omm guide list                List guides and whether they are valid
-  omm guide show <id>           Print a guide and its validation
-  omm guide write <id> [-]      Write a guide from YAML on stdin (refused if invalid)
-  omm guide delete <id>         Delete a guide`,
-  'help': `oh-my-mermaid (omm) — Architecture mirror for vibe coding
+  prisme guide list                List guides and whether they are valid
+  prisme guide show <id>           Print a guide and its validation
+  prisme guide write <id> [-]      Write a guide from YAML on stdin (refused if invalid)
+  prisme guide delete <id>         Delete a guide`,
+  'help': `prisme — understand any project, from beginner to senior developer
 
 Usage:
-  omm init                          Initialize .omm/ directory (usually not needed)
-  omm setup [platform]              Register skills with AI coding tools
-  omm setup --list                  Show detected platforms
-  omm setup --teardown              Unregister from all platforms
-  omm update                        Update CLI + plugins to latest version
-  omm list                          List perspectives
-  omm tree <path>                   Show element tree
-  omm read <path> <field>           Read a field (stdout)
-  omm write <path> <field> <text|-> Write a field
-  omm show <path>                   Show all fields for an element
-  omm delete <path>                 Delete an element
-  omm status                        Show overview of all elements
-  omm diff <path>                   Compare current vs previous diagram
-  omm refs <path>                   Show elements that reference this element
-  omm validate [path]               Validate diagram(s) and guides
-  omm guide list|show|write|delete  Manage guides, step-by-step walks (.omm/.guides/)
-  omm config [key] [value]          Read or set project settings (e.g. language fr)
-  omm view [--port <port>]          Start web viewer (default: 3000)
+  prisme init                          Initialize .prisme/ directory (usually not needed)
+  prisme setup [platform]              Register skills with AI coding tools
+  prisme setup --list                  Show detected platforms
+  prisme setup --teardown              Unregister from all platforms
+  prisme update                        Update CLI + plugins to latest version
+  prisme list                          List perspectives
+  prisme tree <path>                   Show element tree
+  prisme read <path> <field>           Read a field (stdout)
+  prisme write <path> <field> <text|-> Write a field
+  prisme show <path>                   Show all fields for an element
+  prisme delete <path>                 Delete an element
+  prisme status                        Show overview of all elements
+  prisme diff <path>                   Compare current vs previous diagram
+  prisme refs <path>                   Show elements that reference this element
+  prisme validate [path]               Validate diagram(s) and guides
+  prisme guide list|show|write|delete  Manage guides, step-by-step walks (.prisme/.guides/)
+  prisme config [key] [value]          Read or set project settings (e.g. language fr)
+  prisme view [--port <port>]          Start web viewer (default: 3000)
 
-Cloud:
-  omm login                         Log in to omm.dev
-  omm logout                        Log out
-  omm link [org/slug]               Link project to a cloud slug
-  omm push                          Push .omm/ to cloud
-  omm pull                          Pull .omm/ from cloud
-  omm share                         Print the shareable URL
-  omm org list                      List your organizations
-  omm org switch <slug>             Set default organization
-  omm org members [slug]            View members (opens web)
 
 Paths: use / for nested elements (e.g. overall-architecture/main-process)
 Fields: description, diagram, constraint, concern, context, todo, note
-Title:  omm write <path> title "Display name" (shown in the viewer instead of the id)`,
+Title:  prisme write <path> title "Display name" (shown in the viewer instead of the id)`,
 };
 
 export type MessageKey = keyof typeof en;
@@ -106,16 +96,16 @@ export type MessageKey = keyof typeof en;
 const fr: Record<MessageKey, string> = {
   'error': 'erreur : {message}',
   'usage': 'erreur : utilisation : {usage}',
-  'unknownCommand': "erreur : commande inconnue '{cmd}'. Lancez 'omm help' pour l'aide.",
+  'unknownCommand': "erreur : commande inconnue '{cmd}'. Lancez 'prisme help' pour l'aide.",
   'invalidPort': 'erreur : numéro de port invalide',
   'invalidField': "erreur : champ invalide '{field}'. Champs possibles : {valid}",
   'elementNotFound': "erreur : élément '{path}' introuvable",
   'fieldEmpty': 'erreur : {path} est vide',
-  'ommCreated': 'Dossier .omm/ créé. Ajoutez-le au .gitignore si vous ne voulez pas le versionner.',
-  'ommAlreadyInitialized': '.omm/ existe déjà.',
-  'ommMissing': "Aucun dossier .omm/ trouvé. Lancez /omm-scan dans Claude Code pour générer la documentation d'architecture.",
+  'ommCreated': 'Dossier .prisme/ créé. Ajoutez-le au .gitignore si vous ne voulez pas le versionner.',
+  'ommAlreadyInitialized': '.prisme/ existe déjà.',
+  'ommMissing': "Aucun dossier .prisme/ trouvé. Lancez /prisme-scan dans Claude Code pour générer la documentation d'architecture.",
   'noPerspectives': 'Aucune perspective trouvée.',
-  'noPerspectivesScan': 'Aucune perspective trouvée. Lancez /omm-scan pour en générer.',
+  'noPerspectivesScan': 'Aucune perspective trouvée. Lancez /prisme-scan pour en générer.',
   'wrote': '{file} écrit ({bytes} octets)',
   'deleted': "élément '{path}' supprimé",
   'titleSet': 'titre de {path} : {title}',
@@ -140,14 +130,14 @@ const fr: Record<MessageKey, string> = {
   'warnings.one': '{count} avertissement',
   'warnings.other': '{count} avertissements',
   'validateLine': 'ligne {line} :',
-  'configWarnLanguage': "avertissement : '{value}' dans .omm/config.yaml n'est pas un code de langue, {fallback} est utilisé. Corrigez avec : omm config language fr",
+  'configWarnLanguage': "avertissement : '{value}' dans .prisme/config.yaml n'est pas un code de langue, {fallback} est utilisé. Corrigez avec : prisme config language fr",
   'configBadLanguage': "erreur : '{value}' n'est pas un code de langue. Utilisez un code comme fr, en, ko, ja, zh ou pt-BR.",
   'configNotSet': '(non défini)',
   'configSet': 'config : {key}={value}',
   'portInUse': 'Le port {port} est occupé, essai du port {next}...',
-  'viewerRunning': 'Viewer oh-my-mermaid lancé sur {url}',
+  'viewerRunning': 'Viewer prisme lancé sur {url}',
   'guideStep': 'étape {n} :',
-  'guideNone': 'Aucun parcours pour le moment. Écrivez-en un avec : omm guide write <id> < parcours.yaml',
+  'guideNone': 'Aucun parcours pour le moment. Écrivez-en un avec : prisme guide write <id> < parcours.yaml',
   'guideSteps.one': '{count} étape',
   'guideSteps.other': '{count} étapes',
   'guideParts.one': '{count} partie',
@@ -162,46 +152,36 @@ const fr: Record<MessageKey, string> = {
   'guideDeleted': "parcours '{id}' supprimé",
   'validateGuide': 'parcours {id} :',
   'guideUsage': `utilisation :
-  omm guide list                Lister les parcours et dire s'ils sont valides
-  omm guide show <id>           Afficher un parcours et sa validation
-  omm guide write <id> [-]      Écrire un parcours depuis du YAML sur l'entrée standard (refusé s'il est invalide)
-  omm guide delete <id>         Supprimer un parcours`,
-  'help': `oh-my-mermaid (omm) — le miroir de l'architecture de votre projet
+  prisme guide list                Lister les parcours et dire s'ils sont valides
+  prisme guide show <id>           Afficher un parcours et sa validation
+  prisme guide write <id> [-]      Écrire un parcours depuis du YAML sur l'entrée standard (refusé s'il est invalide)
+  prisme guide delete <id>         Supprimer un parcours`,
+  'help': `prisme — comprendre n'importe quel projet, du débutant au développeur confirmé
 
 Utilisation :
-  omm init                          Créer le dossier .omm/ (rarement nécessaire)
-  omm setup [plateforme]            Installer les skills dans les outils d'IA
-  omm setup --list                  Voir les plateformes détectées
-  omm setup --teardown              Désinstaller de toutes les plateformes
-  omm update                        Mettre à jour le CLI et les plugins
-  omm list                          Lister les perspectives
-  omm tree <chemin>                 Afficher l'arbre des éléments
-  omm read <chemin> <champ>         Lire un champ
-  omm write <chemin> <champ> <texte|->  Écrire un champ
-  omm show <chemin>                 Afficher tous les champs d'un élément
-  omm delete <chemin>               Supprimer un élément
-  omm status                        Vue d'ensemble des éléments
-  omm diff <chemin>                 Comparer le diagramme actuel au précédent
-  omm refs <chemin>                 Voir les éléments qui référencent cet élément
-  omm validate [chemin]             Vérifier les diagrammes et les parcours
-  omm guide list|show|write|delete  Gérer les parcours guidés (.omm/.guides/)
-  omm config [clé] [valeur]         Lire ou régler le projet (ex. : language fr)
-  omm view [--port <port>]          Lancer le viewer web (port 3000 par défaut)
+  prisme init                          Créer le dossier .prisme/ (rarement nécessaire)
+  prisme setup [plateforme]            Installer les skills dans les outils d'IA
+  prisme setup --list                  Voir les plateformes détectées
+  prisme setup --teardown              Désinstaller de toutes les plateformes
+  prisme update                        Mettre à jour le CLI et les plugins
+  prisme list                          Lister les perspectives
+  prisme tree <chemin>                 Afficher l'arbre des éléments
+  prisme read <chemin> <champ>         Lire un champ
+  prisme write <chemin> <champ> <texte|->  Écrire un champ
+  prisme show <chemin>                 Afficher tous les champs d'un élément
+  prisme delete <chemin>               Supprimer un élément
+  prisme status                        Vue d'ensemble des éléments
+  prisme diff <chemin>                 Comparer le diagramme actuel au précédent
+  prisme refs <chemin>                 Voir les éléments qui référencent cet élément
+  prisme validate [chemin]             Vérifier les diagrammes et les parcours
+  prisme guide list|show|write|delete  Gérer les parcours guidés (.prisme/.guides/)
+  prisme config [clé] [valeur]         Lire ou régler le projet (ex. : language fr)
+  prisme view [--port <port>]          Lancer le viewer web (port 3000 par défaut)
 
-Cloud :
-  omm login                         Se connecter à omm.dev
-  omm logout                        Se déconnecter
-  omm link [org/slug]               Relier le projet à un slug cloud
-  omm push                          Envoyer .omm/ vers le cloud
-  omm pull                          Récupérer .omm/ depuis le cloud
-  omm share                         Afficher le lien de partage
-  omm org list                      Lister vos organisations
-  omm org switch <slug>             Choisir l'organisation par défaut
-  omm org members [slug]            Voir les membres (ouvre le site)
 
 Chemins : utilisez / pour les éléments imbriqués (ex. : overall-architecture/main-process)
 Champs : description, diagram, constraint, concern, context, todo, note
-Titre :  omm write <chemin> title "Nom affiché" (montré dans le viewer à la place de l'identifiant)`,
+Titre :  prisme write <chemin> title "Nom affiché" (montré dans le viewer à la place de l'identifiant)`,
 };
 
 const CATALOGS: Record<string, Record<MessageKey, string>> = { en, fr };
@@ -225,7 +205,7 @@ function language(): string {
   return cachedLanguage;
 }
 
-/** A message in the project's language (.omm/config.yaml). */
+/** A message in the project's language (.prisme/config.yaml). */
 export function msg(key: MessageKey, vars?: Record<string, string | number>): string {
   return formatMessage(language(), key, vars);
 }

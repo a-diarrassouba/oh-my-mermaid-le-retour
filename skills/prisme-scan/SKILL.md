@@ -1,13 +1,13 @@
 ---
-name: omm-scan
-description: Scan codebase architecture and generate/update .omm/ documentation. Use when the user says "omm scan", "scan architecture", "update architecture", "refresh diagrams".
+name: prisme-scan
+description: Scan codebase architecture and generate/update .prisme/ documentation. Use when the user says "prisme scan", "scan architecture", "update architecture", "refresh diagrams".
 ---
 
-# omm-scan — Perspective-Based Architecture Scanner
+# prisme-scan — Perspective-Based Architecture Scanner
 
 ## Purpose
 
-Analyze the codebase and generate `.omm/` architecture documentation using **perspective-driven recursive analysis**.
+Analyze the codebase and generate `.prisme/` architecture documentation using **perspective-driven recursive analysis**.
 
 - A **perspective** is a top-level element — a distinct way to look at the architecture.
 - Each element in a diagram gets analyzed recursively. If it has internal structure, it becomes a **child element** (subdirectory with its own diagram). If not, it stays a leaf.
@@ -16,23 +16,23 @@ Analyze the codebase and generate `.omm/` architecture documentation using **per
 ## Prerequisites
 
 ```bash
-command -v omm || npm install -g oh-my-mermaid
+command -v prisme
 ```
 
-If the install fails, tell the user: "Please run `npm install -g oh-my-mermaid` in your terminal, then try again."
+If it prints nothing, prisme is not installed: stop and tell the user to run, in a terminal, `git clone https://github.com/a-diarrassouba/oh-my-mermaid-le-retour.git prisme && cd prisme && npm install && npm link`, then try again.
 
 ---
 
 ## Step 0: Check Language
 
 ```bash
-omm config language
+prisme config language
 ```
 
 It prints a language code: `en` (the default), `fr`, `ko`, `ja`, `zh`, ... Everything a reader sees is written in that language:
 
 - field content (description, context, constraint, concern, todo, note);
-- element titles (`omm write <path> title`, see 3b and 3c);
+- element titles (`prisme write <path> title`, see 3b and 3c);
 - diagram labels: the first line of each node label and every edge label (see [Diagram Rules](#diagram-rules)).
 
 Only identifiers stay in English kebab-case: element IDs, directory names, diagram node IDs, `classDef` names. File paths stay as they are in the code.
@@ -87,7 +87,7 @@ For each selected perspective, follow this recursive process:
 Element IDs match child directory names. The viewer resolves nesting from the filesystem.
 
 ```bash
-omm write <perspective> diagram - <<'MERMAID'
+prisme write <perspective> diagram - <<'MERMAID'
 graph LR
     renderer["Renderer\nsrc/renderer/"]
     renderer -->|"IPC invoke/on"| main-process["Main Process\nsrc/main/"]
@@ -109,10 +109,10 @@ Every diagram follows the [Diagram Rules](#diagram-rules), including the mandato
 
 ### 3b. Write the title and the other fields
 
-The diagram from 3a created the perspective's folder, so it can now get a title in the configured language. Then write its fields, each as a separate `omm write` command: `description` always; `context`, `constraint`, `concern`, `todo`, `note` only when there is something real to say (an empty or generic field is worse than none).
+The diagram from 3a created the perspective's folder, so it can now get a title in the configured language. Then write its fields, each as a separate `prisme write` command: `description` always; `context`, `constraint`, `concern`, `todo`, `note` only when there is something real to say (an empty or generic field is worse than none).
 
 ```bash
-omm write <perspective> title "Overall architecture"
+prisme write <perspective> title "Overall architecture"
 ```
 
 The viewer shows the title instead of the ID. Keep it short (a few words, at most 80 characters, one line).
@@ -126,7 +126,7 @@ The viewer shows the title instead of the ID. Keep it short (a few words, at mos
 2. **Write description for every node — no exceptions.** This creates the element directory. Optionally write other fields (context, constraint, concern, todo, note) if relevant — Write in the configured language.
 
    ```bash
-   omm write <perspective>/<element-name> description - <<'EOF'
+   prisme write <perspective>/<element-name> description - <<'EOF'
    (one plain sentence: what it is for)
 
    (then the technical part: what it does, which files/dirs it covers)
@@ -138,7 +138,7 @@ The viewer shows the title instead of the ID. Keep it short (a few words, at mos
 3. **Write its title**, the same name as the first line of its label in the parent diagram. Always after the description: `title` refuses an element whose folder does not exist yet.
 
    ```bash
-   omm write <perspective>/<element-name> title "Data store"
+   prisme write <perspective>/<element-name> title "Data store"
    ```
 
 4. **Decide leaf or group:**
@@ -148,7 +148,7 @@ The viewer shows the title instead of the ID. Keep it short (a few words, at mos
 5. **If group** — write diagram and recurse:
 
    ```bash
-   omm write <perspective>/<element-name> diagram - <<'MERMAID'
+   prisme write <perspective>/<element-name> diagram - <<'MERMAID'
    graph LR
        (internal elements)
    MERMAID
@@ -195,18 +195,18 @@ with a mental map precise enough to know where to look, what to change and how t
 ### When to write it
 
 ```bash
-omm guide list
-omm validate
+prisme guide list
+prisme validate
 ```
 
-- If `omm guide list` answers `invalid field 'list'`, the CLI is too old for guides: tell the user to run `omm update`, and stop here.
-- Write `start-here` when it does not exist, when this scan added or removed perspectives or elements it walks through, when `omm validate` reports it invalid, or when the user asks for it. Otherwise keep it.
+- If `prisme guide list` answers `invalid field 'list'`, the CLI is too old for guides: tell the user to run `prisme update`, and stop here.
+- Write `start-here` when it does not exist, when this scan added or removed perspectives or elements it walks through, when `prisme validate` reports it invalid, or when the user asks for it. Otherwise keep it.
 
 ### Its shape
 
 - `kind: path`, `audience: newcomer`, `start: true`, a `title` in the configured language that names the project ("Get started with <project>"), and a `duration` (one to two minutes per step).
 - **Three parts**, named in the configured language: Functional, Technical, Operational (`fr`: Fonctionnel, Technique, Opérationnel). Every step has its `part`, and the parts come in this order.
-- **One step per question below that `.omm/` can answer**, pointing at the element that answers it. Two questions answered by the same element share one step. When a question names two elements, point at the one that answers most of it and mention the other in `details`. So the length follows the project: a small CLI may need 7 steps, a large application 20 or more.
+- **One step per question below that `.prisme/` can answer**, pointing at the element that answers it. Two questions answered by the same element share one step. When a question names two elements, point at the one that answers most of it and mention the other in `details`. So the length follows the project: a small CLI may need 7 steps, a large application 20 or more.
 - A question with nothing to show gets no step. When the project should have it (no tests, no deployment, no monitoring), say so in the `details` of the step of the same part that comes just before ("No monitoring was found: errors only appear in the terminal."). When the question does not fit this kind of project (routes in a CLI), skip it silently, or name what plays that role ("commands play the role of routes").
 - For "the key features", make one step per critical feature, three at most; name the others in the `details` of the last one.
 
@@ -231,7 +231,7 @@ Write each step for a newcomer who sees the project for the first time; while th
 
 - `say`: the answer to the step's question, in one or two plain sentences (under 280 characters).
 - `details`: 300 to 800 characters of Markdown: which elements to look at on the diagram (by their titles, not by position or color), the answer in plain words, the few names a newcomer will meet (files, commands) in code spans, and "To remember:" in one sentence.
-- **Facts about this project** come only from `.omm/`: the fields of the step's element, of its children and of its parent. Never add one they do not hold. **General words** (CLI, unit test, CDN) may be defined from general knowledge, in plain words, the first time they appear.
+- **Facts about this project** come only from `.prisme/`: the fields of the step's element, of its children and of its parent. Never add one they do not hold. **General words** (CLI, unit test, CDN) may be defined from general knowledge, in plain words, the first time they appear.
 - In the technical part, say where to look to change things ("a new command starts in `src/commands/`"); in the operational part, give the exact commands, in code spans or a fenced code block.
 
 ### Write it
@@ -239,7 +239,7 @@ Write each step for a newcomer who sees the project for the first time; while th
 Put `title`, every `say` and every `part` in double quotes, and `details` as a `|` block. The closing `YAML` line starts at column 0.
 
 ```bash
-omm guide write start-here - <<'YAML'
+prisme guide write start-here - <<'YAML'
 title: "Get started with acme-shop"
 kind: path
 audience: newcomer
@@ -269,7 +269,7 @@ The CLI refuses a guide that points at a missing element. Read the errors, fix t
 
 ## Step 5: Summarize
 
-Report what was created/updated, including the beginner guide (its title, its parts and number of steps, and the questions it could not answer), say that the viewer will offer it on the first visit, and suggest `omm view` to view.
+Report what was created/updated, including the beginner guide (its title, its parts and number of steps, and the questions it could not answer), say that the viewer will offer it on the first visit, and suggest `prisme view` to view.
 
 ## Onboarding Perspectives
 
@@ -327,9 +327,9 @@ The other fields can stay technical.
   ```
 
 - **Every label has a real path.** The second line is a file or folder that exists in the repository, written from the repository root (folders end with `/`). Check it with Glob before writing; never guess a path. When an element spans two places and their common folder says nothing (like `src/`), list both: `src/commands/push.ts, src/lib/cloud.ts`. Exceptions, where the second line says where the thing lives instead:
-  - an external system: its name, domain or command (`ohmymermaid.com`, `Claude Code`, `git`), not translated;
+  - an external system: its name, domain or command (`api.stripe.com`, `Claude Code`, `git`), not translated;
   - a person or group using the system: how they reach it (`browser`, `terminal`, `mobile app`, `API`);
-  - a storage outside the repository: its location (`~/.omm/credentials.json`, `localStorage`, `PostgreSQL`);
+  - a storage outside the repository: its location (`~/.aws/credentials`, `localStorage`, `PostgreSQL`);
   - `project-status/open-questions`, which holds what the repository does not tell: `?`.
 - **A diagram shows only its own elements.** A child diagram lists the parts of that element; how it connects to its siblings is already in the parent diagram, so do not repeat outside elements there (each node would become a duplicate child).
 - The same element may appear in several perspectives with the same ID (each perspective has its own folder for it).
@@ -378,8 +378,8 @@ Write only what the code or the docs show. A conclusion drawn from an absence is
 
 ## General Rules
 
-- **Write each field as a separate `omm write` command.** Each `omm write` must be its own Bash tool call.
-- **Run `omm write` commands one at a time, never in parallel.** Each write also updates the parent's `meta.yaml`; two writes at once can lose a child.
-- If `omm write <path> title ...` answers `invalid field 'title'`, the CLI is too old: tell the user to run `omm update`, and keep scanning without titles.
+- **Write each field as a separate `prisme write` command.** Each `prisme write` must be its own Bash tool call.
+- **Run `prisme write` commands one at a time, never in parallel.** Each write also updates the parent's `meta.yaml`; two writes at once can lose a child.
+- If `prisme write <path> title ...` answers `invalid field 'title'`, the CLI is too old: tell the user to run `prisme update`, and keep scanning without titles.
 - Do not rewrite elements that haven't changed. Fixing something you wrote earlier in the same scan is fine.
 - Do not create circular references. A child element must never reference its parent.

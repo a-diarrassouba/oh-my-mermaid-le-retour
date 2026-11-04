@@ -9,15 +9,8 @@ import { commandStatus } from './commands/status.js';
 import { commandDiff } from './commands/diff.js';
 import { commandRefs } from './commands/refs.js';
 import { commandView } from './commands/view.js';
-import { commandLogin } from './commands/login.js';
-import { commandLogout } from './commands/logout.js';
-import { commandPush } from './commands/push.js';
-import { commandPull } from './commands/pull.js';
-import { commandLink } from './commands/link.js';
-import { commandShare } from './commands/share.js';
 import { commandSetup } from './commands/setup.js';
 import { commandUpdate } from './commands/update.js';
-import { commandOrg } from './commands/org.js';
 import { commandValidate } from './commands/validate.js';
 import { commandTree } from './commands/tree.js';
 import { commandRead, commandWrite } from './commands/read-write.js';
@@ -25,7 +18,7 @@ import { commandConfig } from './commands/config.js';
 import { msg } from './lib/messages.js';
 import { commandGuide } from './commands/guide.js';
 
-const GLOBAL_COMMANDS = ['init', 'setup', 'update', 'list', 'show', 'delete', 'status', 'diff', 'refs', 'validate', 'guide', 'view', 'login', 'logout', 'push', 'pull', 'link', 'share', 'org', 'read', 'write', 'tree', 'config', 'help'];
+const GLOBAL_COMMANDS = ['init', 'setup', 'update', 'list', 'show', 'delete', 'status', 'diff', 'refs', 'validate', 'guide', 'view', 'read', 'write', 'tree', 'config', 'help'];
 
 function printHelp(): void {
   process.stdout.write(msg('help') + '\n');
@@ -43,7 +36,7 @@ async function main(): Promise<void> {
     const { createRequire } = await import('node:module');
     const require = createRequire(import.meta.url);
     const pkg = require('../package.json');
-    process.stdout.write(`omm ${pkg.version}\n`);
+    process.stdout.write(`prisme ${pkg.version}\n`);
     return;
   }
 
@@ -88,7 +81,7 @@ async function main(): Promise<void> {
 
     case 'show':
       if (!args[1]) {
-        process.stderr.write(msg('usage', { usage: 'omm show <path>' }) + '\n');
+        process.stderr.write(msg('usage', { usage: 'prisme show <path>' }) + '\n');
         process.exit(1);
       }
       commandShow(args[1]);
@@ -96,7 +89,7 @@ async function main(): Promise<void> {
 
     case 'delete':
       if (!args[1]) {
-        process.stderr.write(msg('usage', { usage: 'omm delete <path>' }) + '\n');
+        process.stderr.write(msg('usage', { usage: 'prisme delete <path>' }) + '\n');
         process.exit(1);
       }
       commandDelete(args[1]);
@@ -108,7 +101,7 @@ async function main(): Promise<void> {
 
     case 'diff':
       if (!args[1]) {
-        process.stderr.write(msg('usage', { usage: 'omm diff <path>' }) + '\n');
+        process.stderr.write(msg('usage', { usage: 'prisme diff <path>' }) + '\n');
         process.exit(1);
       }
       commandDiff(args[1]);
@@ -126,7 +119,7 @@ async function main(): Promise<void> {
         className = args[2];
       }
       if (!className) {
-        process.stderr.write(msg('usage', { usage: 'omm refs [--reverse] <path>' }) + '\n');
+        process.stderr.write(msg('usage', { usage: 'prisme refs [--reverse] <path>' }) + '\n');
         process.exit(1);
       }
       commandRefs(className, reverse);
@@ -146,36 +139,8 @@ async function main(): Promise<void> {
       return;
     }
 
-    case 'login':
-      await commandLogin();
-      return;
-
-    case 'logout':
-      commandLogout();
-      return;
-
-    case 'link':
-      await commandLink(args[1]);
-      return;
-
-    case 'push':
-      await commandPush();
-      return;
-
-    case 'pull':
-      await commandPull();
-      return;
-
-    case 'share':
-      commandShare();
-      return;
-
-    case 'org':
-      await commandOrg(args[1], args[2]);
-      return;
-
     default:
-      // Legacy alias: omm <path> <field> [content] → read/write
+      // Legacy alias: prisme <path> <field> [content] → read/write
       if (args.length >= 2 && !GLOBAL_COMMANDS.includes(cmd)) {
         const targetPath = cmd;
         const field = args[1];

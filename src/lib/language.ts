@@ -36,9 +36,9 @@ export function normalizeLanguage(raw: unknown): string | null {
   return region ? `${lang.toLowerCase()}-${region.toUpperCase()}` : lang.toLowerCase();
 }
 
-/** The project's language code from .omm/config.yaml, `en` when unset or unreadable. */
+/** The project's language code from .prisme/config.yaml, `en` when unset or unreadable. */
 export function getLanguage(cwd?: string): string {
-  const filePath = path.join(cwd ?? process.cwd(), '.omm', 'config.yaml');
+  const filePath = path.join(cwd ?? process.cwd(), '.prisme', 'config.yaml');
   if (!fs.existsSync(filePath)) return DEFAULT_LANGUAGE;
   const config = YAML.parse(fs.readFileSync(filePath, 'utf-8')) as OmmConfig | null;
   return normalizeLanguage(config?.language) ?? DEFAULT_LANGUAGE;

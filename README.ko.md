@@ -2,63 +2,59 @@
 
 > 이 문서는 영어 README를 번역한 것입니다. 일부 표현이 부자연스러울 수 있습니다.
 
-<p align="center">
-  <img src="./docs/logo.jpg" alt="omm logo" width="80"/>
-</p>
-
-<h1 align="center">Oh-my-mermaid</h1>
+<h1 align="center">prisme</h1>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/oh-my-mermaid"><img src="https://img.shields.io/npm/v/oh-my-mermaid" alt="npm version"/></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"/></a>
 </p>
 
 <p align="center">
-  AI는 몇 초 만에 코드를 작성합니다. 사람이 이해하는 데는 몇 시간이 걸립니다.<br/>
-  이해를 건너뛰면, 코드베이스는 블랙박스가 됩니다 — 본인에게조차.<br/><br/>
-  <strong>omm이 그 격차를 해소합니다 — AI가 생성한, 사람을 위한 아키텍처 문서.</strong>
+  프리즘은 백색광을 선명한 색으로 나눕니다.<br/>
+  <strong>prisme은 복잡한 프로젝트를 초보자부터 시니어 개발자까지 누구나 이해할 수 있는 부분으로 나눕니다.</strong>
 </p>
 
 ---
 
 ## 빠른 시작
 
-터미널에 붙여넣기:
+prisme은 아직 npm에 없습니다. 소스에서 설치한 다음, AI 코딩 도구에 스킬을 등록하세요:
 
 ```bash
-npm install -g oh-my-mermaid && omm setup
+git clone https://github.com/a-diarrassouba/oh-my-mermaid-le-retour.git prisme
+cd prisme && npm install && npm link
+prisme setup
 ```
 
-AI 코딩 도구를 열고 `/omm-scan` 스킬을 실행:
+이후 `prisme update`가 이 클론을 가져와 다시 빌드합니다.
 
-```
-/omm-scan
-```
-
-끝. 결과 보기:
+이해하고 싶은 프로젝트에서 문서 언어를 선택하세요 (선택 사항, 기본값은 영어):
 
 ```bash
-omm view
+prisme config language fr
 ```
 
-## 예시
+그런 다음 해당 프로젝트에서 AI 코딩 도구를 열고 `/prisme-scan` 스킬을 실행하세요:
 
-> omm이 자기 자신을 스캔했습니다. 이것이 결과입니다.
+```
+/prisme-scan
+```
 
-<table><tr>
-<td width="50%"><img src="./docs/screenshot.png" alt="omm viewer"/></td>
-<td width="50%"><img src="./docs/demo.gif" alt="omm scan demo"/></td>
-</tr></table>
+결과를 보고, 뷰어가 제안하는 환영 가이드를 따라가세요:
+
+```bash
+prisme view
+```
 
 ## 작동 방식
 
-AI가 코드베이스를 분석하고 **관점(perspective)** 을 생성합니다 — 아키텍처를 바라보는 다양한 렌즈(구조, 데이터 흐름, 외부 연동 등). 각 관점에는 Mermaid 다이어그램과 문서 필드가 포함됩니다.
+AI가 코드베이스를 읽고 **perspective**를 작성합니다. perspective는 프로젝트를 바라보는 서로 다른 관점입니다: 무엇을 하고 누구를 위한 것인지, 어떻게 만들어졌는지, 데이터가 어떻게 흐르는지, 어떻게 보호되는지, 어떻게 실행·테스트·배포하는지, 그리고 현재 상태. 각 perspective는 선택한 언어로 Mermaid 다이어그램과 문서 필드를 담고 있습니다.
 
-모든 노드는 **재귀적으로 분석**됩니다. 복잡한 노드는 자체 다이어그램을 가진 중첩 자식 element가 됩니다. 단순한 노드는 리프로 남습니다. 파일시스템이 트리를 직접 반영합니다:
+모든 element는 **재귀적으로 분석**됩니다. 복잡한 element는 자체 다이어그램을 가진 중첩 element가 되고, 단순한 element는 leaf로 남습니다. 파일 시스템이 트리를 반영합니다:
 
 ```
-.omm/
-├── overall-architecture/           ← 관점
+.prisme/
+├── functional-overview/            ← perspective
+├── overall-architecture/
 │   ├── description.md
 │   ├── diagram.mmd
 │   ├── context.md
@@ -70,76 +66,71 @@ AI가 코드베이스를 분석하고 **관점(perspective)** 을 생성합니�
 │   └── renderer/
 │       └── ...
 ├── data-flow/
-├── external-integrations/
+├── operations/
+├── project-status/
 └── .guides/                        ← 가이드 (단계별 안내)
 ```
 
-뷰어는 파일시스템에서 중첩을 자동 감지합니다 — 자식이 있는 element는 확장 가능한 그룹으로, 나머지는 노드로 렌더링됩니다.
+뷰어는 파일 시스템에서 중첩을 자동으로 감지합니다 — 자식이 있는 element는 펼칠 수 있는 그룹으로, 나머지는 노드로 렌더링됩니다.
 
-각 element는 최대 7개 필드를 가집니다: `description`, `diagram`, `context`, `constraint`, `concern`, `todo`, `note`.
+각 element는 최대 7개 필드(`description`, `diagram`, `context`, `constraint`, `concern`, `todo`, `note`)와 표시 제목을 가집니다.
 
 ### 가이드
 
-**가이드**는 다이어그램을 단계별로 따라가는 안내입니다. 뷰어는 각 element를 열고, 나머지는 흐리게 하며, 따라가는 연결선을 강조합니다. AI 도구에서 `/omm-guide`로 요청하세요 (예: `/omm-guide 사용자가 가입하면 무슨 일이 일어나나요?`). `/omm-scan`은 환영 가이드 `start-here`도 작성합니다. 세 부분(프로젝트가 하는 일, 구성 방식, 실행·테스트·배포 방법)으로 이루어지며, 뷰어가 처음 방문할 때 제안합니다. 가이드는 `.omm/.guides/`에 저장되며, 새 스캔으로 가이드가 깨지면 `omm validate`가 알려줍니다.
+**가이드**는 다이어그램을 단계별로 따라가는 안내입니다. 뷰어는 각 element를 열고, 나머지는 흐리게 하며, 따라가는 연결선을 강조합니다. AI 도구에서 `/prisme-guide`로 요청하세요 (예: `/prisme-guide 사용자가 가입하면 무슨 일이 일어나나요?`). `/prisme-scan`은 환영 가이드 `start-here`도 작성합니다. 세 부분(프로젝트가 하는 일, 구성 방식, 실행·테스트·배포 방법)으로 이루어지며, 뷰어가 처음 방문할 때 제안합니다. 가이드는 `.prisme/.guides/`에 저장되며, 새 스캔으로 가이드가 깨지면 `prisme validate`가 알려줍니다.
+
+### 질문
+
+뷰어의 질문 창에 질문을 입력하세요 (예: "자격 증명은 어디에 저장되나요?"): 일치하는 element가 다이어그램에서 강조됩니다.
 
 ## CLI
 
 ```bash
-omm setup                          # AI 도구에 스킬 등록
-omm view                           # 인터랙티브 뷰어 열기
-omm config language ko             # 콘텐츠 언어 설정
-omm guide list                     # 가이드 목록 보기
-omm update                         # 최신 버전으로 업데이트
+prisme setup                       # AI 도구에 스킬 등록
+prisme view                        # 인터랙티브 뷰어 열기
+prisme config language fr          # 문서와 인터페이스 언어 설정
+prisme guide list                  # 가이드 목록 보기
+prisme update                      # 최신 버전으로 업데이트
 ```
 
-전체 명령어는 `omm help`를 참고하세요.
+전체 명령어 목록은 `prisme help`를 실행하세요.
 
 ## 스킬
 
-스킬은 **AI 코딩 도구 안에서** 실행하는 명령어입니다 (터미널이 아닙니다). `/`로 시작합니다.
+스킬은 **AI 코딩 도구 안에서** 실행하는 명령입니다 (터미널이 아님). `/`로 시작합니다.
 
 | 스킬 | 기능 |
 | --- | --- |
-| `/omm-scan` | 코드베이스 분석 → 아키텍처 문서 생성 |
-| `/omm-guide` | 질문에 답하는 단계별 가이드 작성 → 뷰어에서 재생 |
-| `/omm-push` | 로그인 + 연결 + 클라우드 푸시를 한 번에 |
-
-## 클라우드
-
-[ohmymermaid.com](https://ohmymermaid.com)을 통해 아키텍처를 클라우드에 저장할 수 있습니다.
-
-```bash
-omm login && omm link && omm push
-```
-
-기본적으로 비공개입니다. 팀과 공유하거나, [이 예시](https://ohmymermaid.com/share/c47e20a7063c231760361ed9cb9ec4b6)처럼 공개할 수 있습니다.
+| `/prisme-scan` | 코드베이스 분석 → 문서와 환영 가이드 작성 |
+| `/prisme-guide` | 질문에 답하는 단계별 가이드 작성 → 뷰어에서 재생 |
+| `/prisme-view` | 뷰어 열기 |
 
 ## 지원 AI 도구
 
 | 플랫폼 | 설정 |
 | --- | --- |
-| Claude Code | `omm setup claude` |
-| Codex | `omm setup codex` |
-| Cursor | `omm setup cursor` |
-| OpenClaw | `omm setup openclaw` |
-| Antigravity | `omm setup antigravity` |
+| Claude Code | `prisme setup claude` |
+| Codex | `prisme setup codex` |
+| Cursor | `prisme setup cursor` |
+| OpenClaw | `prisme setup openclaw` |
+| Antigravity | `prisme setup antigravity` |
 
-`omm setup`을 실행하면 설치된 모든 도구를 자동 감지하고 설정합니다.
+`prisme setup`을 실행하면 설치된 모든 도구를 자동으로 감지하고 설정합니다.
 
-## 로드맵
-
-[docs/ROADMAP.md](./docs/ROADMAP.md)를 참고하세요.
-
-## 개발 & 기여
+## 개발 및 기여
 
 ```bash
-git clone https://github.com/oh-my-mermaid/oh-my-mermaid.git
-cd oh-my-mermaid
+git clone https://github.com/a-diarrassouba/oh-my-mermaid-le-retour.git
+cd oh-my-mermaid-le-retour
 npm install && npm run build
 npm test
 ```
 
-이슈와 PR을 환영합니다. [Conventional Commits](https://www.conventionalcommits.org/)를 사용해주세요.
+이슈와 PR을 환영합니다. [Conventional Commits](https://www.conventionalcommits.org/)를 사용해 주세요.
+
+## 크레딧
+
+prisme은 MIT 라이선스로 공개된 [oh-my-mermaid](https://github.com/oh-my-mermaid/oh-my-mermaid)의 포크에서 시작되었습니다.
 
 ## 라이선스
 

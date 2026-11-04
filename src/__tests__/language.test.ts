@@ -7,7 +7,7 @@ import { normalizeLanguage, getLanguage } from '../lib/language.js';
 let tmpDir: string;
 
 beforeEach(() => {
-  tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'omm-lang-'));
+  tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'prisme-lang-'));
 });
 
 afterEach(() => {
@@ -15,8 +15,8 @@ afterEach(() => {
 });
 
 function writeConfig(content: string): void {
-  fs.mkdirSync(path.join(tmpDir, '.omm'), { recursive: true });
-  fs.writeFileSync(path.join(tmpDir, '.omm', 'config.yaml'), content, 'utf-8');
+  fs.mkdirSync(path.join(tmpDir, '.prisme'), { recursive: true });
+  fs.writeFileSync(path.join(tmpDir, '.prisme', 'config.yaml'), content, 'utf-8');
 }
 
 describe('normalizeLanguage', () => {
@@ -46,7 +46,7 @@ describe('normalizeLanguage', () => {
 });
 
 describe('getLanguage', () => {
-  it('defaults to en without .omm/ or without a language', () => {
+  it('defaults to en without .prisme/ or without a language', () => {
     expect(getLanguage(tmpDir)).toBe('en');
     writeConfig('version: 0.1.0\n');
     expect(getLanguage(tmpDir)).toBe('en');

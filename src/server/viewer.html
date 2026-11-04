@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>oh-my-mermaid</title>
+<title>prisme</title>
 <script src="https://cdn.jsdelivr.net/npm/dagre@0.8.5/dist/dagre.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js" integrity="sha384-+VfUPEb0PdtChMwmBcBmykRMDd+v6D/oFmB3rZM/puCMDYcIvF968OimRh4KQY9a" crossorigin="anonymous"></script>
@@ -443,12 +443,12 @@ body.light .reg-node:hover .nshape { stroke: #000 !important; }
 </head>
 <body>
 <div id="nav-sidebar">
-  <div id="nav-title">omm</div>
+  <div id="nav-title">prisme</div>
   <div id="nav-list"></div>
   <div id="nav-guides" hidden></div>
 </div>
 
-<div id="mobile-nav-btn" onclick="toggleMobileNav()"><span>☰</span><span id="mobile-title">omm</span></div>
+<div id="mobile-nav-btn" onclick="toggleMobileNav()"><span>☰</span><span id="mobile-title">prisme</span></div>
 <div id="mobile-overlay" onclick="toggleMobileNav()"></div>
 <div id="canvas-wrap">
   <div class="float-controls">
@@ -488,7 +488,7 @@ const I18N = {
     context: 'Context', todo: 'Todo', note: 'Notes', references: 'References',
     updatesOne: '{n} update', updatesOther: '{n} updates',
     emptyTitle: 'No perspectives found.', emptyHint: 'Run {cmd} in Claude Code.',
-    guides: 'Guides', guideInvalid: 'needs fixing: run omm validate', stepN: 'Step {n}',
+    guides: 'Guides', guideInvalid: 'needs fixing: run prisme validate', stepN: 'Step {n}',
     stepsOne: '{n} step', stepsOther: '{n} steps', partsOne: '{n} part', partsOther: '{n} parts',
     kindPath: 'guide', kindTrace: 'scenario', back: 'Back', next: 'Next', finish: 'Finish', exitGuide: 'Exit',
     stepOf: 'Step {i} of {n}', partOf: 'Part {i}/{n} — {name}',
@@ -506,7 +506,7 @@ const I18N = {
     context: 'Contexte', todo: 'À faire', note: 'Notes', references: 'Références',
     updatesOne: '{n} mise à jour', updatesOther: '{n} mises à jour',
     emptyTitle: 'Aucune perspective trouvée.', emptyHint: 'Lancez {cmd} dans Claude Code.',
-    guides: 'Parcours', guideInvalid: 'à corriger : lancez omm validate', stepN: 'Étape {n}',
+    guides: 'Parcours', guideInvalid: 'à corriger : lancez prisme validate', stepN: 'Étape {n}',
     stepsOne: '{n} étape', stepsOther: '{n} étapes', partsOne: '{n} partie', partsOther: '{n} parties',
     kindPath: 'parcours', kindTrace: 'scénario', back: 'Précédent', next: 'Suivant', finish: 'Terminer', exitGuide: 'Quitter',
     stepOf: 'Étape {i} sur {n}', partOf: 'Partie {i}/{n} — {name}',
@@ -551,7 +551,7 @@ function safeStorageSet(key, value) {
     localStorage.setItem(key, value);
   } catch {}
 }
-let isDark = safeStorageGet('omm-theme') !== 'light';
+let isDark = safeStorageGet('prisme-theme') !== 'light';
 function applyTheme() {
   document.body.classList.toggle('light', !isDark);
   const btn = document.getElementById('theme-btn');
@@ -559,7 +559,7 @@ function applyTheme() {
 }
 window.toggleTheme = function() {
   isDark = !isDark;
-  safeStorageSet('omm-theme', isDark ? 'dark' : 'light');
+  safeStorageSet('prisme-theme', isDark ? 'dark' : 'light');
   applyTheme();
   rebuildCanvas();
 };
@@ -1704,7 +1704,7 @@ function addNavItem(name, prefix, isLast, displayLabel) {
 }
 
 // ── guides ────────────────────────────────────────────────
-// A guide (.omm/.guides/<id>.yaml, served by /api/guides) walks through
+// A guide (.prisme/.guides/<id>.yaml, served by /api/guides) walks through
 // elements already on the canvas. It only opens elements, fades the rest and
 // animates the edge of each step: all content stays in the elements.
 const navGuides = document.getElementById('nav-guides');
@@ -1714,12 +1714,12 @@ let guides = [];          // [{ id, guide, valid, issues }]
 let activeGuide = null;   // one of guides
 let guideStep = 0;
 
-const guideKey = id => 'omm-guide:' + id;
-const GUIDE_DISMISS_KEY = 'omm-guide-start-dismissed';
+const guideKey = id => 'prisme-guide:' + id;
+const GUIDE_DISMISS_KEY = 'prisme-guide-start-dismissed';
 // Same arrows as parseFlowchart(): "a --> b", "a -->|label| b", ...
 const STEP_EDGE = /^\s*@?([\w-]+)\s*(?:-->(?:\|[^|]*\|)?|--o|--x|---|-.->|==>|~~>)\s*@?([\w-]+)\s*$/;
 
-// Guide text comes from .omm/ (and later from AI answers): never let it run code.
+// Guide text comes from .prisme/ (and later from AI answers): never let it run code.
 function safeMarkdown(text) {
   return DOMPurify.sanitize(marked.parse(String(text)), {
     FORBID_TAGS: ['img', 'picture', 'audio', 'video', 'source', 'track', 'style', 'form', 'input', 'button',
@@ -2254,7 +2254,7 @@ async function init() {
   setLanguage(config.language);
   classes = Array.isArray(list) ? list : [];
   if (!classes.length) {
-    const hint = esc(I18N[lang].emptyHint).replace('{cmd}', '<code>/omm-scan</code>');
+    const hint = esc(I18N[lang].emptyHint).replace('{cmd}', '<code>/prisme-scan</code>');
     canvasEl.innerHTML=`<div class="empty-state" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%)"><p>${esc(t('emptyTitle'))}<br>${hint}</p></div>`;
     return;
   }
@@ -2280,7 +2280,7 @@ async function init() {
   await Promise.all(nodeLoads);
 
   // Set project name and build nav tree
-  var projName = window.__projectName || 'omm';
+  var projName = window.__projectName || 'prisme';
   navTitle.textContent = projName;
   var mobileTitle = document.getElementById('mobile-title');
   if (mobileTitle) mobileTitle.textContent = projName;

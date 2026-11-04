@@ -19,7 +19,7 @@ function getGitInfo(cwd: string): { commit?: string; branch?: string } {
 }
 
 export function updateMeta(className: string, field: Field, cwd: string = process.cwd()): void {
-  const ommDir = path.join(cwd, '.omm');
+  const ommDir = path.join(cwd, '.prisme');
   const metaPath = path.join(ommDir, className, META_FILE);
 
   let meta: ClassMeta;

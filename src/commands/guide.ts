@@ -97,7 +97,7 @@ export async function commandGuide(args: string[]): Promise<void> {
     }
 
     default:
-      // Before guides, "omm guide <field>" read or wrote an element named "guide".
+      // Before guides, "prisme guide <field>" read or wrote an element named "guide".
       if (sub && isValidField(sub) && classExists('guide')) {
         await commandClassField('guide', sub, args[1]);
         return;

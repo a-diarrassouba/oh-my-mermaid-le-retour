@@ -1,13 +1,13 @@
 ---
-name: omm-guide
-description: Create a guide (a step-by-step walk) through the .omm/ architecture docs, played in the omm viewer. Use when the user says "omm guide", "make a guide", "make a tour", "onboarding guide", "walk me through X", "explain how X works step by step", or asks "what happens when ...?" about the system.
+name: prisme-guide
+description: Create a guide (a step-by-step walk) through the .prisme/ architecture docs, played in the prisme viewer. Use when the user says "prisme guide", "make a guide", "make a tour", "onboarding guide", "walk me through X", "explain how X works step by step", or asks "what happens when ...?" about the system.
 ---
 
-# omm-guide — Guides
+# prisme-guide — Guides
 
 ## Purpose
 
-A **guide** ("parcours" in the French interface) is an ordered walk through elements that already exist in `.omm/`. The viewer plays it step by step: it opens each element, fades the rest of the diagram and animates the edge of the step.
+A **guide** ("parcours" in the French interface) is an ordered walk through elements that already exist in `.prisme/`. The viewer plays it step by step: it opens each element, fades the rest of the diagram and animates the edge of the step.
 
 A guide holds the order, the edge or nodes to look at, and for each step a short headline (`say`) and an explanation (`details`). The element's own fields (description, constraints, ...) stay in the element. Two kinds:
 
@@ -19,34 +19,34 @@ A guide holds the order, the edge or nodes to look at, and for each step a short
 ## Prerequisites
 
 ```bash
-omm guide list
+prisme guide list
 ```
 
-If it prints an error, the CLI is too old (it reads `guide` as an element and answers `error: invalid field 'list'`): tell the user to run `omm update` (or `npm install -g oh-my-mermaid`), then try again. Never write `.omm/.guides/` by hand instead.
+If it prints an error, the CLI is too old (it reads `guide` as an element and answers `error: invalid field 'list'` or `erreur : champ invalide 'list'`): tell the user to run `prisme update`, then try again. Never write `.prisme/.guides/` by hand instead.
 
 The list also shows which guide ids are already taken.
 
-If there is no `.omm/` directory, run `/omm-scan` first: a guide can only point at elements that exist.
+If there is no `.prisme/` directory, run `/prisme-scan` first: a guide can only point at elements that exist.
 
 ## Step 0: Check Language
 
 ```bash
-omm config language
+prisme config language
 ```
 
-It prints a language code (`en` by default, `fr`, ...). Write `title`, every `say`, every `details` and every `part` in that language. Guide ids, element paths and node ids are always English kebab-case, as in `.omm/`.
+It prints a language code (`en` by default, `fr`, ...). Write `title`, every `say`, every `details` and every `part` in that language. Guide ids, element paths and node ids are always English kebab-case, as in `.prisme/`.
 
 ## Step 1: Read the map
 
 ```bash
-omm list
-omm tree <perspective>
-omm read <perspective> diagram
+prisme list
+prisme tree <perspective>
+prisme read <perspective> diagram
 ```
 
-If `omm list` shows a `glossary` perspective, also run `omm tree glossary`: it lists the terms your steps can point to.
+If `prisme list` shows a `glossary` perspective, also run `prisme tree glossary`: it lists the terms your steps can point to.
 
-Find the perspective that answers the question (`request-lifecycle`, `data-flow`, `command-surface`, `overall-architecture`, ...). The edges of a step `perspective/x` come from the diagram of its **parent**, `perspective`: read that one (for a step `perspective/group/y`, read `omm read perspective/group diagram`). Note the node ids, the edges and the roles: `class ... entry` marks where things come in (a trace usually starts there), `class ... store` where data is kept, `class ... external` what is outside the project.
+Find the perspective that answers the question (`request-lifecycle`, `data-flow`, `command-surface`, `overall-architecture`, ...). The edges of a step `perspective/x` come from the diagram of its **parent**, `perspective`: read that one (for a step `perspective/group/y`, read `prisme read perspective/group diagram`). Note the node ids, the edges and the roles: `class ... entry` marks where things come in (a trace usually starts there), `class ... store` where data is kept, `class ... external` what is outside the project.
 
 ## Step 2: Choose the kind and the steps
 
@@ -54,7 +54,7 @@ Find the perspective that answers the question (`request-lifecycle`, `data-flow`
 1. Start at the element where the behavior begins, usually an `entry` node. Never start a trace at a perspective: a perspective is not a node of any diagram, so no edge can leave it.
 2. For each next step, pick an element linked by an **edge of the same parent diagram** to an element already visited. Branches are fine; jumps are not.
 3. Write the edge exactly as in the diagram, in its direction: `from --> to` (labels optional: `from -->|label| to`).
-4. If the behavior crosses a link that the diagram does not have, stop the trace there and tell the user. Never invent an edge: suggest running `/omm-scan` to complete the diagram.
+4. If the behavior crosses a link that the diagram does not have, stop the trace there and tell the user. Never invent an edge: suggest running `/prisme-scan` to complete the diagram.
 
 **Path**: go from general to specific. Start with a perspective, then its key groups (entry points, core storage), then one or two leaves that matter. Its length follows the goal: a small topic needs few steps, a broad one more.
 
@@ -73,21 +73,21 @@ While a guide runs, the viewer's panel shows **only the step**, not the element'
 - **`details`**: the explanation, in Markdown, a few short paragraphs or bullets. Aim for 300 to 800 characters; 1500 is a ceiling, and the CLI warns above it.
   1. **What happens here**, concretely, at this step of the walk.
   2. **Why it is built this way**, when the reason is not obvious.
-  3. **Words to know**, only when the step introduces a new term (not one an earlier step already defined): define it in plain words. Point to a glossary entry only if `omm tree glossary` lists it; never cite one that does not exist.
+  3. **Words to know**, only when the step introduces a new term (not one an earlier step already defined): define it in plain words. Point to a glossary entry only if `prisme tree glossary` lists it; never cite one that does not exist.
   4. **What to remember**, in one sentence.
 
-Write for the guide's audience: `newcomer` defines every term; `developer` may name files and functions; `product` uses business words only and says what the step changes for users. Do not copy the element's description: explain the step, in the order of the walk. Never state something the `.omm/` docs or the code do not show.
+Write for the guide's audience: `newcomer` defines every term; `developer` may name files and functions; `product` uses business words only and says what the step changes for users. Do not copy the element's description: explain the step, in the order of the walk. Never state something the `.prisme/` docs or the code do not show.
 
 ## Step 4: Write the guide
 
-Pick a guide id that `omm guide list` does not show: writing an existing id replaces that guide. To update an existing guide on purpose, read it first with `omm guide show <guide-id>` and keep its id. Never write `start-here` from this skill: `/omm-scan` owns it.
+Pick a guide id that `prisme guide list` does not show: writing an existing id replaces that guide. To update an existing guide on purpose, read it first with `prisme guide show <guide-id>` and keep its id. Never write `start-here` from this skill: `/prisme-scan` owns it.
 
 Put `title`, every `say` and every `part` in double quotes: translated text often contains `: ` (French) or `#`, which break plain YAML. Write `details` as a `|` block, indented under the step, so Markdown and colons need no quoting.
 
-The CLI checks the guide against `.omm/` and **refuses to write it if it is invalid**. Read the errors, fix the YAML and run it again.
+The CLI checks the guide against `.prisme/` and **refuses to write it if it is invalid**. Read the errors, fix the YAML and run it again.
 
 ```bash
-omm guide write <guide-id> - <<'YAML'
+prisme guide write <guide-id> - <<'YAML'
 title: "What happens when a user saves a document?"
 kind: trace
 audience: developer
@@ -131,7 +131,7 @@ YAML
 Tell the user the guide id and how to play it:
 
 ```bash
-omm view
+prisme view
 ```
 
 Then open `http://localhost:3000/#guide=<guide-id>&step=1`, or pick the guide in the **Guides** section of the viewer ("Parcours" in French).
@@ -139,7 +139,7 @@ Then open `http://localhost:3000/#guide=<guide-id>&step=1`, or pick the guide in
 ## Rules
 
 - One guide per question or goal. Guide ids are English kebab-case: `save-a-document`, `understand-storage`.
-- Always write guides with `omm guide write`, never by editing `.omm/.guides/` by hand: the command is what keeps broken guides out.
-- Never set `start: true`, and never write `start-here`: the onboarding guide belongs to `/omm-scan`.
+- Always write guides with `prisme guide write`, never by editing `.prisme/.guides/` by hand: the command is what keeps broken guides out.
+- Never set `start: true`, and never write `start-here`: the onboarding guide belongs to `/prisme-scan`.
 - Never delete a guide you did not create in this conversation without asking the user.
-- After a scan renames or removes elements, run `omm validate`: it lists guides that no longer match, so they can be fixed or deleted with `omm guide delete <guide-id>`.
+- After a scan renames or removes elements, run `prisme validate`: it lists guides that no longer match, so they can be fixed or deleted with `prisme guide delete <guide-id>`.

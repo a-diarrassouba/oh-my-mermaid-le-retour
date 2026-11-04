@@ -25,9 +25,9 @@
 
 ## Terminology
 
-- "element" — any architectural unit in `.omm/`
+- "element" — any architectural unit in `.prisme/`
 - "perspective" — top-level element only
 - "group" — element with children (rendered as expandable box in viewer)
 - "leaf" — element without children
-- "guide" — ordered, step-by-step walk through existing elements (`.omm/.guides/<id>.yaml`, `omm guide`); "parcours" in the French interface. Not "tour"
+- "guide" — ordered, step-by-step walk through existing elements (`.prisme/.guides/<id>.yaml`, `prisme guide`); "parcours" in the French interface. Not "tour"
 - Do not use "class" in user-facing strings (internal code names like `listClasses` are fine)

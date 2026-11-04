@@ -5,7 +5,7 @@ import { VALID_FIELDS, FIELD_FILES, type Field, type ClassMeta, type ClassData, 
 import { updateMeta } from './meta.js';
 import { msg } from './messages.js';
 
-const OMM_DIR = '.omm';
+const OMM_DIR = '.prisme';
 const CONFIG_FILE = 'config.yaml';
 const META_FILE = 'meta.yaml';
 
@@ -18,7 +18,7 @@ export function ommExists(cwd?: string): boolean {
 }
 
 /**
- * Write commands: auto-create .omm/ if missing (lazy-init).
+ * Write commands: auto-create .prisme/ if missing (lazy-init).
  */
 export function ensureOmmForWrite(cwd?: string): void {
   if (!ommExists(cwd)) {
@@ -28,7 +28,7 @@ export function ensureOmmForWrite(cwd?: string): void {
 }
 
 /**
- * Read commands: return false if .omm/ missing (no auto-create).
+ * Read commands: return false if .prisme/ missing (no auto-create).
  */
 export function ensureOmmForRead(cwd?: string): boolean {
   if (!ommExists(cwd)) {
@@ -85,7 +85,7 @@ export function listClasses(cwd?: string): string[] {
 
 // --- Perspective + Nested Element operations (direct nesting, no nodes/ dir) ---
 
-/** Resolve filesystem path for a nested element: .omm/<perspective>/<child>/<grandchild> */
+/** Resolve filesystem path for a nested element: .prisme/<perspective>/<child>/<grandchild> */
 export function nodeDir(perspective: string, nodePath: string[], cwd?: string): string {
   return path.join(classDir(perspective, cwd), ...nodePath);
 }

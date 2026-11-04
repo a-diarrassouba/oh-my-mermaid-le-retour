@@ -18,7 +18,7 @@ describe('cursor platform version-aware setup detection', () => {
   let tmpDir: string;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'omm-cursor-'));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'prisme-cursor-'));
     process.chdir(tmpDir);
     getPackageVersion.mockReset();
     getPackageVersion.mockReturnValue('0.1.5');
@@ -39,7 +39,7 @@ describe('cursor platform version-aware setup detection', () => {
     fs.mkdirSync(path.join(tmpDir, '.cursor-plugin'), { recursive: true });
     fs.writeFileSync(
       path.join(tmpDir, '.cursor-plugin', 'plugin.json'),
-      JSON.stringify({ name: 'oh-my-mermaid', version: '0.1.4' }, null, 2) + '\n',
+      JSON.stringify({ name: 'prisme', version: '0.1.4' }, null, 2) + '\n',
     );
 
     const { cursor } = await import('../lib/platforms/cursor.js');
@@ -51,7 +51,7 @@ describe('cursor platform version-aware setup detection', () => {
     fs.mkdirSync(path.join(tmpDir, '.cursor-plugin'), { recursive: true });
     fs.writeFileSync(
       path.join(tmpDir, '.cursor-plugin', 'plugin.json'),
-      JSON.stringify({ name: 'oh-my-mermaid', version: '0.1.5' }, null, 2) + '\n',
+      JSON.stringify({ name: 'prisme', version: '0.1.5' }, null, 2) + '\n',
     );
 
     const { cursor } = await import('../lib/platforms/cursor.js');

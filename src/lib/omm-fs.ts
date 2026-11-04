@@ -1,24 +1,24 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-/** omm never follows a symlink inside .omm/: it could lead outside the project. */
+/** prisme never follows a symlink inside .prisme/: it could lead outside the project. */
 export class OmmSymlinkError extends Error {
   constructor(target: string) {
-    super(`refusing to follow a symlink in .omm/: ${target}`);
+    super(`refusing to follow a symlink in .prisme/: ${target}`);
     this.name = 'OmmSymlinkError';
   }
 }
 
 /**
- * Throws when .omm/ itself, or any existing part of `target` below it, is a
- * symlink, or when `target` is not inside .omm/. Parts that do not exist yet
+ * Throws when .prisme/ itself, or any existing part of `target` below it, is a
+ * symlink, or when `target` is not inside .prisme/. Parts that do not exist yet
  * are fine: they will be created as plain folders and files.
  */
 export function assertNoSymlink(ommDir: string, target: string): void {
   const root = path.resolve(ommDir);
   const relative = path.relative(root, path.resolve(target));
   if (relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
-    throw new Error(`path leaves the .omm directory: ${target}`);
+    throw new Error(`path leaves the .prisme directory: ${target}`);
   }
   const segments = relative === '' ? [] : relative.split(path.sep);
   let current = root;
@@ -32,11 +32,11 @@ export function assertNoSymlink(ommDir: string, target: string): void {
       if (code === 'ENOENT' || code === 'ENOTDIR') return;
       throw err;
     }
-    if (stat.isSymbolicLink()) throw new OmmSymlinkError(path.join('.omm', path.relative(root, current)));
+    if (stat.isSymbolicLink()) throw new OmmSymlinkError(path.join('.prisme', path.relative(root, current)));
   }
 }
 
-/** Whether `target` is inside .omm/ and reached without any symlink. */
+/** Whether `target` is inside .prisme/ and reached without any symlink. */
 export function isPlainOmmPath(ommDir: string, target: string): boolean {
   try {
     assertNoSymlink(ommDir, target);
@@ -49,7 +49,7 @@ export function isPlainOmmPath(ommDir: string, target: string): boolean {
 
 const warned = new Set<string>();
 
-/** Reads a file of .omm/; null when it is missing, not a regular file, or behind a symlink. */
+/** Reads a file of .prisme/; null when it is missing, not a regular file, or behind a symlink. */
 export function readOmmFile(ommDir: string, file: string): string | null {
   try {
     assertNoSymlink(ommDir, file);
@@ -68,13 +68,13 @@ export function readOmmFile(ommDir: string, file: string): string | null {
   return stat.isFile() ? fs.readFileSync(file, 'utf-8') : null;
 }
 
-/** Creates the folders of `dir` inside .omm/, never through a symlink. */
+/** Creates the folders of `dir` inside .prisme/, never through a symlink. */
 export function makeOmmDir(ommDir: string, dir: string): void {
   assertNoSymlink(ommDir, dir);
   fs.mkdirSync(dir, { recursive: true });
 }
 
-/** Writes a file of .omm/ and creates its folders, never through a symlink. */
+/** Writes a file of .prisme/ and creates its folders, never through a symlink. */
 export function writeOmmFile(ommDir: string, file: string, content: string): void {
   makeOmmDir(ommDir, path.dirname(file));
   assertNoSymlink(ommDir, file);
@@ -88,11 +88,11 @@ export function writeOmmFile(ommDir: string, file: string, content: string): voi
 }
 
 /**
- * Removes a file or folder of .omm/, never through a symlink. When `target`
+ * Removes a file or folder of .prisme/, never through a symlink. When `target`
  * itself is a symlink, only the link goes (rm does not follow it).
  */
 export function removeOmmPath(ommDir: string, target: string): void {
-  if (path.resolve(target) === path.resolve(ommDir)) throw new Error('refusing to remove .omm/ itself');
+  if (path.resolve(target) === path.resolve(ommDir)) throw new Error('refusing to remove .prisme/ itself');
   assertNoSymlink(ommDir, path.dirname(target));
   fs.rmSync(target, { recursive: true });
 }

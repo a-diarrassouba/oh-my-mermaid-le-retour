@@ -1,10 +1,10 @@
 {
-  "name": "oh-my-mermaid",
+  "name": "prisme",
   "version": "0.2.0",
-  "description": "Architecture mirror for vibe coding — CLI + Claude Code skills",
+  "description": "Understand any codebase, from beginner to senior developer: AI-written docs, diagrams and guided walks",
   "type": "module",
   "bin": {
-    "omm": "dist/cli.js"
+    "prisme": "dist/cli.js"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -14,20 +14,22 @@
     ".claude-plugin/",
     "LICENSE"
   ],
-  "homepage": "https://github.com/oh-my-mermaid/oh-my-mermaid",
+  "homepage": "https://github.com/a-diarrassouba/oh-my-mermaid-le-retour",
   "bugs": {
-    "url": "https://github.com/oh-my-mermaid/oh-my-mermaid/issues"
+    "url": "https://github.com/a-diarrassouba/oh-my-mermaid-le-retour/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/oh-my-mermaid/oh-my-mermaid.git"
+    "url": "git+https://github.com/a-diarrassouba/oh-my-mermaid-le-retour.git"
   },
   "keywords": [
-    "mermaid",
+    "prisme",
     "architecture",
+    "onboarding",
+    "codebase",
     "diagram",
-    "claude-code",
-    "vibe-coding"
+    "mermaid",
+    "claude-code"
   ],
   "engines": {
     "node": ">=18"
@@ -35,6 +37,7 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
+    "prepare": "npm run build",
     "test": "vitest run",
     "check-version-sync": "node scripts/check-version-sync.js",
     "sync-version": "node scripts/sync-version.js",

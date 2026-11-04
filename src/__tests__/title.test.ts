@@ -8,7 +8,7 @@ import { writeField, writeNodeField, readTitle, writeTitle, readNodeMeta, MAX_TI
 let tmpDir: string;
 
 beforeEach(() => {
-  tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'omm-title-'));
+  tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'prisme-title-'));
 });
 
 afterEach(() => {
@@ -43,13 +43,13 @@ describe('element titles', () => {
     writeTitle('data-flow', [], 'Flux de données', tmpDir);
     writeTitle('data-flow', [], '', tmpDir);
     expect(readTitle('data-flow', [], tmpDir)).toBeNull();
-    const raw = YAML.parse(fs.readFileSync(path.join(tmpDir, '.omm', 'data-flow', 'meta.yaml'), 'utf-8'));
+    const raw = YAML.parse(fs.readFileSync(path.join(tmpDir, '.prisme', 'data-flow', 'meta.yaml'), 'utf-8'));
     expect(raw).not.toHaveProperty('title');
   });
 
   it('refuses an element that does not exist', () => {
     expect(() => writeTitle('nowhere', ['ghost'], 'Fantôme', tmpDir)).toThrow(/not found/);
-    expect(fs.existsSync(path.join(tmpDir, '.omm', 'nowhere'))).toBe(false);
+    expect(fs.existsSync(path.join(tmpDir, '.prisme', 'nowhere'))).toBe(false);
   });
 
   it('refuses titles on several lines or too long', () => {
