@@ -230,6 +230,18 @@ body.light #ask-bar { background: rgba(255,255,255,0.85); }
 .sb-sec-body code { background: #111; padding: 1px 5px; border-radius: 2px; font-size: 11px; color: #ccc; font-family: var(--mono); }
 .sb-sec-body strong { color: #eee; }
 .sb-concern .sb-sec-body { border-left: 2px solid #444; padding-left: 10px; }
+.sb-icon { margin-right: 8px; font-family: var(--font); }
+.sb-levels { display: inline-flex; gap: 2px; margin-bottom: 10px; background: #0b0b0b; border: 1px solid #1e1e1e; border-radius: 6px; padding: 2px; }
+.sb-level { border: 0; background: none; color: #888; font-family: var(--font); font-size: 11px; padding: 3px 10px; border-radius: 4px; cursor: pointer; }
+.sb-level:hover { color: #ddd; }
+.sb-level.on { background: var(--accent); color: #fff; }
+.sb-deeper { margin-top: 8px; border-top: 1px dashed #2a2a2a; padding-top: 6px; }
+.sb-deeper summary { cursor: pointer; font-size: 11px; color: var(--accent); list-style: none; }
+.sb-deeper summary::before { content: '＋ '; }
+.sb-deeper[open] summary::before { content: '－ '; }
+body.light .sb-levels { background: #eee; border-color: #ddd; }
+body.light .sb-level { color: #666; }
+body.light .sb-deeper { border-color: #ddd; }
 .sb-meta-text { font-size: 10px; color: #777; line-height: 1.9; font-family: var(--mono); }
 .sb-refs { display: flex; flex-direction: column; gap: 4px; }
 .sb-ref { font-size: 11px; color: #999; padding: 5px 10px; background: #090909; border: 1px solid #1e1e1e; border-radius: 4px; cursor: pointer; display: block; font-family: var(--mono); transition: border-color .12s, color .12s; }
@@ -506,6 +518,8 @@ const I18N = {
     askField_todo: 'Todo', askField_note: 'Notes',
     askAiBtn: '✦ Ask Claude for a guide', askAiNote: 'Claude Code on this machine writes a guide that answers the question (up to 4 min).',
     askAiRunning: 'Claude is writing the guide… (up to 4 min)', askAiFailed: 'Claude could not answer: {reason}',
+    levelNovice: 'Beginner', levelJunior: 'Junior', levelSenior: 'Senior', levelsAria: 'Explanation level',
+    explain: 'Explanation', deeper: 'Learn more',
   },
   fr: {
     zoomOut: 'Zoom arrière', zoomIn: 'Zoom avant', fit: 'ajuster', fitTitle: "Ajuster à l'écran",
@@ -526,6 +540,8 @@ const I18N = {
     askField_todo: 'À faire', askField_note: 'Notes',
     askAiBtn: '✦ Demander un parcours à Claude', askAiNote: 'Claude Code, sur cette machine, écrit un parcours qui répond à la question (4 min au plus).',
     askAiRunning: 'Claude écrit le parcours… (4 min au plus)', askAiFailed: "Claude n'a pas pu répondre : {reason}",
+    levelNovice: 'Débutant', levelJunior: 'Junior', levelSenior: 'Senior', levelsAria: "Niveau d'explication",
+    explain: 'Explication', deeper: 'Approfondir',
   },
 };
 let lang = 'en';
@@ -602,6 +618,32 @@ function customTitle(key) {
   return typeof title === 'string' && title.trim() && title !== id ? title : null;
 }
 function displayTitle(key) { return customTitle(key) ?? fmtLabel(String(key).split('/').pop()); }
+
+// Icons a scan may give an element (ICONS in src/lib/explain.ts).
+const ICON_GLYPHS = {
+  app: '🧩', api: '🔌', server: '🖥️', database: '🗄️', storage: '💾', file: '📄', folder: '📁', terminal: '⌨️',
+  browser: '🌐', screen: '🖥️', mobile: '📱', user: '👤', users: '👥', lock: '🔒', key: '🔑', shield: '🛡️',
+  settings: '⚙️', plug: '🔌', cloud: '☁️', network: '🕸️', queue: '📬', message: '💬', mail: '✉️', bell: '🔔',
+  clock: '⏱️', search: '🔍', chart: '📊', book: '📖', test: '🧪', build: '🏗️', package: '📦', git: '🌿',
+  bot: '🤖', code: '💻', globe: '🌍', link: '🔗', layers: '🗂️', map: '🗺️', compass: '🧭', flag: '🚩',
+  wrench: '🔧', zap: '⚡', eye: '👁️', palette: '🎨', calendar: '📅', cart: '🛒', payment: '💳', puzzle: '🧩',
+  filter: '🔎', refresh: '🔄',
+};
+function iconOf(key) {
+  const icon = classesData[key]?.meta?.icon;
+  return typeof icon === 'string' ? ICON_GLYPHS[icon] || '' : '';
+}
+
+// Explanation level: novice, junior or senior (the description). Kept per browser.
+const LEVELS = ['novice', 'junior', 'senior'];
+const LEVEL_KEY = 'prisme-level';
+let readerLevel = LEVELS.includes(safeStorageGet(LEVEL_KEY)) ? safeStorageGet(LEVEL_KEY) : 'junior';
+function setReaderLevel(level) {
+  if (!LEVELS.includes(level)) return;
+  readerLevel = level;
+  safeStorageSet(LEVEL_KEY, level);
+  if (sidebar.classList.contains('open') && sbOpenKey) openSidebar(sbOpenKey);
+}
 
 // ── flowchart parser ──────────────────────────────────────
 function parseFlowchart(raw) {
@@ -1349,11 +1391,30 @@ window.__openSb = function(cls, frameCls) {
   }
 };
 
+let sbOpenKey = null;
+function explainSection(data, md) {
+  const ex = data.explain;
+  if (!ex || !ex.novice) return '';
+  const tabs = LEVELS.map(l => `<button type="button" class="sb-level${l === readerLevel ? ' on' : ''}" data-level="${l}">${esc(t('level' + l[0].toUpperCase() + l.slice(1)))}</button>`).join('');
+  let body;
+  if (readerLevel === 'novice') {
+    body = md(ex.novice) + (ex.deeper ? `<details class="sb-deeper"><summary>${esc(t('deeper'))}</summary>${md(ex.deeper)}</details>` : '');
+  } else if (readerLevel === 'junior') {
+    body = md(ex.junior || data.description);
+  } else {
+    body = md(data.description);
+  }
+  return `<div class="sb-sec"><div class="sb-levels" role="group" aria-label="${esc(t('levelsAria'))}">${tabs}</div><div class="sb-sec-body">${body}</div></div>`;
+}
+
 function openSidebar(cls) {
   const data=classesData[cls]||{}, refs=refsData[cls]||{};
-  sbTitle.textContent=displayTitle(cls);
+  sbOpenKey = cls;
+  const glyph = iconOf(cls);
+  sbTitle.innerHTML = (glyph ? `<span class="sb-icon" aria-hidden="true">${glyph}</span>` : '') + esc(displayTitle(cls));
   sbDiagram.innerHTML = '';
-  const md=t=>t?marked.parse(t):'';
+  // Fields come from .prisme/, written by AI: never let them run code.
+  const md=t=>t?safeMarkdown(t):'';
   const sec=(title,body,ex='')=>body?`<div class="sb-sec ${ex}"><div class="sb-sec-title">${title}</div><div class="sb-sec-body">${body}</div></div>`:'';
   let html='';
   if (data.meta) {
@@ -1362,7 +1423,8 @@ function openSidebar(cls) {
     const updates=t(n===1?'updatesOne':'updatesOther',{n});
     html+=`<div class="sb-sec"><div class="sb-sec-title">${esc(t('meta'))}</div><div class="sb-meta-text">${when?esc(when)+'<br>':''}${esc(updates)}${data.meta.git_branch?` · ${esc(data.meta.git_branch)}`:''}${data.meta.git_commit?` · ${esc(data.meta.git_commit)}`:''}</div></div>`;
   }
-  html+=sec(esc(t('description')),md(data.description));
+  const explained = explainSection(data, md);
+  html += explained || sec(esc(t('description')),md(data.description));
   html+=sec(esc(t('constraint')),md(data.constraint));
   html+=sec(esc(t('concern')),md(data.concern),'sb-concern');
   html+=sec(esc(t('context')),md(data.context));
@@ -1423,6 +1485,10 @@ function clearFocusExempt() {
   document.querySelectorAll('#canvas [data-cls].focus-exempt').forEach(el => el.classList.remove('focus-exempt'));
 }
 window.closeSidebar=closeSidebar;
+sbFields.addEventListener('click', e => {
+  const level = e.target.closest('[data-level]');
+  if (level) setReaderLevel(level.dataset.level);
+});
 
 // ── build full canvas SVG ─────────────────────────────────
 function buildCanvas(classes, classesData, refsData) {

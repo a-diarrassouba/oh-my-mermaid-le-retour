@@ -43,6 +43,10 @@ const en = {
   'configSet': 'config: {key}={value}',
   'portInUse': 'Port {port} in use, trying {next}...',
   'viewerRunning': 'prisme viewer running at {url}',
+  'iconSet': 'icon of {path}: {icon}',
+  'iconRemoved': 'icon of {path} removed',
+  'explainWritten': 'wrote the explanations of {path}',
+  'explainRefused': 'error: explanations of {path} refused, nothing written:',
   'aiWindows': 'questions to Claude are not available on Windows yet',
   'aiNotInstalled': 'Claude Code (the `claude` command) is not installed on this machine',
   'aiNotLoggedIn': 'Claude Code is not logged in on this machine: run `claude` in a terminal, then /login.',
@@ -71,6 +75,7 @@ const en = {
   'guideNeeded': "error: guide '{id}' not deleted: {ids} name it in \"after\"",
   'guideDeleted': "guide '{id}' deleted",
   'validateGuide': 'guide {id}:',
+  'validateIcon': 'unknown icon "{icon}" in meta.yaml',
   'changesFull': 'Full scan recommended:',
   'changesPartial': 'Partial scan recommended:',
   'changesNone': 'Nothing to rescan:',
@@ -121,7 +126,9 @@ Usage:
 
 Paths: use / for nested elements (e.g. overall-architecture/main-process)
 Fields: description, diagram, constraint, concern, context, todo, note
-Title:  prisme write <path> title "Display name" (shown in the viewer instead of the id)`,
+Title:  prisme write <path> title "Display name" (shown in the viewer instead of the id)
+Icon:   prisme write <path> icon database (one word, see the prisme-scan skill)
+Levels: prisme write <path> explain - (YAML on stdin: novice, deeper, junior)`,
 };
 
 export type MessageKey = keyof typeof en;
@@ -169,6 +176,10 @@ const fr: Record<MessageKey, string> = {
   'configSet': 'config : {key}={value}',
   'portInUse': 'Le port {port} est occupé, essai du port {next}...',
   'viewerRunning': 'Viewer prisme lancé sur {url}',
+  'iconSet': 'icône de {path} : {icon}',
+  'iconRemoved': 'icône de {path} supprimée',
+  'explainWritten': 'explications de {path} écrites',
+  'explainRefused': "erreur : explications de {path} refusées, rien n'a été écrit :",
   'aiWindows': 'les questions à Claude ne sont pas encore disponibles sous Windows',
   'aiNotInstalled': "Claude Code (la commande `claude`) n'est pas installé sur cette machine",
   'aiNotLoggedIn': "Claude Code n'est pas connecté sur cette machine : lancez `claude` dans un terminal, puis /login.",
@@ -197,6 +208,7 @@ const fr: Record<MessageKey, string> = {
   'guideNeeded': "erreur : parcours '{id}' non supprimé : {ids} le cite dans \"after\"",
   'guideDeleted': "parcours '{id}' supprimé",
   'validateGuide': 'parcours {id} :',
+  'validateIcon': 'icône inconnue « {icon} » dans meta.yaml',
   'changesFull': 'Scan complet conseillé :',
   'changesPartial': 'Scan partiel conseillé :',
   'changesNone': 'Rien à réanalyser :',
@@ -247,7 +259,9 @@ Utilisation :
 
 Chemins : utilisez / pour les éléments imbriqués (ex. : overall-architecture/main-process)
 Champs : description, diagram, constraint, concern, context, todo, note
-Titre :  prisme write <chemin> title "Nom affiché" (montré dans le viewer à la place de l'identifiant)`,
+Titre :  prisme write <chemin> title "Nom affiché" (montré dans le viewer à la place de l'identifiant)
+Icône :  prisme write <chemin> icon database (un mot, voir le skill prisme-scan)
+Niveaux : prisme write <chemin> explain - (YAML sur stdin : novice, deeper, junior)`,
 };
 
 const CATALOGS: Record<string, Record<MessageKey, string>> = { en, fr };

@@ -49,12 +49,12 @@ Every element, perspectives first, depth first:
     "title": "Stockage",
     "kind": "leaf",
     "role": "store",
-    "icon": null,
+    "icon": "database",
     "files": ["src/lib/store.ts"],
     "depth": 1,
     "children": [],
     "fields": { "description": "…", "concern": "…" },
-    "explain": null,
+    "explain": { "novice": "Comme un grand classeur…", "deeper": "…", "junior": "…" },
     "updated": "2026-11-02T09:12:00.000Z"
   }
 ]
@@ -65,7 +65,8 @@ Every element, perspectives first, depth first:
 - `role`: `entry`, `store`, `external`, `concern` or `null`, from the parent diagram.
 - `files`: the second line of its label: files, folders, or the name of an external system.
 - `fields`: only the fields the element has, among `description`, `diagram`, `constraint`, `concern`, `context`, `todo`, `note` (Markdown, or Mermaid for `diagram`).
-- `icon`, `explain`: written by the scan; `null` when the scan has not written them yet.
+- `icon`: one word among `app`, `api`, `server`, `database`, `storage`, `file`, `folder`, `terminal`, `browser`, `screen`, `mobile`, `user`, `users`, `lock`, `key`, `shield`, `settings`, `plug`, `cloud`, `network`, `queue`, `message`, `mail`, `bell`, `clock`, `search`, `chart`, `book`, `test`, `build`, `package`, `git`, `bot`, `code`, `globe`, `link`, `layers`, `map`, `compass`, `flag`, `wrench`, `zap`, `eye`, `palette`, `calendar`, `cart`, `payment`, `puzzle`, `filter`, `refresh` (`ICONS` in `src/lib/explain.ts`); `null` when the scan gave none.
+- `explain`: the element explained by reader level, from `explain.yaml`: `novice` (an everyday image, then the real words one at a time), `deeper` (the novice's "learn more"), `junior` (how it works, with files and patterns). The senior level is `fields.description`. `null` when the scan has not written it.
 
 ## `GET /api/v1/elements/<path>`
 

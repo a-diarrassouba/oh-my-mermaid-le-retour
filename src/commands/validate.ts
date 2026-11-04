@@ -3,6 +3,9 @@ import { validateDiagram } from '../lib/validate.js';
 import { msg, plural } from '../lib/messages.js';
 import { loadGuides } from '../lib/guides.js';
 import { formatGuideIssues } from './guide.js';
+import { listElements } from '../lib/elements.js';
+import { parseExplain, readExplainSource, isIcon } from '../lib/explain.js';
+import { readNodeMeta } from '../lib/store.js';
 
 function validateClass(className: string, allClasses: string[]): { errors: number; warnings: number } {
   const diagram = readField(className, 'diagram');
@@ -51,6 +54,19 @@ export function commandValidate(className?: string): void {
   for (const cls of allClasses) {
     const { errors } = validateClass(cls, allClasses);
     totalErrors += errors;
+  }
+
+  // Explanations and icons are optional, but must be readable when present.
+  for (const el of listElements()) {
+    const [perspective, ...nodePath] = el.path.split('/');
+    const issues: string[] = [];
+    const source = readExplainSource(perspective, nodePath);
+    if (source !== null) issues.push(...parseExplain(source).issues.map(i => `explain.yaml: ${i}`));
+    const icon = readNodeMeta(perspective, nodePath)?.icon;
+    if (icon !== undefined && !isIcon(icon)) issues.push(msg('validateIcon', { icon: String(icon) }));
+    if (!issues.length) continue;
+    process.stdout.write(`${el.path}:\n  ${msg('validateInvalid')}\n${issues.map(i => `  error ${i}\n`).join('')}\n`);
+    totalErrors++;
   }
 
   // Guides point at elements and edges, so a scan that renames them breaks guides.

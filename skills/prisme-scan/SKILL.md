@@ -33,6 +33,7 @@ It prints a language code: `en` (the default), `fr`, `ko`, `ja`, `zh`, ... Every
 
 - field content (description, context, constraint, concern, todo, note);
 - element titles (`prisme write <path> title`, see 3b and 3c);
+- explanations (`prisme write <path> explain`, see [Three Levels](#three-levels-of-explanation));
 - diagram labels: the first line of each node label and every edge label (see [Diagram Rules](#diagram-rules)).
 
 Only identifiers stay in English kebab-case: element IDs, directory names, diagram node IDs, `classDef` names. File paths stay as they are in the code.
@@ -133,6 +134,8 @@ prisme write <perspective> title "Overall architecture"
 
 The viewer shows the title instead of the ID. Keep it short (a few words, at most 80 characters, one line).
 
+Then its icon and its explanations, as for any element (3c, step 4).
+
 ### 3c. Recursive drill-down: analyze every element
 
 **For every element in the diagram**, in this order (a perspective starts with its diagram in 3a only because it has no parent diagram):
@@ -157,11 +160,25 @@ The viewer shows the title instead of the ID. Keep it short (a few words, at mos
    prisme write <perspective>/<element-name> title "Data store"
    ```
 
-4. **Decide leaf or group:**
+4. **Write its icon and its explanations** (see [Three Levels](#three-levels-of-explanation)):
+
+   ```bash
+   prisme write <perspective>/<element-name> icon database
+   prisme write <perspective>/<element-name> explain - <<'YAML'
+   novice: |
+     (an everyday image, then the real words one at a time)
+   deeper: |
+     (learn more: how the image maps to the real thing)
+   junior: |
+     (what it does and how, with files and patterns)
+   YAML
+   ```
+
+5. **Decide leaf or group:**
    - **Distinct internal components found** → write a diagram and recurse deeper (it becomes a group)
    - **No meaningful sub-components** (single file, trivial wrapper, external system) → it stays a leaf: stop here, after writing the other fields that have something real to say
 
-5. **If group** — write diagram and recurse:
+6. **If group** — write diagram and recurse:
 
    ```bash
    prisme write <perspective>/<element-name> diagram - <<'MERMAID'
@@ -303,7 +320,7 @@ The scan describes the files as they are on disk. When there are uncommitted cha
 
 Use the report of `prisme changes --json`; read the elements it names with `prisme read` and the files it lists, nothing else.
 
-1. **`changed`**: for each element, read the files listed and the element's fields, then rewrite only what the change made wrong (description, other fields, title, label and edges in the parent diagram, its own diagram if it is a group). An element whose files changed in a way its docs do not mention needs no write.
+1. **`changed`**: for each element, read the files listed and the element's fields (`prisme read <path> explain` too), then rewrite only what the change made wrong (description, explanations, other fields, title, icon, label and edges in the parent diagram, its own diagram if it is a group). An element without explanations gets them now. An element whose files changed in a way its docs do not mention needs no write.
 2. **`orphans`**: new files no element covers. Find the element they belong to (usually the one covering their folder's neighbors) and add them to its label and description, or create a new element in the right diagram when they form a new part, following Step 3c.
 3. **`removed`**: paths cited by an element that no longer exist. Fix the label and the description; when the whole element is gone, delete it (`prisme delete <path>`) and remove its node and edges from the parent diagram.
 4. **`onboarding`**: re-read the files that changed (README, scripts, CI, `.env.example`, roadmap…) and update the onboarding perspectives listed.
@@ -355,6 +372,20 @@ The readers include people who do not code (product, newcomers). Every `descript
 - Not good: "Repository layer wrapping the ORM."
 
 The other fields can stay technical.
+
+## Three Levels of Explanation
+
+The viewer lets each reader pick a level. The **senior** level is the `description`. `explain` holds the two others, as YAML, refused with the reason when it is not valid:
+
+- **`novice`** (required, up to 1200 characters): for someone who has never coded. Start with **an image from everyday life** that works like the element (a library's index cards, a post office sorting letters, a cloakroom ticket), in two or three sentences. Then bring in **the real words one at a time**, each explained the first time it appears ("this list is called a *cache*: ..."). No file names, no code.
+- **`deeper`** (optional, up to 1500 characters): the "Learn more" section under the novice text. How the image maps to the real thing, the two or three technical words a beginner will meet next, and one file or folder name to open first.
+- **`junior`** (optional, up to 1500 characters): for a developer new to this code base. What it does, how (main function or flow, the pattern used), which files to read and in what order, one trap to avoid. Without it, the junior level shows the description.
+
+Write `novice` and `deeper` in short sentences, with `|` blocks. Never repeat the description word for word.
+
+**Icon.** One word, for the element's role, from this list: `app`, `api`, `server`, `database`, `storage`, `file`, `folder`, `terminal`, `browser`, `screen`, `mobile`, `user`, `users`, `lock`, `key`, `shield`, `settings`, `plug`, `cloud`, `network`, `queue`, `message`, `mail`, `bell`, `clock`, `search`, `chart`, `book`, `test`, `build`, `package`, `git`, `bot`, `code`, `globe`, `link`, `layers`, `map`, `compass`, `flag`, `wrench`, `zap`, `eye`, `palette`, `calendar`, `cart`, `payment`, `puzzle`, `filter`, `refresh`. Any other word is refused.
+
+If `prisme write <path> icon` or `explain` answers `invalid field`, the CLI is too old: tell the user to run `prisme update`, and keep scanning without them.
 
 ## Diagram Rules
 
