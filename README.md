@@ -83,7 +83,7 @@ Type any question in the viewer's question bar (for example "what happens when I
 
 This needs Claude Code installed and logged in (`claude`, then `/login`) on the machine that runs `prisme view`; people who only open the viewer need nothing. Claude may only read the project (never `.env` files or keys), never change it. `prisme view --no-ai` turns questions off.
 
-The security tile of the home screen computes the score on a click, without AI and without installing anything.
+The security tile of the home screen computes the score on a click: an automatic check of known risks (secrets, risky code, CI and dependency hygiene in the spirit of OpenSSF Scorecard, each finding tagged with its OWASP Top 10 category), with nothing to install. `/prisme-security` then has Claude review each finding.
 
 ## CLI
 
@@ -94,7 +94,7 @@ prisme view --no-ai                # Same, without the questions to Claude Code 
 prisme config language fr          # Set the language of the docs and the interface
 prisme guide list                  # List guides (step-by-step walks)
 prisme changes                     # What changed since the last scan
-prisme security                    # Security score A–E, without AI (gitleaks, osv-scanner, semgrep used when installed)
+prisme security                    # Security score A–E, automatic checks (gitleaks, osv-scanner, semgrep used when installed)
 prisme evolve show                 # Ideas to make the project evolve, written by /prisme-evolve
 prisme update                      # Update to the latest version
 ```

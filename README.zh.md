@@ -85,7 +85,7 @@ AI 阅读代码库并编写**视角**——从不同角度看待项目：它做�
 
 这需要在运行 `prisme view` 的机器上安装并登录 Claude Code（运行 `claude`，然后 `/login`）；只打开查看器的人无需任何东西。Claude 只读取项目（从不读取 `.env` 文件或密钥），从不修改。`prisme view --no-ai` 可关闭提问功能。
 
-点击主页上的安全磁贴即可计算评分，无需 AI，也无需安装任何东西。
+点击主页上的安全磁贴即可计算评分：自动检查已知风险（密钥、危险代码、OpenSSF Scorecard 风格的 CI 与依赖管理），每项都标注 OWASP Top 10 类别，无需安装任何东西。之后可用 `/prisme-security` 让 Claude 逐项复核。
 
 ## CLI
 
@@ -96,7 +96,7 @@ prisme view --no-ai                # 不向 Claude Code 提问 (API: docs/api.md
 prisme config language fr          # 设置文档和界面的语言
 prisme guide list                  # 列出导览
 prisme changes                     # 自上次扫描以来的变更
-prisme security                    # 无需 AI 的安全评分 A–E（如已安装则使用 gitleaks、osv-scanner、semgrep）
+prisme security                    # 自动检查的安全评分 A–E（如已安装则使用 gitleaks、osv-scanner、semgrep）
 prisme evolve show                 # /prisme-evolve 写下的项目改进想法
 prisme update                      # 更新到最新版本
 ```

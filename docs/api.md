@@ -93,7 +93,7 @@ The last report of `prisme security`, `404` before the first one:
   "findings": [{
     "rule": "tls-disabled", "severity": "high",
     "title": "Certificate checks are turned off", "why": "…", "fix": "…",
-    "file": "src/http.ts", "line": 12, "match": "rejectUnauthorized: false", "source": "prisme",
+    "file": "src/http.ts", "line": 12, "match": "rejectUnauthorized: false", "owasp": "A02:2021 Cryptographic Failures", "source": "prisme",
     "elements": ["overall-architecture/http-client"]
   }],
   "ignored": [{ "rule": "html-injection", "file": "src/view.ts", "line": 40, "reason": "Escaped before.", "…": "…" }],
@@ -104,6 +104,8 @@ The last report of `prisme security`, `404` before the first one:
 - `grade`: `A` (≥ 90) to `E` (< 40), from a score that starts at 100 and loses 30 / 15 / 6 / 2 points per critical / high / medium / low finding, at most two findings per rule. Any critical finding caps the grade at `D`, any high one at `C`.
 - `title`, `why`, `fix`: in the project's language when it is French, else English.
 - `match`: what was found; secrets are masked (`AKIA…ZZ`).
+- `owasp`: the finding's OWASP Top 10 (2021) category, when it has one.
+- Checks: about 35 kinds of keys and database addresses with a password; risky code (injection, path traversal, open redirect, outdated crypto, unverified JWT, unclean HTML, TLS off…), skipped in tests and docs; repository practices in the spirit of OpenSSF Scorecard (CI workflow rights, unpinned third-party actions, untrusted text in CI scripts, `npm install` in CI, `curl | sh`, http downloads, unpinned Docker images, root containers, no Dependabot or Renovate, no `SECURITY.md`, no lockfile).
 - `elements`: up to three elements whose label cites the finding's file, deepest first, to show it on the map.
 - `ignored`: findings left out by `.prisme/security.yaml` (`ignore: [{ rule, file?, line?, reason }]`, written by `/prisme-security` with the user's agreement), with the reason. They do not count in the grade.
 - `source`: `prisme` (base checks), `npm-audit`, `gitleaks`, `osv-scanner` or `semgrep`. `tools` says which ran, which are not installed (`missing`), failed or were skipped (`--no-tools`).
