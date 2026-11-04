@@ -88,6 +88,7 @@ AI 阅读代码库并编写**视角**——从不同角度看待项目：它做�
 ```bash
 prisme setup                       # 将技能注册到 AI 工具
 prisme view                        # 打开交互式查看器
+prisme view --no-ai                # 不向 Claude Code 提问 (API: docs/api.md)
 prisme config language fr          # 设置文档和界面的语言
 prisme guide list                  # 列出导览
 prisme changes                     # 自上次扫描以来的变更

@@ -88,6 +88,7 @@ Görüntüleyicinin soru çubuğuna bir soru yazın (örneğin "kimlik bilgileri
 ```bash
 prisme setup                       # Becerileri AI araçlarınıza kaydedin
 prisme view                        # Etkileşimli görüntüleyiciyi açın
+prisme view --no-ai                # Claude Code'a soru sormadan açın (API: docs/api.md)
 prisme config language fr          # Belgelerin ve arayüzün dilini ayarlayın
 prisme guide list                  # Rehberleri listele
 prisme changes                     # Son taramadan bu yana değişenler

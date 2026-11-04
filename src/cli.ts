@@ -133,14 +133,15 @@ async function main(): Promise<void> {
 
     case 'view': {
       let port = 3000;
-      if (args[1] === '--port' && args[2]) {
-        port = parseInt(args[2], 10);
+      const portAt = args.indexOf('--port');
+      if (portAt !== -1) {
+        port = parseInt(args[portAt + 1] ?? '', 10);
         if (isNaN(port)) {
           process.stderr.write(msg('invalidPort') + '\n');
           process.exit(1);
         }
       }
-      commandView(port);
+      commandView(port, { ai: !args.includes('--no-ai') });
       return;
     }
 

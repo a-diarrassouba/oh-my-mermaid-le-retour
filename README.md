@@ -86,6 +86,7 @@ Type a question in the viewer's question bar (for example "where are credentials
 ```bash
 prisme setup                       # Register skills with your AI tools
 prisme view                        # Open the interactive viewer
+prisme view --no-ai                # Same, without the questions to Claude Code (API: docs/api.md)
 prisme config language fr          # Set the language of the docs and the interface
 prisme guide list                  # List guides (step-by-step walks)
 prisme changes                     # What changed since the last scan
