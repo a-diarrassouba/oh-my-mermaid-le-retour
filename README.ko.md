@@ -85,7 +85,7 @@ AI가 코드베이스를 읽고 **perspective**를 작성합니다. perspective�
 
 이 기능은 `prisme view`를 실행하는 컴퓨터에 Claude Code가 설치되고 로그인되어 있어야 합니다 (`claude` 실행 후 `/login`). 뷰어만 여는 사람은 아무것도 필요하지 않습니다. Claude는 프로젝트를 읽기만 하며 (`.env` 파일이나 키는 읽지 않음) 절대 수정하지 않습니다. `prisme view --no-ai`로 질문 기능을 끌 수 있습니다.
 
-홈 화면의 보안 타일을 클릭하면 AI 없이, 아무것도 설치하지 않고 점수를 계산합니다.
+홈 화면의 보안 타일을 클릭하면 점수를 계산합니다: 알려진 위험(비밀 정보, 위험한 코드, OpenSSF Scorecard 방식의 CI·의존성 관리)을 자동으로 점검하며, 각 항목에 OWASP Top 10 분류가 붙고, 아무것도 설치할 필요가 없습니다. 이어서 `/prisme-security`로 Claude가 각 항목을 검토합니다.
 
 ## CLI
 
@@ -96,7 +96,7 @@ prisme view --no-ai                # Claude Code 질문 없이 열기 (API: docs
 prisme config language fr          # 문서와 인터페이스 언어 설정
 prisme guide list                  # 가이드 목록 보기
 prisme changes                     # 마지막 스캔 이후 변경 사항
-prisme security                    # AI 없이 보안 점수 A–E (gitleaks, osv-scanner, semgrep이 설치되어 있으면 사용)
+prisme security                    # 자동 점검 보안 점수 A–E (gitleaks, osv-scanner, semgrep이 설치되어 있으면 사용)
 prisme evolve show                 # /prisme-evolve가 작성한 프로젝트 발전 아이디어
 prisme update                      # 최신 버전으로 업데이트
 ```

@@ -520,6 +520,7 @@ body.light .reg-node:hover .nshape { stroke: #000 !important; }
 .sec-sub { font-size: 12.5px; color: var(--text-mid); line-height: 1.6; }
 .sec-sub code, .sec-item code { font-family: var(--mono); background: var(--surface-2); padding: 1px 5px; border-radius: 4px; color: var(--text); font-size: 11.5px; }
 .sec-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.sec-owasp { text-decoration: none; color: var(--accent); border-color: color-mix(in srgb, var(--accent) 50%, transparent); }
 .sec-chip { font-family: var(--mono); font-size: 10.5px; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--border-hi); color: var(--text-mid); }
 .sev-critical { color: #f38ba8; border-color: #f38ba8; } .sev-high { color: #fab387; border-color: #fab387; }
 .sev-medium { color: #f9e2af; border-color: #c9b27f; } .sev-low { color: var(--text-mid); }
@@ -627,10 +628,10 @@ const I18N = {
     tileUnderstandState: '{n} elements · {g} guides', tileUnderstandEmpty: 'Not scanned yet: run {cmd} in Claude Code.',
     tileSecurity: 'Security score', tileSecurityText: 'A grade from A to E, what puts the project at risk and how to fix it.',
     tileEvolve: 'Make it evolve', tileEvolveText: 'Ideas to simplify, speed up and go further, and what similar products do.',
-    secCompute: 'Not computed yet: click to get your score (a few seconds, no AI).', secRunning: 'Computing the score…',
+    secCompute: 'Not computed yet: click to get your score (an automatic check, a few seconds).', secRunning: 'Computing the score…',
     secRecompute: '↻ Compute again', secFailed: 'The security check failed: {reason}',
     secBack: '← Home', secMap: 'Open the map', secOutOf: '{score}/100 · {date}',
-    secHow: 'Computed without AI by {cmd}, from the project files. For explanations in plain words and fixes, run {skill} in Claude Code.',
+    secHow: 'An automatic check by {cmd}: a list of known risks, like a vehicle inspection. It can miss subtle problems or raise false alarms; to have an AI review each one and help fix it, run {skill} in Claude Code.', secOwasp: 'OWASP {code}',
     secNothing: 'Nothing found by the checks that ran.', secWhy: 'Why it matters', secFix: 'How to fix it', secSeeMap: 'See {name} on the map',
     secTools: 'Tools', secReason: 'Why it was left out', secIgnored: 'Left out ({count}), with the reason', sev_critical: 'Critical', sev_high: 'High', sev_medium: 'Medium', sev_low: 'Low',
     tool_ran: 'ran', tool_missing: 'not installed', tool_failed: 'failed', tool_skipped: 'skipped', secFiles: '{count} files read',
@@ -670,10 +671,10 @@ const I18N = {
     tileUnderstandState: '{n} éléments · {g} parcours', tileUnderstandEmpty: 'Pas encore scanné : lancez {cmd} dans Claude Code.',
     tileSecurity: 'Score de sécurité', tileSecurityText: 'Une note de A à E, ce qui met le projet en danger et comment le corriger.',
     tileEvolve: 'Faire évoluer', tileEvolveText: 'Des idées pour simplifier, accélérer et aller plus loin, et ce que font les produits proches.',
-    secCompute: 'Pas encore calculé : cliquez pour obtenir votre score (quelques secondes, sans IA).', secRunning: 'Calcul du score…',
+    secCompute: 'Pas encore calculé : cliquez pour obtenir votre score (vérification automatique, quelques secondes).', secRunning: 'Calcul du score…',
     secRecompute: '↻ Recalculer', secFailed: 'La vérification de sécurité a échoué : {reason}',
     secBack: '← Accueil', secMap: 'Ouvrir la carte', secOutOf: '{score}/100 · {date}',
-    secHow: "Calculé sans IA par {cmd}, à partir des fichiers du projet. Pour des explications en mots simples et des corrections, lancez {skill} dans Claude Code.",
+    secHow: "Vérification automatique par {cmd} : une liste de risques connus, comme un contrôle technique. Elle peut manquer un problème subtil ou donner une fausse alerte ; pour qu'une IA relise chaque alerte et aide à corriger, lancez {skill} dans Claude Code.", secOwasp: 'OWASP {code}',
     secNothing: 'Rien trouvé par les vérifications lancées.', secWhy: "Pourquoi c'est important", secFix: 'Comment corriger', secSeeMap: 'Voir {name} sur la carte',
     secTools: 'Outils', secReason: 'Pourquoi elle est écartée', secIgnored: 'Écartées ({count}), avec la raison', sev_critical: 'Critique', sev_high: 'Élevé', sev_medium: 'Moyen', sev_low: 'Faible',
     tool_ran: 'lancé', tool_missing: 'non installé', tool_failed: 'en échec', tool_skipped: 'ignoré', secFiles: '{count} fichiers lus',
@@ -2774,7 +2775,7 @@ function securityItem(f) {
   const links = (f.elements || []).map(p =>
     `<button type="button" class="sec-link" data-go="${esc(p)}">${esc(t('secSeeMap', { name: displayTitle(p) }))}</button>`).join('');
   return `<details class="sec-item">
-    <summary><span class="sec-chip sev-${esc(f.severity)}">${esc(t('sev_' + f.severity))}</span><span class="sec-item-title">${esc(f.title)}</span><span class="sec-item-where">${esc(where)}</span></summary>
+    <summary><span class="sec-chip sev-${esc(f.severity)}">${esc(t('sev_' + f.severity))}</span><span class="sec-item-title">${esc(f.title)}</span>${f.owasp ? `<a class="sec-chip sec-owasp" href="https://owasp.org/Top10/" target="_blank" rel="noopener noreferrer" title="${esc(f.owasp)}">${esc(t('secOwasp', { code: f.owasp.split(':')[0] }))}</a>` : ''}<span class="sec-item-where">${esc(where)}</span></summary>
     <div class="sec-item-body">
       ${f.match ? `<div class="sec-match">${esc(f.match)}</div>` : ''}
       <div><b>${esc(t('secWhy'))}</b>${esc(f.why)}</div>

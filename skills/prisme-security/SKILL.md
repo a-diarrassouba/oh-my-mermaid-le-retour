@@ -8,7 +8,7 @@ argument-hint: "[--no-tools]"
 
 ## Purpose
 
-`prisme security` computes a grade from A to E **without AI**: it reads the project's files (secrets, risky code, repository hygiene), runs `npm audit` on production dependencies, and adds the findings of gitleaks, osv-scanner and semgrep **when they are installed**. It writes `.prisme/.reports/security.json`, which the viewer shows on its Security page.
+`prisme security` computes a grade from A to E with **automatic checks, no AI**, like a vehicle inspection: it reads the project's files (secrets, risky code, repository hygiene), runs `npm audit` on production dependencies, and adds the findings of gitleaks, osv-scanner and semgrep **when they are installed**. It writes `.prisme/.reports/security.json`, which the viewer shows on its Security page.
 
 This skill adds what the command cannot do: check each finding in the code (real problem or false alarm), explain it at the reader's level, and fix what the user agrees to fix.
 
@@ -30,7 +30,7 @@ Pass `--no-tools` only if the user asks for a quick check (no `npm audit`, no in
 
 If it answers `invalid field '--json'` (or `champ invalide`), the CLI is too old: tell the user to run `prisme update`, then stop.
 
-Each finding has `rule`, `severity` (critical, high, medium, low), `title`, `why`, `fix`, often `file`, `line` and `match` (secrets are masked: never try to read or print the full value). `tools` says which tools ran, which are `missing`, `failed` or `skipped`. `ignored` lists findings the team already left out in `.prisme/security.yaml`, with the reason.
+Each finding has `rule`, `severity` (critical, high, medium, low), `title`, `why`, `fix`, its OWASP Top 10 category in `owasp` (name it when you explain, e.g. "A03 Injection"), often `file`, `line` and `match` (secrets are masked: never try to read or print the full value). `tools` says which tools ran, which are `missing`, `failed` or `skipped`. `ignored` lists findings the team already left out in `.prisme/security.yaml`, with the reason.
 
 ## Step 2: Check Each Finding in the Code
 

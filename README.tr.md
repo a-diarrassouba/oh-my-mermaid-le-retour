@@ -85,7 +85,7 @@ Görüntüleyicinin soru çubuğuna istediğiniz soruyu yazın (örneğin "`pris
 
 Bunun için `prisme view` çalıştıran makinede Claude Code kurulu ve oturum açılmış olmalıdır (`claude`, ardından `/login`); görüntüleyiciyi yalnızca açanlar için hiçbir şey gerekmez. Claude projeyi yalnızca okur (`.env` dosyalarını veya anahtarları asla okumaz), hiçbir şeyi değiştirmez. `prisme view --no-ai` soruları kapatır.
 
-Ana ekrandaki güvenlik kutucuğu, tek tıkla, yapay zekâ olmadan ve hiçbir şey kurmadan puanı hesaplar.
+Ana ekrandaki güvenlik kutucuğu tek tıkla puanı hesaplar: bilinen riskleri (gizli anahtarlar, riskli kod, OpenSSF Scorecard tarzında CI ve bağımlılık düzeni) otomatik olarak kontrol eder, her bulguya OWASP Top 10 kategorisini ekler; hiçbir şey kurmak gerekmez. Ardından `/prisme-security` ile Claude her bulguyu inceler.
 
 ## CLI
 
@@ -96,7 +96,7 @@ prisme view --no-ai                # Claude Code'a soru sormadan açın (API: do
 prisme config language fr          # Belgelerin ve arayüzün dilini ayarlayın
 prisme guide list                  # Rehberleri listele
 prisme changes                     # Son taramadan bu yana değişenler
-prisme security                    # Yapay zekâ olmadan güvenlik notu A–E (kuruluysa gitleaks, osv-scanner, semgrep kullanılır)
+prisme security                    # Otomatik kontrollerle güvenlik notu A–E (kuruluysa gitleaks, osv-scanner, semgrep kullanılır)
 prisme evolve show                 # /prisme-evolve tarafından yazılan geliştirme fikirleri
 prisme update                      # En son sürüme güncelleyin
 ```
