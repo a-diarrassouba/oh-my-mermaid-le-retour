@@ -44,6 +44,36 @@ describe('decideReleaseAction', () => {
     });
   });
 
+  it('does not wait for npm when npm publishing is not set up', () => {
+    expect(decideReleaseAction({
+      currentVersion: '0.3.0',
+      previousVersion: '0.3.0',
+      npmPublished: false,
+      tagExists: true,
+      releaseExists: true,
+      npmEnabled: 'false',
+    })).toEqual({
+      changed: false,
+      shouldRelease: false,
+      reason: 'version unchanged and release artifacts already exist',
+    });
+  });
+
+  it('still creates the tag and the GitHub release when npm is not set up', () => {
+    expect(decideReleaseAction({
+      currentVersion: '0.3.0',
+      previousVersion: '0.3.0',
+      npmPublished: false,
+      tagExists: false,
+      releaseExists: false,
+      npmEnabled: 'false',
+    })).toEqual({
+      changed: false,
+      shouldRelease: true,
+      reason: 'release artifacts missing for current version',
+    });
+  });
+
   it('continues when some artifacts exist but others are missing', () => {
     expect(decideReleaseAction({
       currentVersion: '0.1.6',
