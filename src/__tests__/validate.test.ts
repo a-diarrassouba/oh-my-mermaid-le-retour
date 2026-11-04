@@ -147,3 +147,13 @@ describe('validateDiagram', () => {
     expect(refIssues).toHaveLength(0);
   });
 });
+
+describe('node count with edge labels', () => {
+  it('does not read words of a label as nodes', async () => {
+    const { parseMermaid } = await import('../lib/diff.js');
+    const text = 'graph LR\n    cli["CLI\\nsrc/cli.ts"]\n    store["Store"]\n    cli -->|"dispatches args to"| store\n    store -->|reads| disk[("Disk")]\n';
+    const parsed = parseMermaid(text);
+    expect([...parsed.nodes].sort()).toEqual(['cli', 'disk', 'store']);
+    expect([...parsed.edges]).toEqual(['cli --> store', 'store --> disk']);
+  });
+});

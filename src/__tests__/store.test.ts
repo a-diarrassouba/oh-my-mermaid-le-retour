@@ -66,3 +66,13 @@ describe('writeField with lazy-init', () => {
     expect(content).toBe('no direct DB access');
   });
 });
+
+describe('element paths', () => {
+  it('never leave .prisme/', async () => {
+    const { isSafeElementPath, writeNodeField, nodeDir } = await import('../lib/store.js');
+    expect(isSafeElementPath('overall-architecture/store')).toBe(true);
+    for (const bad of ['..', 'a/..', '../x', '/etc', 'a//b', '.guides', 'a\\..\\b', '']) expect(isSafeElementPath(bad), bad).toBe(false);
+    expect(() => nodeDir('a', ['..', '..', 'x'])).toThrow(/a\/\.\.\/\.\.\/x/);
+    expect(() => writeNodeField('..', ['x'], 'description', 'hi')).toThrow();
+  });
+});
