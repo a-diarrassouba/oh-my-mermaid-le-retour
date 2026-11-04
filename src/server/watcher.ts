@@ -9,7 +9,6 @@ export function addSSEClient(res: ServerResponse): void {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
     'Connection': 'keep-alive',
-    'Access-Control-Allow-Origin': '*',
   });
   res.write('data: connected\n\n');
   clients.add(res);

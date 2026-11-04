@@ -65,7 +65,7 @@ describe('/api/v1 data', () => {
   });
 
   it('describes the project', () => {
-    const p = apiProject({ token: null, cwd: dir });
+    const p = apiProject({ ai: false, cwd: dir });
     expect(p).toMatchObject({
       api: 1, language: 'fr', lastScan: null,
       counts: { perspectives: 1, elements: 3, guides: 0 },
@@ -92,7 +92,7 @@ describe('/api/v1 routes', () => {
 
   beforeEach(async () => {
     server = http.createServer((req, res) => {
-      if (!handleApiV1(req, res, { port, token: TOKEN, cwd: dir })) { res.writeHead(418); res.end('{}'); }
+      if (!handleApiV1(req, res, { port, token: TOKEN, ai: true, cwd: dir })) { res.writeHead(418); res.end('{}'); }
     });
     await new Promise<void>(r => server.listen(0, '127.0.0.1', r));
     port = (server.address() as AddressInfo).port;

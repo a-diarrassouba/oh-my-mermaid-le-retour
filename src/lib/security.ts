@@ -307,9 +307,11 @@ export function scanText(file: string, text: string, lang: 'en' | 'fr' = 'en'): 
       if (isTest) continue;
       out.push(finding('password-in-code', lang, { file, line: i + 1, match: `${m[1]} = ${mask(value)}` }));
     }
+    // Tests hold samples of risky code on purpose: only secrets count there.
+    if (isTest) continue;
     for (const { rule, re, files } of LINE_RULES) {
       if (!files.test(file) || !re.test(line)) continue;
-      out.push(finding(rule, lang, { file, line: i + 1, match: line.trim().slice(0, 120), ...(isTest ? { severity: 'low' as Severity } : {}) }));
+      out.push(finding(rule, lang, { file, line: i + 1, match: line.trim().slice(0, 120) }));
     }
   }
   return out;
@@ -337,7 +339,7 @@ export function scanRepository(cwd: string, files: string[], lang: 'en' | 'fr' =
 
   // .env in .gitignore, when the project reads environment variables.
   // The project keeps settings in .env files: it has one (even an example) or loads them with dotenv.
-  const usesEnv = files.some(f => ENV_FILE.test(f)) || [...(contents?.entries() ?? [])].some(([, t]) => /require\(\s*['"]dotenv|from\s+['"]dotenv|import\s+['"]dotenv|load_dotenv\(|godotenv\.Load/.test(t));
+  const usesEnv = files.some(f => ENV_FILE.test(f)) || [...(contents?.entries() ?? [])].some(([f, t]) => !TEST_FILE.test(f) && /require\(\s*['"]dotenv|from\s+['"]dotenv|import\s+['"]dotenv|load_dotenv\(|godotenv\.Load/.test(t));
   if (usesEnv && tracked.size) {
     const ignore = readText(cwd, '.gitignore') ?? '';
     if (!/^\s*\/?\.env(\*|\.\*)?\s*$/m.test(ignore) && !/^\s*\*\.env\s*$/m.test(ignore)) out.push(finding('env-not-ignored', lang, { file: '.gitignore' }));

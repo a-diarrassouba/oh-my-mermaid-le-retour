@@ -7,7 +7,7 @@
 - The server listens on `127.0.0.1` only, and answers only to `Host: localhost:<port>` or `127.0.0.1:<port>` (no DNS rebinding). Any other host gets `403`.
 - No `Access-Control-Allow-Origin` header: another site cannot read the API from a browser.
 - `X-Frame-Options: DENY`: no site can show the viewer in a frame.
-- Questions to Claude (`/api/v1/ask/ai…`) also need the `X-Prisme-Token` header, a secret drawn when the viewer starts and handed only to the page (`window.__prismeAI.token`), and an `Origin` that is the viewer itself. `prisme view --no-ai` turns them off.
+- Routes that run something or delete (`/api/v1/ask/ai…`, `POST /api/v1/security/run`, `DELETE /api/v1/guides/ask-…`) also need the `X-Prisme-Token` header, a secret drawn when the viewer starts and handed only to the page (`window.__prismeToken`), and an `Origin` that is the viewer itself. `prisme view --no-ai` turns the questions off (`window.__prismeAI` is then `false`).
 
 Every route below is `GET` unless noted. Errors are `{ "error": "<reason>" }` with a 4xx/5xx status.
 
@@ -132,6 +132,18 @@ The ideas `/prisme-evolve` wrote (checked by `prisme evolve write`), `404` befor
 - `market`: level 2, 3 to 5 similar products the AI found on the web and the ideas they suggest; `kind` is `feature` or `design`, `seenIn` names products of `products`. `null` when only level 1 was written.
 - `effort`: `small`, `medium`, `large`; `impact`: `low`, `medium`, `high`; `elements`: existing element paths.
 
+## `POST /api/v1/security/run`
+
+Runs `prisme security` in a child process (no AI; `npm audit` and the installed tools included), then answers with the new report, same shape as `GET /api/v1/security`. One check at a time: a second call waits for the running one. Page token required.
+
+## `GET /api/v1/file?path=<path>`
+
+A project file a guide step shows: `{ "path": "src/lib/store.ts", "content": "…", "lines": 340 }`. `404` with `{ "error" }` for a path outside the project, inside `.git`, through a symbolic link, larger than 300 KB, not text, or that may hold secrets (`.env`, `.env.*` except examples, `*.pem`, `*.key`, SSH keys, `.npmrc`…).
+
+## `DELETE /api/v1/guides/ask-<id>`
+
+Deletes the answer to one of the reader's questions (guides whose id starts with `ask-`). Page token required.
+
 ## `GET /api/v1/ask?q=<question>`
 
 Search without AI over every element's fields. Up to 8 results, best first:
@@ -142,7 +154,7 @@ Search without AI over every element's fields. Up to 8 results, best first:
 
 ## Questions to Claude
 
-Claude Code (`claude`) must be installed and logged in on the machine running `prisme view`; the reader's browser needs nothing. Claude gets no tools: the server sends it the `.prisme/` map and the question, reads the guide it answers with, and writes it through the same checks as `prisme guide write`. One question at a time, 4 minutes at most.
+Any question, in the reader's words. Claude Code (`claude`) must be installed and logged in on the machine running `prisme view`; the reader's browser needs nothing. The server sends Claude the `.prisme/` map and the question; Claude may read the project's files with Read, Grep and Glob only (`--tools`, `--restricted`: confined to the project, no command, no write), never the files listed for `/api/v1/file`. It answers with a guide whose steps trace a path along the arrows (`kind: trace`, `edge`), light blocks (`focus`) or open a file at the right lines (`file: { path, lines }`), each with its explanation. The server records the question in the guide (`question`) and writes it through the same checks as `prisme guide write` (elements, edges, files and lines must exist), with one retry on errors. One question at a time, 4 minutes at most.
 
 ### `POST /api/v1/ask/ai`
 

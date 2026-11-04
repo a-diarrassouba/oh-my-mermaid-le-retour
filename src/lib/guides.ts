@@ -3,6 +3,7 @@ import path from 'node:path';
 import YAML from 'yaml';
 import { getOmmDir, nodeDir } from './store.js';
 import { isPlainOmmPath, readOmmFile, removeOmmPath, writeOmmFile } from './omm-fs.js';
+import { parseLineRange, readProjectFile } from './project-files.js';
 
 // A guide is an ordered walk through existing elements of .prisme/. It holds no
 // content of its own: only the order, what to look at (an edge, a few nodes)
@@ -31,6 +32,8 @@ export interface GuideStep {
   details?: string;
   /** Optional chapter of the guide ("Functional", "Technical", ...); steps of one part follow each other */
   part?: string;
+  /** A project file to show next to the map, and the lines to light ("12-40") */
+  file?: { path: string; lines?: string };
 }
 
 export interface Guide {
@@ -41,6 +44,8 @@ export interface Guide {
   start?: boolean;
   duration?: string;
   after?: string[];
+  /** The reader's question, for a guide written to answer it */
+  question?: string;
   steps: GuideStep[];
 }
 
@@ -60,8 +65,8 @@ export interface GuideResult {
 }
 
 const GUIDE_ID = /^[a-z0-9][a-z0-9-]*$/;
-const GUIDE_KEYS = new Set(['title', 'kind', 'audience', 'start', 'duration', 'after', 'steps']);
-const STEP_KEYS = new Set(['element', 'edge', 'focus', 'say', 'details', 'part']);
+const GUIDE_KEYS = new Set(['title', 'kind', 'audience', 'start', 'duration', 'after', 'question', 'steps']);
+const STEP_KEYS = new Set(['element', 'edge', 'focus', 'say', 'details', 'part', 'file']);
 
 export function guidesDir(cwd?: string): string {
   return path.join(getOmmDir(cwd), GUIDES_DIR);
@@ -131,6 +136,7 @@ export function parseGuide(id: string, source: string): { guide: Guide | null; i
   if (raw.start !== undefined && typeof raw.start !== 'boolean') error('start', '"start" must be true or false');
   if (raw.duration !== undefined && typeof raw.duration !== 'string') error('duration', '"duration" must be text, e.g. "10m"');
   if (raw.after !== undefined && !isStringArray(raw.after)) error('after', '"after" must be a list of guide ids');
+  if (raw.question !== undefined && typeof raw.question !== 'string') error('question', '"question" must be text');
 
   const steps: GuideStep[] = [];
   if (!Array.isArray(raw.steps) || raw.steps.length === 0) {
@@ -153,6 +159,14 @@ export function parseGuide(id: string, source: string): { guide: Guide | null; i
       if (step.edge !== undefined && typeof step.edge !== 'string') error('edge', '"edge" must be text, e.g. "a --> b"', n);
       if (step.focus !== undefined && !isStringArray(step.focus)) error('focus', '"focus" must be a list of node ids', n);
       if (step.part !== undefined && (typeof step.part !== 'string' || !step.part.trim())) error('part', '"part" must be a short text, e.g. "Technical"', n);
+      // file: "src/a.ts" or { path: "src/a.ts", lines: "12-40" }
+      let file: GuideStep['file'];
+      if (step.file !== undefined) {
+        const f = typeof step.file === 'string' ? { path: step.file } : step.file as Record<string, unknown>;
+        if (!f || typeof f !== 'object' || typeof f.path !== 'string' || !f.path.trim()) error('file', '"file" must be a path, or { path, lines }', n);
+        else if (f.lines !== undefined && !parseLineRange(f.lines)) error('file', '"lines" must be a line or a range, e.g. "12-40"', n);
+        else file = { path: f.path.trim(), ...(f.lines !== undefined ? { lines: String(f.lines).replace(/\s+/g, '') } : {}) };
+      }
       steps.push({
         element: typeof step.element === 'string' ? step.element.trim().replace(/^\/+|\/+$/g, '') : '',
         edge: typeof step.edge === 'string' ? step.edge : undefined,
@@ -160,6 +174,7 @@ export function parseGuide(id: string, source: string): { guide: Guide | null; i
         say: typeof step.say === 'string' ? step.say : '',
         ...(typeof step.details === 'string' && step.details.trim() ? { details: step.details.trim() } : {}),
         ...(typeof step.part === 'string' && step.part.trim() ? { part: step.part.trim() } : {}),
+        ...(file ? { file } : {}),
       });
     });
     issues.push(...partIssues(steps));
@@ -177,6 +192,7 @@ export function parseGuide(id: string, source: string): { guide: Guide | null; i
   if (raw.start !== undefined) guide.start = raw.start as boolean;
   if (raw.duration !== undefined) guide.duration = raw.duration as string;
   if (raw.after !== undefined) guide.after = raw.after as string[];
+  if (typeof raw.question === 'string' && raw.question.trim()) guide.question = raw.question.trim();
   return { guide, issues };
 }
 
@@ -361,6 +377,15 @@ export function validateGuide(guide: Guide, knownGuideIds: string[], cwd?: strin
       }
     } else if (guide.kind === 'trace' && i > 0) {
       error('trace', 'In a trace, every step after the first follows an "edge"', n);
+    }
+
+    if (step.file) {
+      const read = readProjectFile(step.file.path, cwd);
+      if ('error' in read) error('file', read.error, n);
+      else {
+        const range = step.file.lines ? parseLineRange(step.file.lines) : null;
+        if (range && range.end > read.lines) error('file', `"${step.file.path}" has ${read.lines} lines, not ${range.end}`, n);
+      }
     }
 
     for (const node of step.focus ?? []) {

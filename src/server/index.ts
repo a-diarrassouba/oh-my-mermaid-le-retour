@@ -37,8 +37,9 @@ function getViewerHtml(): string {
 export function startServer(port: number, options: ServerOptions = {}): http.Server {
   startWatcher();
   // A new secret each time the viewer starts; only the page receives it.
-  const aiToken = options.ai === false ? null : crypto.randomBytes(24).toString('hex');
-  if (aiToken) {
+  const pageToken = crypto.randomBytes(24).toString('hex');
+  const ai = options.ai !== false;
+  if (ai) {
     // Ctrl+C or a kill also stops a question being answered.
     for (const signal of ['SIGINT', 'SIGTERM'] as const) {
       process.once(signal, () => { stopRunningAgent(); process.exit(130); });
@@ -68,7 +69,7 @@ export function startServer(port: number, options: ServerOptions = {}): http.Ser
 
     // API endpoints: the versioned contract, then the viewer's own routes
     if (url.pathname.startsWith('/api/')) {
-      if (handleApiV1(req, res, { port: boundPort, token: aiToken })) return;
+      if (handleApiV1(req, res, { port: boundPort, token: pageToken, ai })) return;
       if (handleApi(req, res)) return;
       res.writeHead(404, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'not found' }));
@@ -79,9 +80,9 @@ export function startServer(port: number, options: ServerOptions = {}): http.Ser
     if (url.pathname === '/' || url.pathname === '/index.html') {
       let html = getViewerHtml();
       const projectName = path.basename(process.cwd());
-      const ai = aiToken ? `window.__prismeAI=${JSON.stringify({ token: aiToken })};` : '';
+      const page = `window.__prismeToken=${JSON.stringify(pageToken)};window.__prismeAI=${ai};`;
       // "<" escaped: a folder name must not be able to close the script.
-      const inline = `window.__projectName=${JSON.stringify(projectName)};${ai}`.replace(/</g, '\\u003c');
+      const inline = `window.__projectName=${JSON.stringify(projectName)};${page}`.replace(/</g, '\\u003c');
       html = html.replace('</head>', `<script>${inline}</script>\n</head>`);
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
       res.end(html);
@@ -111,7 +112,7 @@ export function startServer(port: number, options: ServerOptions = {}): http.Ser
   server.once('listening', () => {
     boundPort = (server.address() as AddressInfo).port;
     process.stderr.write(msg('viewerRunning', { url: `http://localhost:${boundPort}` }) + '\n');
-    process.stderr.write(msg(aiToken ? 'viewerAiOn' : 'viewerAiOff') + '\n');
+    process.stderr.write(msg(ai ? 'viewerAiOn' : 'viewerAiOff') + '\n');
   });
 
   void listen(port);
