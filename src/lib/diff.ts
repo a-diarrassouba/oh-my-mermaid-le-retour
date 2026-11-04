@@ -15,7 +15,10 @@ export function parseMermaid(text: string): MermaidElement {
 
   const lines = text.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('%%'));
 
-  for (const line of lines) {
+  for (const raw of lines) {
+    // Edge labels (`-->|"reads from"| b`) may hold spaces and words: drop them,
+    // or a word of the label would be read as a node.
+    const line = raw.replace(/(-->|--o|--x|---|-\.->|==>|~~>)\s*\|[^|]*\|/g, '$1 ');
     // Skip directives, classDef, click, style, etc.
     if (/^(graph|flowchart|sequenceDiagram|classDiagram|erDiagram|gantt|pie|gitGraph)/i.test(line)) continue;
     if (/^(classDef|class |click |style |linkStyle|subgraph|end$)/i.test(line)) continue;

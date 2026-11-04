@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import YAML from 'yaml';
-import { getOmmDir, nodeDir } from './store.js';
+import { getOmmDir, isSafeElementPath, nodeDir } from './store.js';
 import { isPlainOmmPath, readOmmFile, removeOmmPath, writeOmmFile } from './omm-fs.js';
 import { parseLineRange, readProjectFile } from './project-files.js';
 
@@ -292,14 +292,6 @@ export function parseStepEdge(edge: string): { from: string; to: string } | null
   const bare = /^@?[\w-]+$/;
   if (!bare.test(parts[0].trim()) || !bare.test(parts[2].trim())) return null;
   return { from: nodeIdOf(parts[0])!, to: nodeIdOf(parts[2])! };
-}
-
-// Element names are folder names written by prisme: no separators, no leading
-// dot, so an element path can never leave .prisme/ (on Windows either).
-const ELEMENT_SEGMENT = /^[\w-][\w.-]*$/;
-
-function isSafeElementPath(elementPath: string): boolean {
-  return elementPath.split('/').every(s => ELEMENT_SEGMENT.test(s) && s !== '..');
 }
 
 function elementExists(elementPath: string, cwd?: string): boolean {

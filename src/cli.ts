@@ -27,6 +27,12 @@ function printHelp(): void {
   process.stdout.write(msg('help') + '\n');
 }
 
+// `prisme tree | head` closes the pipe early: stop quietly, like other CLI tools.
+process.stdout.on('error', (err: NodeJS.ErrnoException) => {
+  if (err.code === 'EPIPE') process.exit(0);
+  throw err;
+});
+
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
 

@@ -58,7 +58,21 @@ export function initOmm(cwd?: string): void {
 
 // --- Class operations ---
 
+// Each segment of an element path is a plain name: letters, digits, _ and -,
+// then dots allowed, never a leading dot. So a path can never leave .prisme/
+// ("..", absolute paths, backslashes on Windows) or reach .guides/.reports.
+const ELEMENT_SEGMENT = /^[\w-][\w.-]*$/;
+
+export function isSafeElementPath(elementPath: string): boolean {
+  return elementPath.split('/').every(s => ELEMENT_SEGMENT.test(s));
+}
+
+function checkElementPath(elementPath: string): void {
+  if (!isSafeElementPath(elementPath)) throw new Error(msg('invalidElementPath', { path: elementPath }));
+}
+
 function classDir(className: string, cwd?: string): string {
+  checkElementPath(className);
   return path.join(getOmmDir(cwd), className);
 }
 
@@ -87,6 +101,7 @@ export function listClasses(cwd?: string): string[] {
 
 /** Resolve filesystem path for a nested element: .prisme/<perspective>/<child>/<grandchild> */
 export function nodeDir(perspective: string, nodePath: string[], cwd?: string): string {
+  if (nodePath.length) checkElementPath([perspective, ...nodePath].join('/'));
   return path.join(classDir(perspective, cwd), ...nodePath);
 }
 

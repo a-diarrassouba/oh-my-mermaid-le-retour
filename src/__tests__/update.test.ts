@@ -54,3 +54,10 @@ describe('commandUpdate', () => {
     stderrWrite.mockRestore();
   });
 });
+
+describe('test isolation', () => {
+  it('runs with a throwaway home folder', async () => {
+    const os = await import('node:os');
+    expect(os.homedir()).toMatch(/prisme-home-/);
+  });
+});
