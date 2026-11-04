@@ -286,7 +286,7 @@ body.light .reg-node:hover .nshape { stroke: #000 !important; filter: drop-shado
 body.light .reg-node.selected .nshape { stroke: #4f46e5 !important; filter: drop-shadow(0 0 8px rgba(79,70,229,0.4)); }
 body.light .reg-node:hover .nshape { stroke: #000 !important; }
 
-#mobile-nav-btn { display: none; }
+#mobile-nav-btn, #mobile-home-btn { display: none; }
 #mobile-overlay { display: none; }
 
 /* Mobile responsive */
@@ -307,6 +307,11 @@ body.light .reg-node:hover .nshape { stroke: #000 !important; }
     cursor: pointer; backdrop-filter: blur(8px);
   }
   #mobile-nav-btn span { font-size: 16px; }
+  #mobile-home-btn {
+    display: block; position: fixed; top: 10px; right: 10px; z-index: 400;
+    background: rgba(0,0,0,0.75); border: 1px solid #333; border-radius: 6px;
+    color: #fff; font-size: 16px; padding: 4px 12px; cursor: pointer; backdrop-filter: blur(8px);
+  }
   #mobile-overlay {
     display: none; position: fixed; inset: 0; z-index: 450;
     background: rgba(0,0,0,0.5);
@@ -443,6 +448,30 @@ body.light .reg-node:hover .nshape { stroke: #000 !important; }
   35% { filter: drop-shadow(0 0 18px var(--accent)); }
   100% { filter: drop-shadow(0 0 10px color-mix(in srgb, var(--accent) 60%, transparent)); }
 }
+/* Home: the three categories and the reader's level */
+#home { position: fixed; inset: 0; z-index: 600; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(6px); overflow-y: auto; display: flex; justify-content: center; padding: 48px 16px; }
+#home[hidden] { display: none; }
+.home-box { width: 100%; max-width: 860px; display: flex; flex-direction: column; gap: 28px; }
+.home-project { font-family: var(--mono); font-size: 12px; color: var(--text-dim); letter-spacing: .06em; }
+.home-title { font-size: 26px; font-weight: 650; color: var(--text); margin-top: 4px; }
+.home-label { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .12em; color: var(--text-dim); margin-bottom: 10px; }
+.home-levels { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+.home-level { text-align: left; border: 1px solid var(--border-hi); background: var(--surface); color: var(--text); border-radius: 10px; padding: 12px 14px; cursor: pointer; font-family: var(--font); }
+.home-level:hover { border-color: var(--accent); }
+.home-level.on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--surface)); }
+.home-level b { display: block; font-size: 14px; margin-bottom: 3px; }
+.home-level span { font-size: 12px; color: var(--text-mid); }
+.home-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.home-tile { text-align: left; border: 1px solid var(--border-hi); background: var(--surface); color: var(--text); border-radius: 14px; padding: 20px; cursor: pointer; font-family: var(--font); display: flex; flex-direction: column; gap: 8px; min-height: 170px; transition: border-color .15s, transform .15s; }
+.home-tile:hover:not(:disabled) { border-color: var(--accent); transform: translateY(-2px); }
+.home-tile:disabled { cursor: default; opacity: .72; }
+.home-tile-icon { font-size: 26px; }
+.home-tile-name { font-size: 17px; font-weight: 600; }
+.home-tile-text { font-size: 12.5px; line-height: 1.6; color: var(--text-mid); flex: 1; }
+.home-tile-state { font-size: 11.5px; color: var(--text-dim); }
+.home-tile-state code { font-family: var(--mono); background: var(--surface-2); padding: 1px 5px; border-radius: 4px; color: var(--text); }
+.home-tile-state.ok { color: var(--accent); }
+@media (prefers-reduced-motion: reduce) { .home-tile { transition: none; } }
 @media (prefers-reduced-motion: reduce) {
   .edge-flow, .flow-persp .edge-flow { animation: none !important; opacity: 0 !important; }
   #guide-spark { display: none; }
@@ -468,6 +497,7 @@ body.light .reg-node:hover .nshape { stroke: #000 !important; }
 
 <div id="mobile-nav-btn" onclick="toggleMobileNav()"><span>☰</span><span id="mobile-title">prisme</span></div>
 <div id="mobile-overlay" onclick="toggleMobileNav()"></div>
+<button id="mobile-home-btn" type="button" data-i18n-aria="home">⌂</button>
 <div id="canvas-wrap">
   <div class="float-controls">
     <button class="hbtn" onclick="zoomOut()" data-i18n-title="zoomOut">−</button>
@@ -475,6 +505,7 @@ body.light .reg-node:hover .nshape { stroke: #000 !important; }
     <button class="hbtn" onclick="zoomIn()" data-i18n-title="zoomIn">+</button>
     <button class="hbtn" onclick="resetView()" style="font-size:11px" data-i18n="fit" data-i18n-title="fitTitle">fit</button>
     <button class="hbtn" id="theme-btn" onclick="toggleTheme()" style="font-size:13px" data-i18n-title="theme">○</button>
+    <button class="hbtn" id="home-btn" type="button" data-i18n-title="home">⌂</button>
   </div>
   <div id="ask-bar">
     <input id="ask-input" type="text" autocomplete="off" />
@@ -493,6 +524,7 @@ body.light .reg-node:hover .nshape { stroke: #000 !important; }
   </div>
 </div>
 
+<div id="home" role="dialog" aria-modal="true" data-i18n-aria="home" hidden></div>
 <div id="guide-bar" role="region" data-i18n-aria="guides" hidden></div>
 <div id="guide-spark" aria-hidden="true"></div>
 
@@ -520,6 +552,13 @@ const I18N = {
     askAiRunning: 'Claude is writing the guide… (up to 4 min)', askAiFailed: 'Claude could not answer: {reason}',
     levelNovice: 'Beginner', levelJunior: 'Junior', levelSenior: 'Senior', levelsAria: 'Explanation level',
     explain: 'Explanation', deeper: 'Learn more',
+    home: 'Home', homeTitle: 'What do you want to do?', homeLevel: 'Your level',
+    profileNovice: 'I am new to code', profileJunior: 'I code, but this project is new to me', profileSenior: 'I know code well: show me the details',
+    tileUnderstand: 'Understand my code', tileUnderstandText: 'The map of the project, explained at your level, with guides to follow step by step.',
+    tileUnderstandState: '{n} elements · {g} guides', tileUnderstandEmpty: 'Not scanned yet: run {cmd} in Claude Code.',
+    tileSecurity: 'Security score', tileSecurityText: 'A grade from A to E, what puts the project at risk and how to fix it.',
+    tileEvolve: 'Make it evolve', tileEvolveText: 'Ideas to simplify, speed up and go further, and what similar products do.',
+    tileReady: 'Ready', tileNotYet: 'Not analyzed yet: run {cmd} in Claude Code.',
   },
   fr: {
     zoomOut: 'Zoom arrière', zoomIn: 'Zoom avant', fit: 'ajuster', fitTitle: "Ajuster à l'écran",
@@ -542,6 +581,13 @@ const I18N = {
     askAiRunning: 'Claude écrit le parcours… (4 min au plus)', askAiFailed: "Claude n'a pas pu répondre : {reason}",
     levelNovice: 'Débutant', levelJunior: 'Junior', levelSenior: 'Senior', levelsAria: "Niveau d'explication",
     explain: 'Explication', deeper: 'Approfondir',
+    home: 'Accueil', homeTitle: 'Que voulez-vous faire ?', homeLevel: 'Votre niveau',
+    profileNovice: 'Je découvre le code', profileJunior: 'Je code, mais je découvre ce projet', profileSenior: 'Je connais bien le code : montrez-moi les détails',
+    tileUnderstand: 'Comprendre mon code', tileUnderstandText: 'La carte du projet, expliquée à votre niveau, avec des parcours à suivre pas à pas.',
+    tileUnderstandState: '{n} éléments · {g} parcours', tileUnderstandEmpty: 'Pas encore scanné : lancez {cmd} dans Claude Code.',
+    tileSecurity: 'Score de sécurité', tileSecurityText: 'Une note de A à E, ce qui met le projet en danger et comment le corriger.',
+    tileEvolve: 'Faire évoluer', tileEvolveText: 'Des idées pour simplifier, accélérer et aller plus loin, et ce que font les produits proches.',
+    tileReady: 'Prêt', tileNotYet: 'Pas encore analysé : lancez {cmd} dans Claude Code.',
   },
 };
 let lang = 'en';
@@ -2381,6 +2427,88 @@ async function loadSubNodeData(perspective, subPath, shortName) {
   }
 }
 
+// ── home ──────────────────────────────────────────────────
+// Three categories (understand, security, evolve) and the reader's level.
+// Shown on the first visit, then from the ⌂ button.
+const homeEl = document.getElementById('home');
+const PROFILE_KEY = 'prisme-profile';
+let project = null;
+let homeChecked = false;
+
+function homeHtml() {
+  const p = project || { counts: {}, categories: {} };
+  const levels = LEVELS.map(l => {
+    const name = 'level' + l[0].toUpperCase() + l.slice(1);
+    const text = 'profile' + l[0].toUpperCase() + l.slice(1);
+    return `<button type="button" class="home-level${l === readerLevel ? ' on' : ''}" data-level="${l}"><b>${esc(t(name))}</b><span>${esc(t(text))}</span></button>`;
+  }).join('');
+  // The command goes in as a marker, so it can be shown as code once escaped.
+  const withCmd = (key, c) => esc(t(key, { cmd: '\u0001' })).replace('\u0001', `<code>${esc(c)}</code>`);
+  const state = (ready, okText, cmdName) => ready
+    ? `<div class="home-tile-state ok">${esc(okText)}</div>`
+    : `<div class="home-tile-state">${withCmd('tileNotYet', cmdName)}</div>`;
+  const understand = !!p.categories.understand?.available;
+  const tiles = [
+    { key: 'understand', icon: '🧭', name: t('tileUnderstand'), text: t('tileUnderstandText'), ready: understand,
+      state: understand
+        ? `<div class="home-tile-state ok">${esc(t('tileUnderstandState', { n: p.counts.elements ?? 0, g: p.counts.guides ?? 0 }))}</div>`
+        : `<div class="home-tile-state">${withCmd('tileUnderstandEmpty', '/prisme-scan')}</div>` },
+    { key: 'security', icon: '🛡️', name: t('tileSecurity'), text: t('tileSecurityText'), ready: !!p.categories.security?.available,
+      state: state(!!p.categories.security?.available, t('tileReady'), '/prisme-security') },
+    { key: 'evolve', icon: '🌱', name: t('tileEvolve'), text: t('tileEvolveText'), ready: !!p.categories.evolve?.available,
+      state: state(!!p.categories.evolve?.available, t('tileReady'), '/prisme-evolve') },
+  ].map(tile => `<button type="button" class="home-tile" data-tile="${tile.key}"${tile.ready ? '' : ' disabled'}>
+      <span class="home-tile-icon" aria-hidden="true">${tile.icon}</span>
+      <span class="home-tile-name">${esc(tile.name)}</span>
+      <span class="home-tile-text">${esc(tile.text)}</span>
+      ${tile.state}
+    </button>`).join('');
+  return `<div class="home-box">
+    <div><div class="home-project">${esc(window.__projectName || 'prisme')}</div><div class="home-title">${esc(t('homeTitle'))}</div></div>
+    <div><div class="home-label">${esc(t('homeLevel'))}</div><div class="home-levels">${levels}</div></div>
+    <div class="home-tiles">${tiles}</div>
+  </div>`;
+}
+
+async function openHome() {
+  project = await api('/api/v1/project');
+  homeEl.innerHTML = homeHtml();
+  homeEl.hidden = false;
+  homeEl.querySelector('.home-tile:not(:disabled)')?.focus();
+}
+
+function closeHome() { homeEl.hidden = true; }
+
+// Understand: a beginner who has not followed the welcome guide starts it.
+function enterUnderstand() {
+  closeHome();
+  const welcome = guides.find(g => g.valid && g.guide.start);
+  if (readerLevel === 'novice' && welcome && !activeGuide && guideProgress(welcome.id) !== 'done') startGuide(welcome.id);
+}
+
+homeEl.addEventListener('click', e => {
+  const level = e.target.closest('[data-level]');
+  if (level) {
+    setReaderLevel(level.dataset.level);
+    safeStorageSet(PROFILE_KEY, level.dataset.level);
+    homeEl.querySelectorAll('.home-level').forEach(b => b.classList.toggle('on', b === level));
+    return;
+  }
+  const tile = e.target.closest('[data-tile]');
+  if (tile && !tile.disabled && tile.dataset.tile === 'understand') enterUnderstand();
+});
+homeEl.addEventListener('keydown', e => { if (e.key === 'Escape') closeHome(); });
+document.getElementById('home-btn').addEventListener('click', openHome);
+document.getElementById('mobile-home-btn').addEventListener('click', openHome);
+
+// First visit: no level chosen yet, and no guide link to follow.
+function maybeShowHome() {
+  if (homeChecked) return;
+  homeChecked = true;
+  if (safeStorageGet(PROFILE_KEY) || new URLSearchParams(location.hash.slice(1)).get('guide')) return;
+  openHome();
+}
+
 // ── init ──────────────────────────────────────────────────
 async function init() {
   applyTheme();
@@ -2429,6 +2557,7 @@ async function init() {
   paintGuideStep();
   if (!activeGuide) requestAnimationFrame(centerView);
   await loadGuidesIntoViewer();
+  maybeShowHome();
 
   // Cloud mode: notify parent frame of available classes
   if (window.parent !== window) {
