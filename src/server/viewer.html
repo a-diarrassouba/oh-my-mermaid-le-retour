@@ -188,7 +188,8 @@ body.light #ask-bar { background: rgba(255,255,255,0.85); }
 #canvas-wrap.zoom-overview [data-cls].focus-exempt > .grp-inner { pointer-events: auto !important; }
 #canvas-wrap.zoom-overview [data-cls].focus-exempt > .grp-inner > .reg-node { opacity: 1 !important; }
 #canvas-wrap.zoom-overview [data-cls].focus-exempt > .grp-inner .edge-path { opacity: 1 !important; }
-#canvas-wrap.zoom-overview [data-cls].focus-exempt > .grp-inner .edge-label { opacity: 1 !important; }
+#canvas-wrap.zoom-overview [data-cls].focus-exempt > .grp-inner .edge-label.edge-hl,
+#canvas-wrap.zoom-overview [data-cls].focus-exempt > .grp-inner .edge-label.guide-show { opacity: 1 !important; }
 #canvas-wrap.zoom-overview [data-cls].focus-exempt > .grp-inner .grp-node .grp-inner { opacity: 1 !important; }
 #canvas-wrap.zoom-overview [data-cls].focus-exempt > .grp-inner .grp-node .grp-border { opacity: 1 !important; }
 #canvas-wrap.zoom-overview [data-cls].focus-exempt > .grp-inner .grp-node .grp-label-top { opacity: 1 !important; }
@@ -398,6 +399,36 @@ body.light .reg-node:hover .nshape { stroke: #000 !important; }
 #canvas-wrap.guiding .edge-path.guide-trail { stroke: var(--accent) !important; stroke-width: 2px; opacity: .55 !important; }
 #canvas-wrap.guiding .edge-path.guide-edge { stroke: var(--accent) !important; stroke-width: 2.5px; opacity: 1 !important; stroke-dasharray: 7 5; animation: edge-flow .7s linear infinite; }
 @keyframes edge-flow { to { stroke-dashoffset: -12; } }
+
+/* ── Edges: labels on hover, moving light ───────────────────
+   A label shows only for the edge in focus (hovered edge or node, current
+   guide step), so long labels never pile up. Each edge also has a dotted
+   .edge-flow copy whose dots run in the arrow's direction: on hover, on the
+   current guide edge, and always inside flow perspectives (.flow-persp). */
+.edge-label { opacity: 0; pointer-events: none; transition: opacity .15s; }
+.edge-label.edge-hl, .edge-label.guide-show { opacity: 1; }
+.edge-path.edge-hl { stroke: var(--text) !important; stroke-width: 2.5px; opacity: 1 !important; }
+.edge-hit { fill: none; stroke: transparent; stroke-width: 14px; pointer-events: stroke; }
+.edge-flow { fill: none; stroke: var(--accent); stroke-width: 3px; stroke-linecap: round; stroke-dasharray: 0.5 13; opacity: 0; pointer-events: none; filter: drop-shadow(0 0 3px var(--accent)); }
+.edge-flow.edge-hl, .edge-flow.guide-flow, .flow-persp .edge-flow { opacity: .95; animation: edge-flow-dots 1.1s linear infinite; }
+@keyframes edge-flow-dots { to { stroke-dashoffset: -13.5; } }
+#canvas-wrap.zoom-overview .flow-persp .grp-inner .edge-flow:not(.edge-hl) { opacity: .45; }
+#canvas-wrap.guiding .edge-flow:not(.guide-flow):not(.edge-hl) { opacity: 0 !important; }
+
+/* The guide's moving light, and the pulse when it reaches the step. */
+#guide-spark { position: fixed; left: 0; top: 0; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; pointer-events: none; z-index: 240; opacity: 0;
+  background: radial-gradient(circle, #fff 0 22%, var(--accent) 45%, transparent 72%); box-shadow: 0 0 18px 6px color-mix(in srgb, var(--accent) 55%, transparent); }
+#canvas-wrap.guiding .grp-node.guide-arrive > .grp-border,
+#canvas-wrap.guiding .reg-node.guide-arrive .nshape { animation: guide-pulse 1.2s ease-out 1; }
+@keyframes guide-pulse {
+  0% { filter: drop-shadow(0 0 0 var(--accent)); }
+  35% { filter: drop-shadow(0 0 18px var(--accent)); }
+  100% { filter: drop-shadow(0 0 10px color-mix(in srgb, var(--accent) 60%, transparent)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .edge-flow, .flow-persp .edge-flow { animation: none !important; opacity: 0 !important; }
+  #guide-spark { display: none; }
+}
 @media (prefers-reduced-motion: reduce) {
   #canvas-wrap.guiding .edge-path.guide-edge { animation: none; stroke-dasharray: none; }
 }
@@ -445,6 +476,7 @@ body.light .reg-node:hover .nshape { stroke: #000 !important; }
 </div>
 
 <div id="guide-bar" role="region" data-i18n-aria="guides" hidden></div>
+<div id="guide-spark" aria-hidden="true"></div>
 
 <script type="module">
 // ── interface language ────────────────────────────────────
@@ -612,7 +644,8 @@ function parseFlowchart(raw) {
         if (!nodesMap.has(src.id)) nodesMap.set(src.id,src);
         if (!nodesMap.has(dst.id)) nodesMap.set(dst.id,dst);
         const lm=parts[1].match(/\|([^|]+)\|/);
-        edges.push({from:src.id,to:dst.id,label:lm?lm[1].replace(/<br\s*\/?>/gi,' '):''});
+        // |"label"| keeps its quotes in Mermaid source; they are not part of the text.
+        edges.push({from:src.id,to:dst.id,label:lm?lm[1].replace(/<br\s*\/?>/gi,' ').trim().replace(/^"(.*)"$/,'$1'):''});
       }
     } else {
       const n=tok(line); if (n&&!nodesMap.has(n.id)) nodesMap.set(n.id,n);
@@ -796,6 +829,8 @@ function renderGroup(cls, classesData, allClasses, level, seen = new Set(), scop
   const uid = `${cls.replace(/[^a-z0-9]/gi,'')}_l${level}_`;
   const th = theme();
   let svg = '';
+  // Edge labels go on top of the nodes, so a node never hides the end of a label.
+  let edgeLabels = '';
 
   // edges
   edges.forEach((e,i) => {
@@ -818,13 +853,17 @@ function renderGroup(cls, classesData, allClasses, level, seen = new Set(), scop
     }
     const ec = th.edgeColor0;
     const mk = `${uid}m${i}`;
+    const eid = `${uid}e${i}`;
+    const ends = `data-edge="${eid}" data-from="${esc(e.from)}" data-to="${esc(e.to)}"`;
     svg += `<defs><marker id="${mk}" markerWidth="6" markerHeight="5" refX="5" refY="2.5" orient="auto" markerUnits="userSpaceOnUse">
       <path d="M0,0.5 L0,4.5 L6,2.5 z" fill="${ec}"/></marker></defs>
-      <path class="edge-path" d="${d}" stroke="${ec}" stroke-width="2" fill="none" marker-end="url(#${mk})" data-from="${esc(e.from)}" data-to="${esc(e.to)}"/>`;
+      <path class="edge-path" d="${d}" stroke="${ec}" stroke-width="2" fill="none" marker-end="url(#${mk})" ${ends}/>
+      <path class="edge-flow" d="${d}" data-edge="${eid}"/>
+      <path class="edge-hit" d="${d}" ${ends}/>`;
     if (e.label) {
-      const lw = tw(e.label,'9px Inter')+8;
+      const lw = tw(e.label,'9px Inter')+10;
       const mx=r1(mid.x), my=r1(mid.y);
-      svg += `<g class="edge-label"><rect x="${mx-lw/2}" y="${my-6}" width="${lw}" height="12" rx="2" fill="${th.edgeLabelBg}"/>
+      edgeLabels += `<g class="edge-label" data-edge="${eid}"><rect x="${r1(mx-lw/2)}" y="${my-7}" width="${lw}" height="14" rx="3" fill="${th.edgeLabelBg}"/>
         <text x="${mx}" y="${my+3}" text-anchor="middle" font-family="Inter,system-ui" font-size="9" fill="${th.edgeLabelText}">${esc(e.label)}</text></g>`;
     }
   });
@@ -855,10 +894,10 @@ function renderGroup(cls, classesData, allClasses, level, seen = new Set(), scop
       svg += `<text class="grp-label-top" x="10" y="2" font-family="&quot;Plus Jakarta Sans&quot;,Inter,system-ui" font-size="9" font-weight="600"
         fill="${th.subLabelFill}" letter-spacing="0.05em">${esc(displayTitle(sg.scopedPath || sg.cls))}</text>`;
       svg += `<g class="grp-inner" transform="translate(${r1(PAD)},${r1(PAD)}) scale(${r1(fs)})">${sg.svgContent}</g>`;
-      svg += `<text class="grp-label-center" x="${r1(boxW/2)}" y="${r1(boxH/2)}" text-anchor="middle" dominant-baseline="central"
+      svg += `<text class="grp-label-center" data-maxw="${r1(boxW)}" x="${r1(boxW/2)}" y="${r1(boxH/2)}" text-anchor="middle" dominant-baseline="central"
         font-family="&quot;Plus Jakarta Sans&quot;,Inter,system-ui" font-size="9" font-weight="600" fill="${th.grpLabelCenterFill}" letter-spacing="0.05em">${esc(displayTitle(sg.scopedPath || sg.cls))}</text>`;
       svg += `</g>`;
-      labelOverlay += `<text class="grp-label-center" x="${r1(nx + boxW/2)}" y="${r1(ny + boxH/2)}" text-anchor="middle" dominant-baseline="central"
+      labelOverlay += `<text class="grp-label-center" data-maxw="${r1(boxW)}" x="${r1(nx + boxW/2)}" y="${r1(ny + boxH/2)}" text-anchor="middle" dominant-baseline="central"
         font-family="&quot;Plus Jakarta Sans&quot;,Inter,system-ui" font-size="9" font-weight="600" fill="${th.grpLabelCenterFill}" letter-spacing="0.05em">${esc(displayTitle(sg.scopedPath || sg.cls))}</text>`;
     } else {
       // ── regular node ──
@@ -900,7 +939,7 @@ function renderGroup(cls, classesData, allClasses, level, seen = new Set(), scop
     }
   }
 
-  return { svgContent: svg, W, H, labelOverlay };
+  return { svgContent: svg + edgeLabels, W, H, labelOverlay };
 }
 
 // ── sidebar diagram renderer (flat, for sidebar only) ─────
@@ -1021,6 +1060,12 @@ function applyTransform() {
   });
 
   canvasWrap.classList.toggle('zoom-overview', vpScale < 0.42);
+  // A centered group title never gets wider than its box (translated titles are long).
+  document.querySelectorAll('#canvas .grp-label-center[data-maxw]').forEach(el => {
+    const len = el.getComputedTextLength();
+    const max = parseFloat(el.dataset.maxw) * 0.9;
+    if (len > max) el.setAttribute('font-size', String(Math.round(parseFloat(el.getAttribute('font-size')) * max / len * 10) / 10));
+  });
 
   // Viewport-relative expansion: measure group's own border rect
   const vpW = canvasWrap.clientWidth;
@@ -1429,7 +1474,8 @@ function buildCanvas(classes, classesData, refsData) {
   for (const g of groups) {
     const tx = r1(OUTER_PAD + colX[g._col]);
     const ty = r1(OUTER_PAD + rowY[g._row]);
-    innerSVG += `<g class="grp-node" data-cls="${esc(g.cls)}" data-depth="0" transform="translate(${tx},${ty})" onclick="event.stopPropagation();window.__openSb('${esc(g.cls)}')">`;
+    const flow = FLOW_PERSPECTIVES.has(g.cls) ? ' flow-persp' : '';
+    innerSVG += `<g class="grp-node${flow}" data-cls="${esc(g.cls)}" data-depth="0" transform="translate(${tx},${ty})" onclick="event.stopPropagation();window.__openSb('${esc(g.cls)}')">`;
     innerSVG += `<rect class="grp-border" width="${g.W}" height="${g.H}" rx="8"
       fill="${th.groupFill}" stroke="${th.groupStroke}" stroke-width="2"/>`;
     const _lblW = tw(displayTitle(g.cls), '600 10px "Plus Jakarta Sans",Inter,system-ui') + 14;
@@ -1438,7 +1484,7 @@ function buildCanvas(classes, classesData, refsData) {
       fill="${th.grpLabelFill}" letter-spacing="0.05em">${esc(displayTitle(g.cls))}</text>`;
     innerSVG += `<g class="grp-inner">${g.svgContent}</g>`;
     if (g.labelOverlay) innerSVG += `<g class="grp-sub-labels">${g.labelOverlay}</g>`;
-    innerSVG += `<text class="grp-label-center" x="${r1(g.W/2)}" y="${r1(g.H/2)}" text-anchor="middle" dominant-baseline="central"
+    innerSVG += `<text class="grp-label-center" data-maxw="${r1(g.W)}" x="${r1(g.W/2)}" y="${r1(g.H/2)}" text-anchor="middle" dominant-baseline="central"
       font-family="&quot;Plus Jakarta Sans&quot;,Inter,system-ui" font-size="10" font-weight="600" fill="${th.grpLabelCenterFill}" letter-spacing="0.05em">${esc(displayTitle(g.cls))}</text>`;
     innerSVG += `</g>`;
   }
@@ -1469,9 +1515,13 @@ function postRender() {
   if (!_hoverListenerAttached) {
     _hoverListenerAttached = true;
     canvasWrap.addEventListener('mouseover', e => {
+      // Hovering an edge shows its label and its flow.
+      const hit = e.target.closest('.edge-hit');
+      if (hit) return showEdge(hit.dataset.edge);
       const node = e.target.closest('.reg-node, .grp-node');
       if (!node) return;
-      const nodeId = node.dataset.cls;
+      // data-cls is the scoped path; edges hold the short node id.
+      const nodeId = node.dataset.cls?.split('/').pop();
       if (!nodeId) return;
       // Only highlight edges in the same parent group (sibling edges)
       const parentGroup = node.parentElement?.closest('[data-cls]') || node.closest('svg');
@@ -1481,19 +1531,23 @@ function postRender() {
         const match = from === nodeId || to === nodeId || from === '@'+nodeId || to === '@'+nodeId;
         const edgeParentGroup = path.closest('[data-cls]') || path.closest('svg');
         if (edgeParentGroup !== parentGroup) return;
-        if (match) {
-          path.classList.add('edge-hl');
-        }
+        if (match) showEdge(path.dataset.edge);
       });
     });
     canvasWrap.addEventListener('mouseout', e => {
-      const node = e.target.closest('.reg-node, .grp-node');
-      if (!node) return;
-      document.querySelectorAll('#canvas .edge-path.edge-hl').forEach(path => {
-        path.classList.remove('edge-hl');
-      });
+      if (!e.target.closest('.edge-hit, .reg-node, .grp-node')) return;
+      document.querySelectorAll('#canvas .edge-hl').forEach(el => el.classList.remove('edge-hl'));
     });
   }
+}
+
+// Perspectives that describe a flow: their light always runs along the arrows.
+const FLOW_PERSPECTIVES = new Set(['data-flow', 'request-lifecycle', 'pipeline', 'orchestration']);
+
+// Lights an edge: its path, its moving light and its label (class edge-hl on all three).
+function showEdge(eid) {
+  if (!eid) return;
+  document.querySelectorAll(`#canvas [data-edge="${CSS.escape(eid)}"]`).forEach(el => el.classList.add('edge-hl'));
 }
 
 // ── rebuild canvas (depth change) ─────────────────────────
@@ -1788,8 +1842,9 @@ function startGuide(id, step) {
 
 function goToGuideStep(i) {
   if (!activeGuide || i < 0 || i >= activeGuide.guide.steps.length) return;
+  const prev = activeGuide.guide.steps[guideStep].element;
   guideStep = i;
-  showGuideStep();
+  showGuideStep(prev);
 }
 
 function nextGuideStep() {
@@ -1805,6 +1860,8 @@ function finishGuide() {
 
 function exitGuide() {
   activeGuide = null;
+  clearTimeout(sparkTimer);
+  sparkAnim?.cancel();
   paintGuideStep();
   guideBar.hidden = true;
   sbStep.hidden = true;
@@ -1813,8 +1870,74 @@ function exitGuide() {
   renderGuideList();
 }
 
+// ── the guide's moving light ──
+// After the view has moved to the new step, a light travels to its element:
+// along the step's edge when it has one, otherwise in a straight line from
+// the previous step's element. Then the element pulses once.
+const guideSpark = document.getElementById('guide-spark');
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+let sparkTimer = null, sparkAnim = null;
+
+function drawnEl(cls) {
+  for (let segs = cls.split('/'); segs.length; segs.pop()) {
+    const el = document.querySelector(`#canvas [data-cls="${CSS.escape(segs.join('/'))}"]`);
+    if (el) return el;
+  }
+  return null;
+}
+
+function centerOf(el) {
+  const shape = el.querySelector(':scope > .grp-border, :scope > .nshape') || el;
+  const r = shape.getBoundingClientRect();
+  return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+}
+
+// Screen points along the step's edge, from the step already seen to the new element.
+function edgePoints(step) {
+  const m = step.edge && step.edge.match(STEP_EDGE);
+  const parentEl = m && drawnEl(parentOf(step.element));
+  if (!parentEl) return null;
+  const path = [...parentEl.querySelectorAll('.edge-path')]
+    .find(p => p.closest('[data-cls]') === parentEl && p.dataset.from === m[1] && p.dataset.to === m[2]);
+  const ctm = path?.getScreenCTM();
+  if (!ctm) return null;
+  const len = path.getTotalLength(), pts = [];
+  for (let k = 0; k <= 24; k++) {
+    const p = path.getPointAtLength(len * k / 24);
+    const s = new DOMPoint(p.x, p.y).matrixTransform(ctm);
+    pts.push({ x: s.x, y: s.y });
+  }
+  // The arrow points away from the new element when the walk goes against it.
+  return step.element.split('/').pop() === m[1] ? pts.reverse() : pts;
+}
+
+function flyGuideSpark(prevElement) {
+  clearTimeout(sparkTimer);
+  sparkAnim?.cancel();
+  if (reducedMotion.matches || !activeGuide) return;
+  const target = activeGuide.guide.steps[guideStep];
+  // Wait for the view to finish moving (see __openSb and animateTo).
+  sparkTimer = setTimeout(() => {
+    if (!activeGuide || activeGuide.guide.steps[guideStep] !== target) return;
+    const el = drawnEl(target.element);
+    if (!el) return;
+    const end = centerOf(el);
+    let pts = edgePoints(target);
+    if (!pts && prevElement && prevElement !== target.element) {
+      const from = drawnEl(prevElement);
+      if (from) pts = [centerOf(from), end];
+    }
+    const arrive = () => el.classList.add('guide-arrive');
+    if (!pts) return arrive();
+    sparkAnim = guideSpark.animate(
+      pts.map((p, k) => ({ transform: `translate(${p.x}px, ${p.y}px)`, opacity: k === 0 || k === pts.length - 1 ? 0.2 : 1 })),
+      { duration: 950, easing: 'ease-in-out' });
+    sparkAnim.onfinish = arrive;
+  }, 700);
+}
+
 // Opens the step's element, framing its parent diagram so the edge is in view.
-function showGuideStep() {
+function showGuideStep(prevElement) {
   const step = activeGuide.guide.steps[guideStep];
   sidebar.classList.remove('show-full');
   safeStorageSet(guideKey(activeGuide.id), String(guideStep));
@@ -1823,12 +1946,13 @@ function showGuideStep() {
   window.__openSb(step.element, parentOf(step.element) || step.element);
   paintGuideStep();
   renderGuideList();
+  flyGuideSpark(prevElement);
 }
 
 // Marks what the guide has walked so far. Safe to call after any re-render.
 function paintGuideStep() {
   canvasWrap.classList.toggle('guiding', !!activeGuide);
-  const marks = ['guide-lit', 'guide-cur', 'guide-anc', 'guide-in', 'guide-trail', 'guide-edge'];
+  const marks = ['guide-lit', 'guide-cur', 'guide-anc', 'guide-in', 'guide-trail', 'guide-edge', 'guide-flow', 'guide-show', 'guide-arrive'];
   document.querySelectorAll(marks.map(m => '#canvas .' + m).join(','))
     .forEach(el => el.classList.remove(...marks));
   if (!activeGuide) return;
@@ -1865,6 +1989,12 @@ function paintGuideStep() {
       if (path.closest('[data-cls]') !== parentEl) return;
       if (path.dataset.from !== m[1] || path.dataset.to !== m[2]) return;
       path.classList.add(i === guideStep ? 'guide-edge' : 'guide-trail');
+      if (i !== guideStep) return;
+      // The current edge also shows its label and its moving light.
+      parentEl.querySelectorAll(`[data-edge="${CSS.escape(path.dataset.edge)}"]`).forEach(el => {
+        if (el.classList.contains('edge-flow')) el.classList.add('guide-flow');
+        if (el.classList.contains('edge-label')) el.classList.add('guide-show');
+      });
     });
   });
 
@@ -1951,7 +2081,7 @@ let searchActive = false;
 
 function fieldLabel(field) { return t('askField_' + field); }
 
-const SEARCH_MARKS = ['guide-lit', 'guide-cur', 'guide-anc', 'guide-in', 'guide-trail', 'guide-edge'];
+const SEARCH_MARKS = ['guide-lit', 'guide-cur', 'guide-anc', 'guide-in', 'guide-trail', 'guide-edge', 'guide-flow', 'guide-show', 'guide-arrive'];
 function clearPaintMarks() {
   document.querySelectorAll(SEARCH_MARKS.map(m => '#canvas .' + m).join(','))
     .forEach(el => el.classList.remove(...SEARCH_MARKS));
