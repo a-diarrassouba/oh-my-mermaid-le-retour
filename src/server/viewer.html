@@ -2594,8 +2594,16 @@ function startLinkedGuide(delay = 0) {
   setTimeout(() => startGuide(linked, step), delay);
   return true;
 }
+// #element=<path> opens that element's panel (links from the security and evolve pages).
+function openLinkedElement(delay = 0) {
+  const target = new URLSearchParams(location.hash.slice(1)).get('element');
+  if (!target || !classesData[target]) return false;
+  setTimeout(() => window.__openSb(target, target.includes('/') ? target.split('/').slice(0, -1).join('/') : target), delay);
+  return true;
+}
+
 // A link pasted into an open viewer changes only the hash.
-window.addEventListener('hashchange', () => startLinkedGuide());
+window.addEventListener('hashchange', () => { if (!startLinkedGuide()) openLinkedElement(); });
 
 // ── nested element support ────────────────────────────────
 var childrenByPerspective = {};
@@ -2915,13 +2923,16 @@ securityEl.addEventListener('click', e => {
 });
 securityEl.addEventListener('keydown', e => { if (e.key === 'Escape') securityEl.hidden = true; });
 homeEl.addEventListener('keydown', e => { if (e.key === 'Escape') closeHome(); });
-document.getElementById('home-btn').addEventListener('click', openHome);
-document.getElementById('mobile-home-btn').addEventListener('click', openHome);
+// With the new front (served at /), home is that front; the map lives at /map.
+const goHome = () => { if (window.__prismeWeb) location.href = '/'; else openHome(); };
+document.getElementById('home-btn').addEventListener('click', goHome);
+document.getElementById('mobile-home-btn').addEventListener('click', goHome);
 
 // First visit: no level chosen yet, and no guide link to follow.
 function maybeShowHome() {
   if (homeChecked) return;
   homeChecked = true;
+  if (window.__prismeWeb) return; // the new front asked for the level already
   if (safeStorageGet(PROFILE_KEY) || new URLSearchParams(location.hash.slice(1)).get('guide')) return;
   openHome();
 }
@@ -2975,6 +2986,7 @@ async function init() {
   if (!activeGuide) requestAnimationFrame(centerView);
   await loadGuidesIntoViewer();
   threatModel = await api('/api/v1/threats');
+  openLinkedElement(300);
   maybeShowHome();
 
   // Cloud mode: notify parent frame of available classes

@@ -34,6 +34,28 @@ function getViewerHtml(): string {
   return '<html><body><h1>viewer.html not found</h1></body></html>';
 }
 
+/** The new front (dist/web, built by Vite), or null when it was not built. */
+export function webDir(): string | null {
+  for (const dir of [path.join(__dirname, 'web'), path.join(__dirname, '..', '..', 'dist', 'web')]) {
+    if (fs.existsSync(path.join(dir, 'index.html'))) return dir;
+  }
+  return null;
+}
+
+const ASSET_TYPES: Record<string, string> = {
+  '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.map': 'application/json; charset=utf-8',
+  '.woff2': 'font/woff2', '.woff': 'font/woff', '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon',
+};
+
+/** /assets/<name>: a file Vite built, by its plain name only (no folder, no ".."). */
+export function readAsset(dir: string, name: string): { body: Buffer; type: string } | null {
+  if (!/^[\w.-]+$/.test(name) || name.startsWith('.')) return null;
+  const type = ASSET_TYPES[path.extname(name)];
+  const file = path.join(dir, 'assets', name);
+  if (!type || !fs.existsSync(file) || !fs.lstatSync(file).isFile()) return null;
+  return { body: fs.readFileSync(file), type };
+}
+
 export function startServer(port: number, options: ServerOptions = {}): http.Server {
   startWatcher();
   // A new secret each time the viewer starts; only the page receives it.
@@ -76,16 +98,33 @@ export function startServer(port: number, options: ServerOptions = {}): http.Ser
       return;
     }
 
-    // Serve viewer HTML
-    if (url.pathname === '/' || url.pathname === '/index.html') {
-      let html = getViewerHtml();
+    // The page gets the project name, its token and whether questions to Claude are on.
+    const sendPage = (html: string, extra = '') => {
       const projectName = path.basename(process.cwd());
-      const page = `window.__prismeToken=${JSON.stringify(pageToken)};window.__prismeAI=${ai};`;
+      const page = `window.__prismeToken=${JSON.stringify(pageToken)};window.__prismeAI=${ai};${extra}`;
       // "<" escaped: a folder name must not be able to close the script.
       const inline = `window.__projectName=${JSON.stringify(projectName)};${page}`.replace(/</g, '\\u003c');
-      html = html.replace('</head>', `<script>${inline}</script>\n</head>`);
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
-      res.end(html);
+      res.end(html.replace('</head>', `<script>${inline}</script>\n</head>`));
+    };
+    const web = webDir();
+
+    // The new front at /, the map (classic viewer) at /map. Without a built
+    // front, the classic viewer stays at / as before.
+    if (url.pathname === '/' || url.pathname === '/index.html') {
+      if (web) sendPage(fs.readFileSync(path.join(web, 'index.html'), 'utf-8'));
+      else sendPage(getViewerHtml());
+      return;
+    }
+    if (url.pathname === '/map' || url.pathname === '/map/') {
+      sendPage(getViewerHtml(), web ? 'window.__prismeWeb=true;' : '');
+      return;
+    }
+    if (web && url.pathname.startsWith('/assets/')) {
+      const asset = readAsset(web, url.pathname.slice('/assets/'.length));
+      if (!asset) { res.writeHead(404); res.end('Not Found'); return; }
+      res.writeHead(200, { 'Content-Type': asset.type, 'Cache-Control': 'public, max-age=31536000, immutable' });
+      res.end(asset.body);
       return;
     }
 
