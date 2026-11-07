@@ -13,6 +13,7 @@ import { readConfig } from '../lib/config.js';
 import { readExplain, readIcon, type Explain, type Icon } from '../lib/explain.js';
 import { readSecurityReport, type SecurityReport } from '../lib/security.js';
 import { readAudit, type AuditReport } from '../lib/audit.js';
+import { currentAudit, startAudit, stopAudit } from './audit-job.js';
 import { readEvolve } from '../lib/evolve.js';
 import { readThreats } from '../lib/threats.js';
 import { askSupported, getJob, runningJob, startAsk, validateQuestion } from './ask.js';
@@ -248,6 +249,20 @@ export function handleApiV1(req: IncomingMessage, res: ServerResponse, ctx: ApiC
     const result = deleteGuide(answerMatch[1], ctx.cwd);
     if (result.deleted) json(res, { deleted: answerMatch[1] });
     else json(res, { error: result.reason }, result.reason === 'not-found' ? 404 : 409);
+    return true;
+  }
+
+  // The audit by Claude, from the viewer: start it, follow it, stop it.
+  if (route === '/api/v1/security/audit') {
+    if (!ctx.ai) { json(res, { error: 'questions to Claude are turned off' }, 404); return true; }
+    if (!fromThePage(req, ctx)) { json(res, { error: 'forbidden' }, 403); return true; }
+    if (req.method === 'GET') json(res, currentAudit());
+    else if (req.method === 'POST') {
+      const job = startAudit(ctx.cwd ?? process.cwd());
+      if ('status' in job) json(res, { error: job.error, job: job.job }, job.status);
+      else json(res, job, 202);
+    } else if (req.method === 'DELETE') json(res, { stopped: stopAudit() });
+    else json(res, { error: 'method not allowed' }, 405);
     return true;
   }
 

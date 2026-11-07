@@ -85,7 +85,7 @@ AI가 코드베이스를 읽고 **perspective**를 작성합니다. perspective�
 
 이 기능은 `prisme view`를 실행하는 컴퓨터에 Claude Code가 설치되고 로그인되어 있어야 합니다 (`claude` 실행 후 `/login`). 뷰어만 여는 사람은 아무것도 필요하지 않습니다. Claude는 프로젝트를 읽기만 하며 (`.env` 파일이나 키는 읽지 않음) 절대 수정하지 않습니다. `prisme view --no-ai`로 질문 기능을 끌 수 있습니다.
 
-보안 점수는 감사에서 나옵니다: Claude Code에서 `/prisme-security`를 실행하세요 (또는 터미널에서 `claude "/prisme:prisme-security"`). Claude가 이 저장소의 코드만 읽고, 실제 취약점을 확인하고, 잘못된 경고는 이유와 함께 제외하며, 각 취약점과 수정 방법을 설명합니다. 등급 A–E는 prisme가 계산합니다. 뷰어의 보안 페이지에서 모두 볼 수 있습니다.
+보안 점수는 감사에서 나옵니다: Claude Code에서 `/prisme-security`를 실행하세요 (또는 터미널에서 `claude "/prisme:prisme-security"`). Claude가 이 저장소의 코드만 읽고, 실제 취약점을 확인하고, 잘못된 경고는 이유와 함께 제외하며, 각 취약점과 수정 방법을 설명합니다. 등급 A–E는 prisme가 계산합니다. 뷰어의 보안 페이지에서 모두 볼 수 있으며, "Claude로 감사 실행" 버튼으로 같은 감사를 백그라운드에서(읽기 전용, 수정 없음) 실행하고 단계를 화면에서 따라갈 수 있습니다.
 
 ## CLI
 

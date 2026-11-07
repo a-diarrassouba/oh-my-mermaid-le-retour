@@ -83,7 +83,7 @@ Type any question in the viewer's question bar (for example "what happens when I
 
 This needs Claude Code installed and logged in (`claude`, then `/login`) on the machine that runs `prisme view`; people who only open the viewer need nothing. Claude may only read the project (never `.env` files or keys), never change it. `prisme view --no-ai` turns questions off.
 
-The security score comes from an audit: run `/prisme-security` in Claude Code (or `claude "/prisme:prisme-security"` in a terminal). Claude reads the code of the repository, and only that one, confirms the real flaws, dismisses the false ones with the reason, explains each flaw and the fix, and prisme computes the grade from A to E. The Security page of the viewer shows it all.
+The security score comes from an audit: run `/prisme-security` in Claude Code (or `claude "/prisme:prisme-security"` in a terminal). Claude reads the code of the repository, and only that one, confirms the real flaws, dismisses the false ones with the reason, explains each flaw and the fix, and prisme computes the grade from A to E. The Security page of the viewer shows it all, and its "Run the audit with Claude" button runs the same audit in the background (read-only, no fixes) while you follow its steps on screen.
 
 ## CLI
 

@@ -103,6 +103,14 @@ The security audit `/prisme-security` wrote after reading the code (checked by `
 - Only confirmed flaws, in files git tracks in this repository (never `.claude/` worktrees, dependencies or build output). `dismissed` keeps the leads Claude ruled out, with the reason; `checked` covers every area (`secrets`, `auth`, `access-control`, `injection`, `xss`, `files`, `ssrf`, `crypto`, `dependencies`, `config`, `ci-cd`, `data-exposure`, `dos`) as `ok`, `issues`, `partial` or `not-applicable`.
 - `grade`: computed by prisme from the severities, always the same way: 100 minus 30 per critical, 15 per high, 6 per medium (30 at most), 2 per low (10 at most); A ≥ 90, B ≥ 75, C ≥ 60, D ≥ 40, else E; a critical caps at D, a high at C.
 
+## `/api/v1/security/audit`
+
+The "Run the audit with Claude" button. Page token and origin required; `404` when questions to Claude are off (`--no-ai`).
+
+- `POST`: starts the audit (`202` with the job; `409` with `job` when one is running; `503` when Claude Code is not available). Claude Code runs the `prisme-security` skill in the background, Steps 0 to 9: it reads the project (never `.env` files or keys), may run only the audit's commands (`prisme security…`, `prisme tree/read`, `git ls-files`, `npm audit`…), changes no code and asks nothing; it writes the audit and the threat model through `prisme security audit write` and `prisme security threats write`. 45 minutes at most.
+- `GET`: the current job, or `null`: `{ id, state: "running" | "done" | "failed" | "stopped", startedAt, endedAt?, step (0–9), reads, events: [{ at, kind: "step" | "read" | "search" | "run" | "note", text }], error? }` (the last 60 events).
+- `DELETE`: stops it.
+
 ## `GET /api/v1/security/leads`
 
 The automatic leads of `prisme security` (patterns, `npm audit`, installed tools), `404` before the first run. They are a starting point for the audit, not a verdict:

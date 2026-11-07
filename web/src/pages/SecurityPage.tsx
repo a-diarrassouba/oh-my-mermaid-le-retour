@@ -1,50 +1,20 @@
 import { useEffect, useState } from 'react';
-import { api, mapLink, type ApiElement, type AuditReport, type Severity, type ThreatModel } from '../api';
+import { api, mapLink, type ApiElement, type AuditReport, type Project, type Severity, type ThreatModel } from '../api';
+import { AuditRunner } from './AuditRunner';
 import { useI18n } from '../i18n';
 import { formatDate, markdown } from '../format';
 
 const SEVS: Severity[] = ['critical', 'high', 'medium', 'low'];
 const GRADES = ['A', 'B', 'C', 'D', 'E'] as const;
-export const AUDIT_COMMAND = 'claude "/prisme:prisme-security"';
-
-/** The command to run the audit, with a copy button. */
-export function AuditCommand() {
-  const { t } = useI18n();
-  const [copied, setCopied] = useState(false);
-  const copy = async () => {
-    try { await navigator.clipboard.writeText(AUDIT_COMMAND); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { /* the reader can still select it */ }
-  };
-  return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
-      <code className="match" style={{ flex: '1 1 260px', fontSize: 14, padding: '12px 14px' }}>{AUDIT_COMMAND}</code>
-      <button type="button" className="btn ghost" onClick={copy} aria-live="polite">{copied ? t('copied') : t('copy')}</button>
-    </div>
-  );
-}
-
-function HowToRun({ title, text }: { title: string; text: string }) {
-  const { t } = useI18n();
-  return (
-    <section className="card group">
-      <h2 className="section">{title}</h2>
-      <p style={{ margin: 0, color: 'var(--ink-2)' }}>{text}</p>
-      <ol className="list" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <li>{t('auditStep1')}</li>
-        <li>{t('auditStep2')}<div style={{ marginTop: 8 }}><AuditCommand /></div></li>
-      </ol>
-      <p className="meta" style={{ margin: 0 }}>{t('auditNeed')}</p>
-    </section>
-  );
-}
-
-export function SecurityPage() {
+export function SecurityPage({ project }: { project: Project | null }) {
   const { t, lang } = useI18n();
   const [audit, setAudit] = useState<AuditReport | null | undefined>(undefined);
   const [threats, setThreats] = useState<ThreatModel | null>(null);
   const [titles, setTitles] = useState<Map<string, string>>(new Map());
 
+  const loadAudit = () => api.security().then(setAudit);
   useEffect(() => {
-    api.security().then(setAudit);
+    loadAudit();
     api.threats().then(setThreats);
     api.elements().then(els => setTitles(new Map((els ?? []).map((e: ApiElement) => [e.path, e.title]))));
   }, []);
@@ -58,7 +28,11 @@ export function SecurityPage() {
     return (
       <div className="wrap page">
         <h1 className="title">{t('auditNoneTitle')}</h1>
-        <HowToRun title={t('auditHow')} text={t('auditNoneText')} />
+        <section className="card group">
+          <p className="lead" style={{ margin: 0 }}>{t('auditNoneText')}</p>
+          <AuditRunner project={project} onDone={loadAudit} />
+          <p className="meta" style={{ margin: 0 }}>{t('auditNeed')}</p>
+        </section>
         {threats && <ThreatsSection model={threats} title={title} cmd={cmd} />}
       </div>
     );
@@ -156,7 +130,7 @@ export function SecurityPage() {
       <section className="card group">
         <h2 className="section">{t('rerun')}</h2>
         <p style={{ margin: 0, color: 'var(--ink-2)' }}>{t('rerunText')}</p>
-        <AuditCommand />
+        <AuditRunner project={project} onDone={loadAudit} />
       </section>
     </div>
   );

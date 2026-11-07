@@ -85,7 +85,7 @@ Görüntüleyicinin soru çubuğuna istediğiniz soruyu yazın (örneğin "`pris
 
 Bunun için `prisme view` çalıştıran makinede Claude Code kurulu ve oturum açılmış olmalıdır (`claude`, ardından `/login`); görüntüleyiciyi yalnızca açanlar için hiçbir şey gerekmez. Claude projeyi yalnızca okur (`.env` dosyalarını veya anahtarları asla okumaz), hiçbir şeyi değiştirmez. `prisme view --no-ai` soruları kapatır.
 
-Güvenlik notu bir denetimden gelir: Claude Code'da `/prisme-security` çalıştırın (veya terminalde `claude "/prisme:prisme-security"`). Claude yalnızca bu deponun kodunu okur, gerçek açıkları doğrular, yanlış alarmları gerekçesiyle eler, her açığı ve düzeltmesini açıklar; A–E notunu prisme hesaplar. Görüntüleyicinin Güvenlik sayfası hepsini gösterir.
+Güvenlik notu bir denetimden gelir: Claude Code'da `/prisme-security` çalıştırın (veya terminalde `claude "/prisme:prisme-security"`). Claude yalnızca bu deponun kodunu okur, gerçek açıkları doğrular, yanlış alarmları gerekçesiyle eler, her açığı ve düzeltmesini açıklar; A–E notunu prisme hesaplar. Görüntüleyicinin Güvenlik sayfası hepsini gösterir; "Denetimi Claude ile çalıştır" düğmesi aynı denetimi arka planda (salt okunur, düzeltme yok) çalıştırır ve adımları ekranda izlersiniz.
 
 ## CLI
 
