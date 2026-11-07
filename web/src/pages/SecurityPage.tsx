@@ -1,33 +1,50 @@
 import { useEffect, useState } from 'react';
-import { api, mapLink, type ApiElement, type Finding, type SecurityReport, type Severity, type ThreatModel } from '../api';
+import { api, mapLink, type ApiElement, type AuditReport, type Severity, type ThreatModel } from '../api';
 import { useI18n } from '../i18n';
 import { formatDate, markdown } from '../format';
 
 const SEVS: Severity[] = ['critical', 'high', 'medium', 'low'];
 const GRADES = ['A', 'B', 'C', 'D', 'E'] as const;
+export const AUDIT_COMMAND = 'claude "/prisme:prisme-security"';
 
-/** Findings of one rule in one file become one item ("19 places"), so a long list stays readable. */
-function grouped(findings: Finding[]): { first: Finding; count: number; lines: number[] }[] {
-  const groups = new Map<string, { first: Finding; count: number; lines: number[] }>();
-  for (const f of findings) {
-    const key = `${f.rule}|${f.file ?? ''}|${f.source}`;
-    const g = groups.get(key);
-    if (g) { g.count++; if (f.line) g.lines.push(f.line); }
-    else groups.set(key, { first: f, count: 1, lines: f.line ? [f.line] : [] });
-  }
-  return [...groups.values()];
+/** The command to run the audit, with a copy button. */
+export function AuditCommand() {
+  const { t } = useI18n();
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(AUDIT_COMMAND); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { /* the reader can still select it */ }
+  };
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+      <code className="match" style={{ flex: '1 1 260px', fontSize: 14, padding: '12px 14px' }}>{AUDIT_COMMAND}</code>
+      <button type="button" className="btn ghost" onClick={copy} aria-live="polite">{copied ? t('copied') : t('copy')}</button>
+    </div>
+  );
 }
 
-export function SecurityPage({ onChange }: { onChange: () => void }) {
+function HowToRun({ title, text }: { title: string; text: string }) {
+  const { t } = useI18n();
+  return (
+    <section className="card group">
+      <h2 className="section">{title}</h2>
+      <p style={{ margin: 0, color: 'var(--ink-2)' }}>{text}</p>
+      <ol className="list" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <li>{t('auditStep1')}</li>
+        <li>{t('auditStep2')}<div style={{ marginTop: 8 }}><AuditCommand /></div></li>
+      </ol>
+      <p className="meta" style={{ margin: 0 }}>{t('auditNeed')}</p>
+    </section>
+  );
+}
+
+export function SecurityPage() {
   const { t, lang } = useI18n();
-  const [report, setReport] = useState<SecurityReport | null | undefined>(undefined);
+  const [audit, setAudit] = useState<AuditReport | null | undefined>(undefined);
   const [threats, setThreats] = useState<ThreatModel | null>(null);
   const [titles, setTitles] = useState<Map<string, string>>(new Map());
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
 
   useEffect(() => {
-    api.security().then(setReport);
+    api.security().then(setAudit);
     api.threats().then(setThreats);
     api.elements().then(els => setTitles(new Map((els ?? []).map((e: ApiElement) => [e.path, e.title]))));
   }, []);
@@ -36,75 +53,63 @@ export function SecurityPage({ onChange }: { onChange: () => void }) {
   const cmd = (key: string, c: string, vars: Record<string, string | number> = {}) =>
     t(key, { ...vars, cmd: '\u0001' }).split('\u0001').flatMap((p, i) => i ? [<code key={i}>{c}</code>, p] : [p]);
 
-  const compute = async () => {
-    setBusy(true);
-    setError('');
-    const { report: fresh, error: why } = await api.runSecurity();
-    setBusy(false);
-    if (!fresh) { setError(t('failed', { reason: why ?? '' })); return; }
-    setReport(fresh);
-    onChange();
-  };
-
-  if (report === undefined) return <div className="wrap page"><p className="empty">{t('loading')}</p></div>;
-  if (report === null) {
+  if (audit === undefined) return <div className="wrap page"><p className="empty">{t('loading')}</p></div>;
+  if (audit === null) {
     return (
       <div className="wrap page">
-        <h1 className="title">{t('security')}</h1>
-        <p className="lead">{t('securityNone')}</p>
-        <div className="go">
-          <button type="button" className="btn big" onClick={compute} disabled={busy}>{busy ? t('computing') : t('compute')}</button>
-          {error && <span className="error" role="alert">{error}</span>}
-        </div>
+        <h1 className="title">{t('auditNoneTitle')}</h1>
+        <HowToRun title={t('auditHow')} text={t('auditNoneText')} />
+        {threats && <ThreatsSection model={threats} title={title} cmd={cmd} />}
       </div>
     );
   }
 
-  const total = report.findings.length;
+  const total = audit.findings.length;
   return (
     <div className="wrap page">
       <section className="card hero">
-        <div className={`big g-${report.grade}`} aria-label={`${report.grade}`}>{report.grade}</div>
+        <div className={`big g-${audit.grade}`} aria-label={audit.grade}>{audit.grade}</div>
         <div className="sum">
-          <h1>{t(`gradeHead_${report.grade}`)}</h1>
-          <p>{t('outOf', { score: report.score, files: report.files, date: formatDate(report.date, lang) })}</p>
+          <h1>{t(`gradeHead_${audit.grade}`)}</h1>
+          <p>{t('auditOutOf', { score: audit.score, files: audit.files, date: formatDate(audit.date, lang) })}</p>
           <div className="chips">
-            {SEVS.map(s => <span key={s} className={`chip ${report.counts[s] ? `strong sev-${s}` : ''}`}>{report.counts[s]} · {t(`sev_${s}`)}</span>)}
+            {SEVS.map(s => <span key={s} className={`chip ${audit.counts[s] ? `strong sev-${s}` : ''}`}>{audit.counts[s]} · {t(`sev_${s}`)}</span>)}
           </div>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <button type="button" className="btn ghost" onClick={compute} disabled={busy}>{busy ? t('computing') : t('recompute')}</button>
-          {error && <span className="error" role="alert">{error}</span>}
-        </div>
       </section>
 
-      <p className="lead" style={{ fontSize: 15 }}>{cmd('howCheck', '/prisme-security')}</p>
+      <div className="card md" dangerouslySetInnerHTML={markdown(audit.summary)} />
 
       <section className="scale" aria-label="A–E">
-        {GRADES.map(g => <div key={g} className={`s-${g} ${g === report.grade ? 'on' : ''}`}><b>{g}</b>{t(`scale_${g}`)}</div>)}
+        {GRADES.map(g => <div key={g} className={`s-${g} ${g === audit.grade ? 'on' : ''}`}><b>{g}</b>{t(`scale_${g}`)}</div>)}
       </section>
 
-      <section className="group" aria-labelledby="found">
-        <h2 className="section" id="found">{t('findingsTitle', { n: total })}</h2>
-        {!total && <p className="empty">{t('nothingFound')}</p>}
+      <section className="group" aria-labelledby="tofix">
+        <h2 className="section" id="tofix">{t('toFix', { n: total })}</h2>
+        {!total && <p className="empty">{t('noFlaw')}</p>}
         {SEVS.map(s => {
-          const items = grouped(report.findings.filter(f => f.severity === s));
+          const items = audit.findings.filter(f => f.severity === s);
           if (!items.length) return null;
           return (
             <div key={s}>
-              <p className="label" style={{ margin: '8px 0' }}>{t(`sev_${s}`)} · {items.reduce((a, g) => a + g.count, 0)}</p>
-              {items.map(({ first: f, count, lines }) => (
-                <details key={`${f.rule}${f.file}${f.line}`} className="item">
+              <p className="label" style={{ margin: '8px 0' }}>{t(`sev_${s}`)} · {items.length}</p>
+              {items.map(f => (
+                <details key={f.title + f.file} className="item" open={s === 'critical' || s === 'high'}>
                   <summary>
                     <span className={`chip sev-${f.severity}`}>{t(`sev_${f.severity}`)}</span>
                     <b>{f.title}</b>
-                    {f.owasp && <a className="chip owasp" href="https://owasp.org/Top10/" target="_blank" rel="noopener noreferrer" title={f.owasp} onClick={e => e.stopPropagation()}>OWASP {f.owasp.split(':')[0]}</a>}
-                    <span className="where">{f.file ?? ''}{count > 1 ? ` · ${t('places', { n: count })}` : f.line ? `:${f.line}` : ''}</span>
+                    {f.owasp && <a className="chip owasp" href="https://owasp.org/Top10/" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}>OWASP {f.owasp}</a>}
+                    <span className="where">{f.file}{f.lines ? `:${f.lines}` : ''}</span>
                   </summary>
                   <div className="body">
-                    {f.match && <div className="match full">{f.match}{count > 1 && lines.length ? ` — ${lines.slice(0, 12).join(', ')}${lines.length > 12 ? '…' : ''}` : ''}</div>}
-                    <div><span className="k">{t('why')}</span>{f.why}</div>
-                    <div><span className="k">{t('fix')}</span>{f.fix}</div>
+                    <div><span className="k">{t('problem')}</span>{f.what}</div>
+                    <div><span className="k">{t('attacker')}</span>{f.impact}</div>
+                    <div className="full"><span className="k">{t('fix')}</span>{f.fix} <span className="chip" style={{ marginLeft: 6 }}>{t('effort', { v: t(`eff_${f.effort}`) })}</span></div>
+                    <details className="full">
+                      <summary style={{ cursor: 'pointer', color: 'var(--accent-ink)', fontWeight: 600 }}>{t('evidence')}</summary>
+                      <div className="match" style={{ marginTop: 8, whiteSpace: 'pre-wrap' }}>{f.evidence}</div>
+                    </details>
+                    {f.also?.length ? <div className="where full">{t('alsoIn', { files: f.also.join(', ') })}</div> : null}
                     {f.elements?.length ? (
                       <div className="links full">{f.elements.map(p => <a key={p} className="link" href={mapLink({ element: p })}>{t('seeOnMap', { name: title(p) })}</a>)}</div>
                     ) : null}
@@ -116,23 +121,42 @@ export function SecurityPage({ onChange }: { onChange: () => void }) {
         })}
       </section>
 
-      {report.ignored?.length ? (
-        <section className="group">
-          <h2 className="section">{t('ignored', { n: report.ignored.length })}</h2>
-          {report.ignored.map(f => (
-            <details key={`${f.rule}${f.file}${f.line}`} className="item">
-              <summary><b>{f.title}</b><span className="where">{f.file}{f.line ? `:${f.line}` : ''}</span></summary>
-              <div className="body"><div className="full"><span className="k">{t('ignoredWhy')}</span>{f.reason}</div></div>
-            </details>
+      <section className="group" aria-labelledby="checked">
+        <h2 className="section" id="checked">{t('checkedTitle')}</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 10 }}>
+          {audit.checked.map(c => (
+            <div key={c.area} className="item" style={{ padding: '12px 16px', margin: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <span style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center' }}>
+                <b>{t(`area_${c.area}`)}</b>
+                <span className={`chip ${c.status === 'ok' ? 'ok' : c.status === 'issues' ? 'todo' : ''}`}>{t(`areaSt_${c.status}`)}</span>
+              </span>
+              <span style={{ color: 'var(--ink-2)', fontSize: 14 }}>{c.note}</span>
+            </div>
           ))}
-        </section>
-      ) : null}
+        </div>
+      </section>
+
+      {audit.dismissed.length > 0 && (
+        <details className="item">
+          <summary><b>{t('dismissedTitle', { n: audit.dismissed.length })}</b></summary>
+          <div className="body">
+            <p className="full meta" style={{ margin: 0 }}>{t('dismissedIntro')}</p>
+            {audit.dismissed.map(d => (
+              <div key={d.title + (d.file ?? '')} className="full" style={{ borderTop: '1px solid var(--line)', paddingTop: 10 }}>
+                <b>{d.title}</b>{d.file && <span className="where"> · {d.file}</span>}
+                <div style={{ color: 'var(--ink-2)' }}>{d.reason}</div>
+              </div>
+            ))}
+          </div>
+        </details>
+      )}
 
       <ThreatsSection model={threats} title={title} cmd={cmd} />
 
-      <section className="card" aria-labelledby="tools">
-        <p className="label" id="tools" style={{ marginBottom: 6 }}>{t('tools')}</p>
-        <p style={{ margin: 0, color: 'var(--ink-2)' }}>{report.tools.map(x => `${x.name} : ${t(`tool_${x.status}`)}${x.status === 'ran' ? ` (${x.findings})` : ''}`).join(' · ')}</p>
+      <section className="card group">
+        <h2 className="section">{t('rerun')}</h2>
+        <p style={{ margin: 0, color: 'var(--ink-2)' }}>{t('rerunText')}</p>
+        <AuditCommand />
       </section>
     </div>
   );

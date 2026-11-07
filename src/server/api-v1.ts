@@ -12,6 +12,7 @@ import { getLanguage } from '../lib/language.js';
 import { readConfig } from '../lib/config.js';
 import { readExplain, readIcon, type Explain, type Icon } from '../lib/explain.js';
 import { readSecurityReport, type SecurityReport } from '../lib/security.js';
+import { readAudit, type AuditReport } from '../lib/audit.js';
 import { readEvolve } from '../lib/evolve.js';
 import { readThreats } from '../lib/threats.js';
 import { askSupported, getJob, runningJob, startAsk, validateQuestion } from './ask.js';
@@ -96,10 +97,8 @@ function toApiElement(el: ElementInfo, cwd?: string): ApiElement {
 const covers = (location: string, file: string) =>
   location.endsWith('/') ? file.startsWith(location) : file === location || file.startsWith(location + '/');
 
-/** The security report, each finding with the elements whose label cites its file (deepest first). */
-export function apiSecurity(cwd?: string): (SecurityReport & { findings: (SecurityReport['findings'][number] & { elements: string[] })[] }) | null {
-  const report = readSecurityReport(cwd);
-  if (!report) return null;
+/** Element paths whose label cites a file, deepest first: to show a finding on the map. */
+function elementLocator(cwd?: string): (file: string) => string[] {
   const elements = listElements(cwd).filter(e => e.locations.length).sort((a, b) => b.depth - a.depth);
   // A bare name after a path ("src/a.ts, b.ts") is in the folder of the path before it.
   const located = elements.map(e => {
@@ -112,13 +111,23 @@ export function apiSecurity(cwd?: string): (SecurityReport & { findings: (Securi
     });
     return { path: e.path, paths };
   });
-  return {
-    ...report,
-    findings: report.findings.map(f => ({
-      ...f,
-      elements: f.file ? located.filter(e => e.paths.some(p => covers(p, f.file!))).map(e => e.path).slice(0, 3) : [],
-    })),
-  };
+  return file => located.filter(e => e.paths.some(p => covers(p, file))).map(e => e.path).slice(0, 3);
+}
+
+/** The automatic leads of `prisme security`, each finding with its elements. */
+export function apiSecurity(cwd?: string): (SecurityReport & { findings: (SecurityReport['findings'][number] & { elements: string[] })[] }) | null {
+  const report = readSecurityReport(cwd);
+  if (!report) return null;
+  const locate = elementLocator(cwd);
+  return { ...report, findings: report.findings.map(f => ({ ...f, elements: f.file ? locate(f.file) : [] })) };
+}
+
+/** The security audit of /prisme-security, each finding with its elements. */
+export function apiAudit(cwd?: string): (AuditReport & { findings: (AuditReport['findings'][number] & { elements: string[] })[] }) | null {
+  const report = readAudit(cwd);
+  if (!report) return null;
+  const locate = elementLocator(cwd);
+  return { ...report, findings: report.findings.map(f => ({ ...f, elements: locate(f.file) })) };
 }
 
 export function apiElements(cwd?: string): ApiElement[] {
@@ -130,7 +139,9 @@ export function apiProject(ctx: Pick<ApiContext, 'ai' | 'cwd'>) {
   const elements = listElements(ctx.cwd);
   const guides = loadGuides(ctx.cwd);
   const supported = askSupported();
-  const security = readSecurityReport(ctx.cwd);
+  // The grade is the audit's; the automatic leads only count as "leads".
+  const security = readAudit(ctx.cwd);
+  const leads = readSecurityReport(ctx.cwd);
   const evolve = readEvolve(ctx.cwd);
   const threats = readThreats(ctx.cwd);
   return {
@@ -147,8 +158,8 @@ export function apiProject(ctx: Pick<ApiContext, 'ai' | 'cwd'>) {
     categories: {
       understand: { available: elements.length > 0 },
       security: security
-        ? { available: true, grade: security.grade, score: security.score, date: security.date, counts: security.counts, threats: threats?.threats.length ?? 0, questions: threats?.questions.length ?? 0 }
-        : { available: false, threats: threats?.threats.length ?? 0, questions: threats?.questions.length ?? 0 },
+        ? { available: true, grade: security.grade, score: security.score, date: security.date, counts: security.counts, dismissed: security.dismissed.length, threats: threats?.threats.length ?? 0, questions: threats?.questions.length ?? 0, leads: leads?.findings.length ?? 0 }
+        : { available: false, threats: threats?.threats.length ?? 0, questions: threats?.questions.length ?? 0, leads: leads?.findings.length ?? 0 },
       evolve: evolve
         ? { available: true, date: evolve.date, code: evolve.code.length, products: evolve.market?.products.length ?? 0, ideas: evolve.market?.ideas.length ?? 0 }
         : { available: false },
@@ -301,9 +312,16 @@ export function handleApiV1(req: IncomingMessage, res: ServerResponse, ctx: ApiC
   }
 
   if (route === '/api/v1/security') {
+    const report = apiAudit(ctx.cwd);
+    if (report) json(res, report);
+    else json(res, { error: 'no security audit yet: run /prisme-security in Claude Code' }, 404);
+    return true;
+  }
+
+  if (route === '/api/v1/security/leads') {
     const report = apiSecurity(ctx.cwd);
     if (report) json(res, report);
-    else json(res, { error: 'no security report: run prisme security' }, 404);
+    else json(res, { error: 'no automatic leads yet: run prisme security' }, 404);
     return true;
   }
 

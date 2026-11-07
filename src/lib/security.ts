@@ -292,7 +292,7 @@ export function scoreFindings(findings: Finding[]): { score: number; grade: Grad
 
 // ── files ─────────────────────────────────────────────────
 
-const SKIP_DIRS = new Set(['node_modules', '.git', '.prisme', '.omm', 'dist', 'build', 'out', 'coverage', 'vendor', '.venv', 'venv', '__pycache__', '.next', '.nuxt', 'target']);
+const SKIP_DIRS = new Set(['node_modules', '.git', '.claude', '.prisme', '.omm', 'dist', 'build', 'out', 'coverage', 'vendor', '.venv', 'venv', '__pycache__', '.next', '.nuxt', 'target']);
 const SKIP_FILES = /(^|\/)(package-lock\.json|yarn\.lock|pnpm-lock\.yaml|Cargo\.lock|poetry\.lock|composer\.lock|go\.sum)$|\.min\.(js|css)$|\.map$/;
 const MAX_FILE_SIZE = 1024 * 1024;
 const MAX_FILES = 20_000;
@@ -725,8 +725,12 @@ export function runSecurity(cwd: string = process.cwd(), options: SecurityOption
     for (const run of [runNpmAudit, runGitleaks, runOsvScanner, runSemgrep]) {
       const result = run(cwd, lang);
       tools.push(result.run);
-      // gitleaks repeats what the base checks found on the same line.
+      // gitleaks repeats what the base checks found on the same line; tools
+      // also walk folders git ignores (Claude Code worktrees, builds): only
+      // this repository's files count.
+      const inRepo = new Set(all);
       for (const f of result.findings) {
+        if (f.file && f.file !== 'package-lock.json' && !inRepo.has(f.file)) continue;
         if (f.source === 'gitleaks' && findings.some(x => x.rule === 'secret-in-code' && x.file === f.file && x.line === f.line)) continue;
         findings.push(f);
       }

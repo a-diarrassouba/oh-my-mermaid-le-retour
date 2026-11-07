@@ -83,7 +83,7 @@ Type any question in the viewer's question bar (for example "what happens when I
 
 This needs Claude Code installed and logged in (`claude`, then `/login`) on the machine that runs `prisme view`; people who only open the viewer need nothing. Claude may only read the project (never `.env` files or keys), never change it. `prisme view --no-ai` turns questions off.
 
-The security tile of the home screen computes the score on a click: an automatic check of known risks (secrets, risky code, CI and dependency hygiene in the spirit of OpenSSF Scorecard, each finding tagged with its OWASP Top 10 category), with nothing to install. `/prisme-security` then has Claude review each finding.
+The security score comes from an audit: run `/prisme-security` in Claude Code (or `claude "/prisme:prisme-security"` in a terminal). Claude reads the code of the repository, and only that one, confirms the real flaws, dismisses the false ones with the reason, explains each flaw and the fix, and prisme computes the grade from A to E. The Security page of the viewer shows it all.
 
 ## CLI
 
@@ -94,7 +94,7 @@ prisme view --no-ai                # Same, without the questions to Claude Code 
 prisme config language fr          # Set the language of the docs and the interface
 prisme guide list                  # List guides (step-by-step walks)
 prisme changes                     # What changed since the last scan
-prisme security                    # Security score A–E, automatic checks (gitleaks, osv-scanner, semgrep used when installed)
+prisme security                    # Automatic security leads, used by the audit (/prisme-security gives the grade)
 prisme security threats show       # Threat model (STRIDE per element) and design questions, written by /prisme-security
 prisme evolve show                 # Ideas to make the project evolve, written by /prisme-evolve
 prisme update                      # Update to the latest version
@@ -110,7 +110,7 @@ Skills are commands you run **inside your AI coding tool** (not the terminal). T
 | --- | --- |
 | `/prisme-scan` | Analyze the codebase → write the docs and the welcome guide |
 | `/prisme-guide` | Write a step-by-step guide that answers a question, played in the viewer |
-| `/prisme-security` | Run `prisme security`, explain the grade in plain words, check each finding and fix what you agree to; write the threat model of the map (STRIDE per element) and the secure-by-design questions |
+| `/prisme-security` | Security audit of the repository: Claude reads the code, keeps the real flaws, explains them, gives the grade A–E, writes the threat model (STRIDE per element) and design questions, then fixes what you agree to |
 | `/prisme-evolve` | Ideas to simplify, speed up and go further in the code, and what 3 to 5 similar products do (features, design) |
 | `/prisme-view` | Open the viewer |
 

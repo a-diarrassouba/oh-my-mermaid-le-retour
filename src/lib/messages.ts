@@ -44,6 +44,13 @@ const en = {
   'configSet': 'config: {key}={value}',
   'portInUse': 'Port {port} in use, trying {next}...',
   'viewerRunning': 'prisme viewer running at {url}',
+  'auditScore': 'Security audit: {grade} ({score}/100)',
+  'auditNone': 'No confirmed flaw.',
+  'auditDismissed': '{count} lead(s) dismissed after reading the code.',
+  'auditMissing': 'No security audit yet: run /prisme-security in Claude Code.',
+  'auditWritten': 'wrote the security audit: {grade} ({score}/100)',
+  'auditRefused': 'error: security audit refused, nothing written:',
+  'securityLeads': 'These are automatic leads, not the audit: /prisme-security in Claude Code reads the code, keeps the real flaws and gives the grade.',
   'threatsDate': 'Threat model ({date})',
   'threatsAssets': 'To protect: {list}',
   'threatsList': 'Threats, most worrying first ({count}):',
@@ -151,8 +158,9 @@ Usage:
   prisme refs <path>                   Show elements that reference this element
   prisme validate [path]               Validate diagram(s) and guides
   prisme changes [--json | --mark]     What changed since the last scan (--mark records a scan)
-  prisme security [--json] [--no-tools] Security score A–E, report in .prisme/.reports/
+  prisme security [--json] [--no-tools] Automatic security leads (the audit: /prisme-security)
   prisme security threats show | write - Threat model and design questions (written by /prisme-security)
+  prisme security audit show | write -  Security audit and grade (written by /prisme-security)
   prisme evolve show | write -        Ideas to make the project evolve (written by /prisme-evolve)
   prisme guide list|show|write|delete  Manage guides, step-by-step walks (.prisme/.guides/)
   prisme config [key] [value]          Read or set project settings (e.g. language fr)
@@ -212,6 +220,13 @@ const fr: Record<MessageKey, string> = {
   'configSet': 'config : {key}={value}',
   'portInUse': 'Le port {port} est occupé, essai du port {next}...',
   'viewerRunning': 'Viewer prisme lancé sur {url}',
+  'auditScore': 'Audit de sécurité : {grade} ({score}/100)',
+  'auditNone': 'Aucune faille confirmée.',
+  'auditDismissed': '{count} piste(s) écartée(s) après lecture du code.',
+  'auditMissing': "Pas encore d'audit de sécurité : lancez /prisme-security dans Claude Code.",
+  'auditWritten': 'audit de sécurité écrit : {grade} ({score}/100)',
+  'auditRefused': "erreur : audit de sécurité refusé, rien n'a été écrit :",
+  'securityLeads': "Ce sont des pistes automatiques, pas l'audit : /prisme-security dans Claude Code lit le code, garde les vraies failles et donne la note.",
   'threatsDate': 'Modèle de menaces ({date})',
   'threatsAssets': 'À protéger : {list}',
   'threatsList': 'Menaces, les plus inquiétantes d\'abord ({count}) :',
@@ -319,8 +334,9 @@ Utilisation :
   prisme refs <chemin>                 Voir les éléments qui référencent cet élément
   prisme validate [chemin]             Vérifier les diagrammes et les parcours
   prisme changes [--json | --mark]     Ce qui a changé depuis le dernier scan (--mark enregistre un scan)
-  prisme security [--json] [--no-tools] Score de sécurité A–E, rapport dans .prisme/.reports/
+  prisme security [--json] [--no-tools] Pistes de sécurité automatiques (l'audit : /prisme-security)
   prisme security threats show | write - Menaces et questions de conception (écrites par /prisme-security)
+  prisme security audit show | write -  Audit de sécurité et note (écrits par /prisme-security)
   prisme evolve show | write -        Idées pour faire évoluer le projet (écrites par /prisme-evolve)
   prisme guide list|show|write|delete  Gérer les parcours guidés (.prisme/.guides/)
   prisme config [clé] [valeur]         Lire ou régler le projet (ex. : language fr)

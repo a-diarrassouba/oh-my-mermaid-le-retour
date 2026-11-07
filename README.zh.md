@@ -85,7 +85,7 @@ AI 阅读代码库并编写**视角**——从不同角度看待项目：它做�
 
 这需要在运行 `prisme view` 的机器上安装并登录 Claude Code（运行 `claude`，然后 `/login`）；只打开查看器的人无需任何东西。Claude 只读取项目（从不读取 `.env` 文件或密钥），从不修改。`prisme view --no-ai` 可关闭提问功能。
 
-点击主页上的安全磁贴即可计算评分：自动检查已知风险（密钥、危险代码、OpenSSF Scorecard 风格的 CI 与依赖管理），每项都标注 OWASP Top 10 类别，无需安装任何东西。之后可用 `/prisme-security` 让 Claude 逐项复核。
+安全评分来自一次审计：在 Claude Code 中运行 `/prisme-security`（或在终端运行 `claude "/prisme:prisme-security"`）。Claude 只阅读本仓库的代码，确认真实漏洞，排除误报并说明理由，解释每个漏洞及修复方法，prisme 计算 A–E 评分。查看器的安全页面会展示全部内容。
 
 ## CLI
 
@@ -96,7 +96,7 @@ prisme view --no-ai                # 不向 Claude Code 提问 (API: docs/api.md
 prisme config language fr          # 设置文档和界面的语言
 prisme guide list                  # 列出导览
 prisme changes                     # 自上次扫描以来的变更
-prisme security                    # 自动检查的安全评分 A–E（如已安装则使用 gitleaks、osv-scanner、semgrep）
+prisme security                    # 自动安全线索（评分由 /prisme-security 审计给出）
 prisme security threats show       # /prisme-security 写下的威胁模型（按元素的 STRIDE）与设计问题
 prisme evolve show                 # /prisme-evolve 写下的项目改进想法
 prisme update                      # 更新到最新版本
@@ -112,7 +112,7 @@ prisme update                      # 更新到最新版本
 | --- | --- |
 | `/prisme-scan` | 分析代码库 → 编写文档和欢迎导览 |
 | `/prisme-guide` | 编写回答问题的逐步导览 → 在查看器中播放 |
-| `/prisme-security` | 运行 `prisme security`，用通俗的话解释评分，逐项核实并修复你同意的问题；并根据地图写出威胁模型（按元素的 STRIDE）和安全设计问题 |
+| `/prisme-security` | 仓库安全审计：Claude 阅读代码，只保留真实漏洞并解释，给出 A–E 评分，写出威胁模型（按元素的 STRIDE）和设计问题，再修复你同意的问题 |
 | `/prisme-evolve` | 简化、加速、扩展代码的想法，以及 3 到 5 个同类产品的功能与设计对比 |
 | `/prisme-view` | 打开查看器 |
 

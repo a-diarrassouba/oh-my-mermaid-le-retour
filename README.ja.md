@@ -85,7 +85,7 @@ AI がコードベースを読み、**パースペクティブ**を作成しま�
 
 これには `prisme view` を実行するマシンに Claude Code がインストールされ、ログインしている必要があります（`claude` を実行して `/login`）。ビューアを開くだけの人は何も必要ありません。Claude はプロジェクトを読むだけで（`.env` ファイルや鍵は読まない）、変更は一切しません。`prisme view --no-ai` で質問機能をオフにできます。
 
-ホーム画面のセキュリティタイルをクリックするとスコアを計算します：既知のリスク（秘密情報、危険なコード、OpenSSF Scorecard 流の CI・依存関係の管理）を自動で点検し、各項目に OWASP Top 10 の分類が付きます。インストールは不要です。続いて `/prisme-security` で Claude が各項目を確認します。
+セキュリティスコアは監査から生まれます：Claude Code で `/prisme-security` を実行します（ターミナルなら `claude "/prisme:prisme-security"`）。Claude がこのリポジトリのコードだけを読み、本当の脆弱性を確認し、誤検知は理由を添えて除外し、各脆弱性と修正方法を説明します。A–E の評価は prisme が計算します。ビューアのセキュリティページですべて確認できます。
 
 ## CLI
 
@@ -96,7 +96,7 @@ prisme view --no-ai                # Claude Code への質問なしで開く (AP
 prisme config language fr          # ドキュメントとインターフェースの言語を設定
 prisme guide list                  # ガイド一覧を表示
 prisme changes                     # 前回のスキャン以降の変更
-prisme security                    # 自動点検のセキュリティスコア A–E（gitleaks、osv-scanner、semgrep があれば使用）
+prisme security                    # 自動のセキュリティ手がかり（評価は /prisme-security の監査が決める）
 prisme security threats show       # /prisme-security が書いた脅威モデル（エレメントごとの STRIDE）と設計の質問
 prisme evolve show                 # /prisme-evolve が書いたプロジェクト改善のアイデア
 prisme update                      # 最新バージョンに更新
@@ -112,7 +112,7 @@ prisme update                      # 最新バージョンに更新
 | --- | --- |
 | `/prisme-scan` | コードベース分析 → ドキュメントとウェルカムガイドを作成 |
 | `/prisme-guide` | 質問に答えるステップごとのガイドを作成 → ビューアで再生 |
-| `/prisme-security` | `prisme security` を実行し、評価をやさしい言葉で説明、各項目を確認して同意したものを修正。マップの脅威モデル（エレメントごとの STRIDE）とセキュア・バイ・デザインの質問も作成 |
+| `/prisme-security` | リポジトリのセキュリティ監査：Claude がコードを読み、本当の脆弱性だけを残して説明し、A–E の評価、脅威モデル（エレメントごとの STRIDE）と設計の質問を作成、同意したものを修正 |
 | `/prisme-evolve` | コードを簡素化・高速化・発展させるアイデアと、類似製品 3〜5 件の機能・デザインの比較 |
 | `/prisme-view` | ビューアを開く |
 

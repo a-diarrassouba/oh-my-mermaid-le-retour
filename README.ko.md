@@ -85,7 +85,7 @@ AI가 코드베이스를 읽고 **perspective**를 작성합니다. perspective�
 
 이 기능은 `prisme view`를 실행하는 컴퓨터에 Claude Code가 설치되고 로그인되어 있어야 합니다 (`claude` 실행 후 `/login`). 뷰어만 여는 사람은 아무것도 필요하지 않습니다. Claude는 프로젝트를 읽기만 하며 (`.env` 파일이나 키는 읽지 않음) 절대 수정하지 않습니다. `prisme view --no-ai`로 질문 기능을 끌 수 있습니다.
 
-홈 화면의 보안 타일을 클릭하면 점수를 계산합니다: 알려진 위험(비밀 정보, 위험한 코드, OpenSSF Scorecard 방식의 CI·의존성 관리)을 자동으로 점검하며, 각 항목에 OWASP Top 10 분류가 붙고, 아무것도 설치할 필요가 없습니다. 이어서 `/prisme-security`로 Claude가 각 항목을 검토합니다.
+보안 점수는 감사에서 나옵니다: Claude Code에서 `/prisme-security`를 실행하세요 (또는 터미널에서 `claude "/prisme:prisme-security"`). Claude가 이 저장소의 코드만 읽고, 실제 취약점을 확인하고, 잘못된 경고는 이유와 함께 제외하며, 각 취약점과 수정 방법을 설명합니다. 등급 A–E는 prisme가 계산합니다. 뷰어의 보안 페이지에서 모두 볼 수 있습니다.
 
 ## CLI
 
@@ -96,7 +96,7 @@ prisme view --no-ai                # Claude Code 질문 없이 열기 (API: docs
 prisme config language fr          # 문서와 인터페이스 언어 설정
 prisme guide list                  # 가이드 목록 보기
 prisme changes                     # 마지막 스캔 이후 변경 사항
-prisme security                    # 자동 점검 보안 점수 A–E (gitleaks, osv-scanner, semgrep이 설치되어 있으면 사용)
+prisme security                    # 자동 보안 단서 (등급은 /prisme-security 감사가 결정)
 prisme security threats show       # /prisme-security가 작성한 위협 모델(element별 STRIDE)과 설계 질문
 prisme evolve show                 # /prisme-evolve가 작성한 프로젝트 발전 아이디어
 prisme update                      # 최신 버전으로 업데이트
@@ -112,7 +112,7 @@ prisme update                      # 최신 버전으로 업데이트
 | --- | --- |
 | `/prisme-scan` | 코드베이스 분석 → 문서와 환영 가이드 작성 |
 | `/prisme-guide` | 질문에 답하는 단계별 가이드 작성 → 뷰어에서 재생 |
-| `/prisme-security` | `prisme security` 실행, 등급을 쉬운 말로 설명, 각 항목 확인 후 동의한 것만 수정; 지도의 위협 모델(element별 STRIDE)과 보안 설계 질문 작성 |
+| `/prisme-security` | 저장소 보안 감사: Claude가 코드를 읽고 실제 취약점만 남겨 설명하고, 등급 A–E, 위협 모델(element별 STRIDE)과 설계 질문을 작성한 뒤 동의한 것만 수정 |
 | `/prisme-evolve` | 코드를 단순화·가속·확장하는 아이디어와 유사 제품 3~5개의 기능·디자인 비교 |
 | `/prisme-view` | 뷰어 열기 |
 
