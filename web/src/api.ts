@@ -21,7 +21,7 @@ export interface Project {
   counts: { perspectives: number; elements: number; guides: number };
   categories: {
     understand: { available: boolean };
-    security: { available: boolean; grade?: Grade; score?: number; date?: string; counts?: Record<Severity, number>; threats?: number; questions?: number };
+    security: { available: boolean; grade?: Grade; score?: number; date?: string; counts?: Record<Severity, number>; dismissed?: number; threats?: number; questions?: number; leads?: number };
     evolve: { available: boolean; date?: string; code?: number; products?: number; ideas?: number };
   };
   ai: { available: boolean; reason?: string };
@@ -51,6 +51,17 @@ export interface SecurityReport {
   findings: Finding[];
   ignored: Finding[];
   tools: { name: string; status: 'ran' | 'missing' | 'failed' | 'skipped'; findings: number }[];
+}
+
+export interface AuditFinding {
+  title: string; severity: Severity; area: string; owasp?: string; file: string; lines?: string;
+  what: string; impact: string; evidence: string; fix: string; effort: 'small' | 'medium' | 'large'; also?: string[]; elements?: string[];
+}
+export interface AuditReport {
+  kind: 'audit'; date: string; files: number; grade: Grade; score: number; counts: Record<Severity, number>; summary: string;
+  findings: AuditFinding[];
+  dismissed: { title: string; file?: string; reason: string }[];
+  checked: { area: string; status: 'ok' | 'issues' | 'partial' | 'not-applicable'; note: string }[];
 }
 
 export type Stride = 'S' | 'T' | 'R' | 'I' | 'D' | 'E';
@@ -86,24 +97,11 @@ async function get<T>(path: string): Promise<T | null> {
 
 export const api = {
   project: () => get<Project>('/api/v1/project'),
-  security: () => get<SecurityReport>('/api/v1/security'),
+  security: () => get<AuditReport>('/api/v1/security'),
   threats: () => get<ThreatModel>('/api/v1/threats'),
   evolve: () => get<EvolveReport>('/api/v1/evolve'),
   elements: () => get<ApiElement[]>('/api/v1/elements'),
   guides: () => get<GuideResult[]>('/api/v1/guides'),
-  /** Runs `prisme security` on the machine; needs the page token. */
-  async runSecurity(): Promise<{ report: SecurityReport | null; error?: string }> {
-    try {
-      const res = await fetch('/api/v1/security/run', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Prisme-Token': window.__prismeToken ?? '' },
-      });
-      const body = await res.json().catch(() => ({}));
-      return res.ok ? { report: body as SecurityReport } : { report: null, error: (body as { error?: string }).error };
-    } catch (e) {
-      return { report: null, error: String(e) };
-    }
-  },
 };
 
 /** The classic map viewer, opened on an element or a guide. */

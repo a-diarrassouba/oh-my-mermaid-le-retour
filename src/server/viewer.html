@@ -2878,7 +2878,7 @@ function threatsSection(m) {
 }
 
 async function openSecurity(report) {
-  const r = report || await api('/api/v1/security');
+  const r = report || await api('/api/v1/security/leads');
   if (!r || r.error) return;
   threatModel = await api('/api/v1/threats');
   const date = r.date ? new Date(r.date).toLocaleString(document.documentElement.lang) : '';

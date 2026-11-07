@@ -82,7 +82,30 @@ Every guide in `.prisme/.guides/`, with its validation, so a front can show a gu
 
 ## `GET /api/v1/security`
 
-The last report of `prisme security`, `404` before the first one:
+The security audit `/prisme-security` wrote after reading the code (checked by `prisme security audit write`), `404` before the first one:
+
+```json
+{
+  "version": 1, "kind": "audit", "date": "…", "commit": "…", "files": 555,
+  "grade": "C", "score": 79, "counts": { "critical": 0, "high": 1, "medium": 1, "low": 0 },
+  "summary": "Markdown: the overall state and what to fix first",
+  "findings": [{
+    "title": "Any signed-in user can read other users' tickets", "severity": "high", "area": "access-control", "owasp": "A01",
+    "file": "apps/api/src/routes/tickets.ts", "lines": "40-58",
+    "what": "…", "impact": "…", "evidence": "…", "fix": "…", "effort": "small", "also": ["apps/api/src/routes/comments.ts"],
+    "elements": ["overall-architecture/api"]
+  }],
+  "dismissed": [{ "title": "Database password in .env.example", "file": "apps/api/.env.example", "reason": "Example file." }],
+  "checked": [{ "area": "secrets", "status": "ok", "note": "…" }]
+}
+```
+
+- Only confirmed flaws, in files git tracks in this repository (never `.claude/` worktrees, dependencies or build output). `dismissed` keeps the leads Claude ruled out, with the reason; `checked` covers every area (`secrets`, `auth`, `access-control`, `injection`, `xss`, `files`, `ssrf`, `crypto`, `dependencies`, `config`, `ci-cd`, `data-exposure`, `dos`) as `ok`, `issues`, `partial` or `not-applicable`.
+- `grade`: computed by prisme from the severities, always the same way: 100 minus 30 per critical, 15 per high, 6 per medium (30 at most), 2 per low (10 at most); A ≥ 90, B ≥ 75, C ≥ 60, D ≥ 40, else E; a critical caps at D, a high at C.
+
+## `GET /api/v1/security/leads`
+
+The automatic leads of `prisme security` (patterns, `npm audit`, installed tools), `404` before the first run. They are a starting point for the audit, not a verdict:
 
 ```json
 {

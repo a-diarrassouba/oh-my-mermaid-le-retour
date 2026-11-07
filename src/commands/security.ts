@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { ensureOmmForRead, ensureOmmForWrite } from '../lib/store.js';
 import { readThreats, writeThreats, type ThreatModel } from '../lib/threats.js';
+import { readAudit, writeAudit, type AuditReport } from '../lib/audit.js';
 import { runSecurity, writeSecurityReport, SEVERITIES, type SecurityReport } from '../lib/security.js';
 import { msg } from '../lib/messages.js';
 
@@ -23,7 +24,7 @@ function printReport(r: SecurityReport, file: string): void {
   out.push('');
   out.push(msg('securityTools', { tools: r.tools.map(t => `${t.name}: ${msg(`securityTool_${t.status}` as const)}${t.status === 'ran' ? ` (${t.findings})` : ''}`).join(', ') }));
   out.push(msg('securityReport', { file: path.relative(process.cwd(), file) }));
-  out.push(msg('securityNext'));
+  out.push(msg('securityLeads'));
   process.stdout.write(out.join('\n') + '\n');
 }
 
@@ -74,9 +75,45 @@ async function commandThreats(args: string[]): Promise<void> {
   process.exit(1);
 }
 
-/** prisme security [--json] [--no-tools] | prisme security threats … */
+function printAudit(r: AuditReport): void {
+  const out = [msg('auditScore', { grade: r.grade, score: r.score }), r.summary, ''];
+  if (!r.findings.length) out.push(msg('auditNone'));
+  for (const f of r.findings) out.push(`[${f.severity}] ${f.title} — ${f.file}${f.lines ? `:${f.lines}` : ''}`);
+  out.push('', msg('auditDismissed', { count: r.dismissed.length }));
+  process.stdout.write(out.join('\n') + '\n');
+}
+
+/** prisme security audit show | write - */
+async function commandAudit(args: string[]): Promise<void> {
+  const [sub] = args;
+  if (sub === 'show') {
+    if (!ensureOmmForRead()) return;
+    const report = readAudit();
+    if (!report) {
+      process.stderr.write(msg('auditMissing') + '\n');
+      process.exit(1);
+    }
+    printAudit(report);
+    return;
+  }
+  if (sub === 'write' && (args[1] === undefined || args[1] === '-')) {
+    ensureOmmForWrite();
+    const { written, issues, report } = writeAudit(await readStdin());
+    if (!written) {
+      process.stderr.write(msg('auditRefused') + '\n' + issues.map(i => `  ${i}\n`).join(''));
+      process.exit(1);
+    }
+    process.stderr.write(msg('auditWritten', { grade: report!.grade, score: report!.score }) + '\n');
+    return;
+  }
+  process.stderr.write(msg('usage', { usage: 'prisme security audit show | prisme security audit write -' }) + '\n');
+  process.exit(1);
+}
+
+/** prisme security [--json] [--no-tools] | prisme security audit … | prisme security threats … */
 export async function commandSecurity(args: string[]): Promise<void> {
   if (args[0] === 'threats') return commandThreats(args.slice(1));
+  if (args[0] === 'audit') return commandAudit(args.slice(1));
   ensureOmmForWrite();
   const report = runSecurity(process.cwd(), { tools: !args.includes('--no-tools') });
   const file = writeSecurityReport(report);

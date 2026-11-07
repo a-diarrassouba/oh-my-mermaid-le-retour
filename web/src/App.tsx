@@ -43,8 +43,8 @@ export function App() {
         <Header route={route} project={project} level={level} />
         <main>
           {route === 'level' && <LevelPage level={level} onChoose={choose} />}
-          {route === 'spaces' && <SpacesPage project={project} onChange={reload} />}
-          {route === 'security' && <SecurityPage onChange={reload} />}
+          {route === 'spaces' && <SpacesPage project={project} />}
+          {route === 'security' && <SecurityPage />}
           {route === 'evolve' && <EvolvePage />}
         </main>
       </div>

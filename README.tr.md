@@ -85,7 +85,7 @@ Görüntüleyicinin soru çubuğuna istediğiniz soruyu yazın (örneğin "`pris
 
 Bunun için `prisme view` çalıştıran makinede Claude Code kurulu ve oturum açılmış olmalıdır (`claude`, ardından `/login`); görüntüleyiciyi yalnızca açanlar için hiçbir şey gerekmez. Claude projeyi yalnızca okur (`.env` dosyalarını veya anahtarları asla okumaz), hiçbir şeyi değiştirmez. `prisme view --no-ai` soruları kapatır.
 
-Ana ekrandaki güvenlik kutucuğu tek tıkla puanı hesaplar: bilinen riskleri (gizli anahtarlar, riskli kod, OpenSSF Scorecard tarzında CI ve bağımlılık düzeni) otomatik olarak kontrol eder, her bulguya OWASP Top 10 kategorisini ekler; hiçbir şey kurmak gerekmez. Ardından `/prisme-security` ile Claude her bulguyu inceler.
+Güvenlik notu bir denetimden gelir: Claude Code'da `/prisme-security` çalıştırın (veya terminalde `claude "/prisme:prisme-security"`). Claude yalnızca bu deponun kodunu okur, gerçek açıkları doğrular, yanlış alarmları gerekçesiyle eler, her açığı ve düzeltmesini açıklar; A–E notunu prisme hesaplar. Görüntüleyicinin Güvenlik sayfası hepsini gösterir.
 
 ## CLI
 
@@ -96,7 +96,7 @@ prisme view --no-ai                # Claude Code'a soru sormadan açın (API: do
 prisme config language fr          # Belgelerin ve arayüzün dilini ayarlayın
 prisme guide list                  # Rehberleri listele
 prisme changes                     # Son taramadan bu yana değişenler
-prisme security                    # Otomatik kontrollerle güvenlik notu A–E (kuruluysa gitleaks, osv-scanner, semgrep kullanılır)
+prisme security                    # Otomatik güvenlik ipuçları (notu /prisme-security denetimi verir)
 prisme security threats show       # /prisme-security tarafından yazılan tehdit modeli (element başına STRIDE) ve tasarım soruları
 prisme evolve show                 # /prisme-evolve tarafından yazılan geliştirme fikirleri
 prisme update                      # En son sürüme güncelleyin
@@ -112,7 +112,7 @@ Beceriler, **AI kodlama aracınızın içinde** (terminalde değil) çalıştır
 | --- | --- |
 | `/prisme-scan` | Kod tabanını analiz eder → belgeleri ve karşılama rehberini yazar |
 | `/prisme-guide` | Bir soruyu yanıtlayan adım adım rehber yazar → görüntüleyicide oynatılır |
-| `/prisme-security` | `prisme security` çalıştırır, notu sade bir dille açıklar, her bulguyu kontrol eder ve onayladıklarınızı düzeltir; haritanın tehdit modelini (element başına STRIDE) ve güvenli tasarım sorularını yazar |
+| `/prisme-security` | Depo güvenlik denetimi: Claude kodu okur, yalnızca gerçek açıkları tutup açıklar, A–E notunu, tehdit modelini (element başına STRIDE) ve tasarım sorularını yazar, onayladıklarınızı düzeltir |
 | `/prisme-evolve` | Kodu sadeleştirme, hızlandırma ve ileri taşıma fikirleri; 3-5 benzer ürünün özellik ve tasarım karşılaştırması |
 | `/prisme-view` | Görüntüleyiciyi açar |
 
