@@ -85,7 +85,7 @@ AI 阅读代码库并编写**视角**——从不同角度看待项目：它做�
 
 这需要在运行 `prisme view` 的机器上安装并登录 Claude Code（运行 `claude`，然后 `/login`）；只打开查看器的人无需任何东西。Claude 只读取项目（从不读取 `.env` 文件或密钥），从不修改。`prisme view --no-ai` 可关闭提问功能。
 
-安全评分来自一次审计：在 Claude Code 中运行 `/prisme-security`（或在终端运行 `claude "/prisme:prisme-security"`）。Claude 只阅读本仓库的代码，确认真实漏洞，排除误报并说明理由，解释每个漏洞及修复方法，prisme 计算 A–E 评分。查看器的安全页面会展示全部内容。
+安全评分来自一次审计：在 Claude Code 中运行 `/prisme-security`（或在终端运行 `claude "/prisme:prisme-security"`）。Claude 只阅读本仓库的代码，确认真实漏洞，排除误报并说明理由，解释每个漏洞及修复方法，prisme 计算 A–E 评分。查看器的安全页面会展示全部内容，其中的“用 Claude 运行审计”按钮会在后台运行同样的审计（只读、不修改），你可以在屏幕上跟进每一步。
 
 ## CLI
 

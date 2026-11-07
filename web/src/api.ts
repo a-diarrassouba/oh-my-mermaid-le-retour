@@ -104,6 +104,28 @@ export const api = {
   guides: () => get<GuideResult[]>('/api/v1/guides'),
 };
 
+export interface AuditJob {
+  id: string; state: 'running' | 'done' | 'failed' | 'stopped'; startedAt: number; endedAt?: number;
+  step: number; reads: number; error?: string;
+  events: { at: number; kind: 'step' | 'read' | 'search' | 'run' | 'note'; text: string }[];
+}
+
+/** Calls that run something on the machine: the page token is required. */
+async function pageCall<T>(path: string, method: string): Promise<{ ok: boolean; body: T & { error?: string } }> {
+  try {
+    const res = await fetch(path, { method, headers: { 'Content-Type': 'application/json', 'X-Prisme-Token': window.__prismeToken ?? '' } });
+    return { ok: res.ok, body: await res.json().catch(() => ({})) };
+  } catch (e) {
+    return { ok: false, body: { error: String(e) } as T & { error?: string } };
+  }
+}
+
+export const audit = {
+  start: () => pageCall<AuditJob & { job?: AuditJob }>('/api/v1/security/audit', 'POST'),
+  status: () => pageCall<AuditJob | null>('/api/v1/security/audit', 'GET'),
+  stop: () => pageCall<{ stopped: boolean }>('/api/v1/security/audit', 'DELETE'),
+};
+
 /** The classic map viewer, opened on an element or a guide. */
 export function mapLink(target?: { element?: string; guide?: string }): string {
   if (target?.guide) return `/map#guide=${encodeURIComponent(target.guide)}`;

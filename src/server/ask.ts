@@ -67,12 +67,13 @@ export function validateQuestion(raw: unknown): { question: string } | { error: 
   return { question };
 }
 
-function findSkill(): string | null {
+/** The instructions of a skill shipped next to this prisme (skills/<name>/SKILL.md). */
+export function findSkill(name = 'prisme-guide'): string | null {
   for (const dir of [
     path.join(__dirname, '..', 'skills'),       // dist/ (flat build)
     path.join(__dirname, '..', '..', 'skills'), // src/server/
   ]) {
-    const file = path.join(dir, 'prisme-guide', 'SKILL.md');
+    const file = path.join(dir, name, 'SKILL.md');
     if (fs.existsSync(file)) return fs.readFileSync(file, 'utf-8');
   }
   return null;
