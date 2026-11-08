@@ -209,7 +209,9 @@ export function stripGuideFlags(yaml: string): string {
 }
 
 /** Files Claude may never read, whatever the question (same list as the viewer's file panel). */
-export const DENIED_READS = ['**/.env', '**/.env.*', '**/*.pem', '**/*.key', '**/*.p12', '**/*.pfx', '**/*.jks', '**/*.keystore',
+// Real environment files are refused; examples (.env.example, .env.sample, .env.template) stay readable.
+export const DENIED_READS = ['**/.env', '**/.env.local', '**/.env.*.local', '**/.env.production', '**/.env.prod', '**/.env.development', '**/.env.dev',
+  '**/.env.staging', '**/.env.test', '**/.env.ci', '**/.envrc', '**/*.pem', '**/*.key', '**/*.p12', '**/*.pfx', '**/*.jks', '**/*.keystore',
   '**/id_rsa', '**/id_dsa', '**/id_ecdsa', '**/id_ed25519', '**/.npmrc', '**/.pypirc', '**/.netrc', '**/.git-credentials', '.git/**'];
 
 /** Records the reader's question in the guide, so the viewer lists it with their questions. */

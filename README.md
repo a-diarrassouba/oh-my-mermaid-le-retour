@@ -111,7 +111,7 @@ Skills are commands you run **inside your AI coding tool** (not the terminal). T
 | `/prisme-scan` | Analyze the codebase → write the docs and the welcome guide |
 | `/prisme-guide` | Write a step-by-step guide that answers a question, played in the viewer |
 | `/prisme-security` | Security audit of the repository: Claude reads the code, keeps the real flaws, explains them, gives the grade A–E, writes the threat model (STRIDE per element) and design questions, then fixes what you agree to |
-| `/prisme-evolve` | Ideas to simplify, speed up and go further in the code, and what 3 to 5 similar products do (features, design) |
+| `/prisme-evolve` | Ideas to simplify, speed up and go further in the code, and what 3 to 5 similar products do (features, design); also from the viewer's "Find ideas with Claude" button |
 | `/prisme-view` | Open the viewer |
 
 ## Supported AI Tools

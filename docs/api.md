@@ -103,13 +103,18 @@ The security audit `/prisme-security` wrote after reading the code (checked by `
 - Only confirmed flaws, in files git tracks in this repository (never `.claude/` worktrees, dependencies or build output). `dismissed` keeps the leads Claude ruled out, with the reason; `checked` covers every area (`secrets`, `auth`, `access-control`, `injection`, `xss`, `files`, `ssrf`, `crypto`, `dependencies`, `config`, `ci-cd`, `data-exposure`, `dos`) as `ok`, `issues`, `partial` or `not-applicable`.
 - `grade`: computed by prisme from the severities, always the same way: 100 minus 30 per critical, 15 per high, 6 per medium (30 at most), 2 per low (10 at most); A ≥ 90, B ≥ 75, C ≥ 60, D ≥ 40, else E; a critical caps at D, a high at C.
 
-## `/api/v1/security/audit`
+## `/api/v1/security/audit` and `/api/v1/evolve/run`
 
-The "Run the audit with Claude" button. Page token and origin required; `404` when questions to Claude are off (`--no-ai`).
+The skill buttons of the viewer: "Run the audit with Claude" (`prisme-security`) and "Find ideas with Claude" (`prisme-evolve`). Page token and origin required; `404` when questions to Claude are off (`--no-ai`).
 
-- `POST`: starts the audit (`202` with the job; `409` with `job` when one is running; `503` when Claude Code is not available). Claude Code runs the `prisme-security` skill in the background, Steps 0 to 9: it reads the project (never `.env` files or keys), may run only the audit's commands (`prisme security…`, `prisme tree/read`, `git ls-files`, `npm audit`…), changes no code and asks nothing; it writes the audit and the threat model through `prisme security audit write` and `prisme security threats write`. 45 minutes at most.
-- `GET`: the current job, or `null`: `{ id, state: "running" | "done" | "failed" | "stopped", startedAt, endedAt?, step (0–9), reads, events: [{ at, kind: "step" | "read" | "search" | "run" | "note", text }], error? }` (the last 60 events).
+- `POST`: starts the job (`202` with the job; `409` with `job` when one of this kind is running; `503` when Claude Code is not available).
+- `GET`: the current job of this kind, or `null`: `{ id, kind, state: "running" | "done" | "failed" | "stopped", startedAt, endedAt?, step, reads, events: [{ at, kind: "step" | "read" | "search" | "run" | "agent" | "web" | "note", text }], error? }` (the last 60 events).
 - `DELETE`: stops it.
+
+Claude Code runs the skill in the background and changes no code; the only place it may write is `.prisme/.drafts/`, which prisme checks (`prisme security audit|threats write <file>`, `prisme evolve write`) and removes once accepted. One hour at most; on a Mac, idle sleep is held off while it runs.
+
+- **Audit**: one phase, Steps 0 to 9 of the skill: two auditors in parallel and a contradictory verifier (Agent tool), reading the project (never real `.env` files or keys) and running only the audit's commands (`prisme security…`, `prisme tree/read`, `git ls-files`, `npm audit`…).
+- **Make it evolve**: two separate phases. The code phase reads the project, without the web, and writes the code ideas and a short public description of the product. The web phase gets only that description, with web search and fetch and **no access to the project**, so a web page cannot get Claude to send the code anywhere; it writes the products and ideas from around. prisme merges both and checks them like `prisme evolve write`.
 
 ## `GET /api/v1/security/leads`
 

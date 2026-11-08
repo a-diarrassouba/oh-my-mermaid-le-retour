@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { handleApi } from './api.js';
 import { handleApiV1 } from './api-v1.js';
 import { stopRunningAgent } from './ask.js';
-import { stopAudit } from './audit-job.js';
+import { stopAllJobs } from './skill-jobs.js';
 import { isLocalHost, portAnswers } from './local.js';
 import { addSSEClient, startWatcher } from './watcher.js';
 import { msg } from '../lib/messages.js';
@@ -65,9 +65,9 @@ export function startServer(port: number, options: ServerOptions = {}): http.Ser
   if (ai) {
     // Ctrl+C or a kill also stops a question being answered.
     for (const signal of ['SIGINT', 'SIGTERM'] as const) {
-      process.once(signal, () => { stopRunningAgent(); stopAudit(); process.exit(130); });
+      process.once(signal, () => { stopRunningAgent(); stopAllJobs(); process.exit(130); });
     }
-    process.once('exit', () => { stopRunningAgent(); stopAudit(); });
+    process.once('exit', () => { stopRunningAgent(); stopAllJobs(); });
   }
 
   // The port actually bound, once listening (0 asks the system for one).

@@ -70,10 +70,15 @@ Each idea has `title`, `why`, `how`, `effort`, `impact` like level 1, `seenIn` (
 
 ## Step 4: Write the Ideas
 
-Put the whole report in one YAML document; each text in double quotes, `how` as a `|` block. The closing `YAML` line starts at column 0.
+Put the whole report in one YAML document; each text in double quotes, `how` as a `|` block. Write it with the Write tool to **`.prisme/.drafts/evolve.yaml`**, then have prisme check and save it:
 
 ```bash
-prisme evolve write - <<'YAML'
+prisme evolve write .prisme/.drafts/evolve.yaml
+```
+
+The draft:
+
+```yaml
 summary: |
   (3 to 5 sentences: where the project stands, the two or three ideas to do first and why)
 code:
@@ -102,10 +107,9 @@ market:
       effort: medium
       impact: high
       seenIn: ["Product name"]
-YAML
 ```
 
-It is refused, with the reasons, when a key is unknown, a value is missing or too long, an element does not exist, a URL is not http(s), or `seenIn` names a product not in `products`. Fix what it lists and write again. With `--code`, leave `market` out; with `--market`, leave `code` out (the previous report is replaced, so keep the other level from `prisme evolve show` if the user wants both).
+It is refused, with the reasons, when a key is unknown, a value is missing or too long, an element does not exist, a URL is not http(s), or `seenIn` names a product not in `products`. Fix the draft and run the command again; once accepted, the draft is removed. With `--code`, leave `market` out; with `--market`, leave `code` out (the previous report is replaced, so keep the other level from `prisme evolve show` if the user wants both).
 
 ## Step 5: Summarize
 

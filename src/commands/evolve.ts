@@ -1,4 +1,6 @@
-import { ensureOmmForRead, ensureOmmForWrite } from '../lib/store.js';
+import fs from 'node:fs';
+import path from 'node:path';
+import { ensureOmmForRead, ensureOmmForWrite, getOmmDir } from '../lib/store.js';
 import { readEvolve, writeEvolve, type EvolveReport } from '../lib/evolve.js';
 import { msg } from '../lib/messages.js';
 
@@ -35,9 +37,23 @@ export async function commandEvolve(args: string[]): Promise<void> {
     printReport(report);
     return;
   }
-  if (sub === 'write' && (args[1] === undefined || args[1] === '-')) {
+  if (sub === 'write') {
     ensureOmmForWrite();
-    const { written, issues } = writeEvolve(await readStdin());
+    // stdin with "-" (or nothing), else a file; a draft in .prisme/.drafts/ is removed once accepted.
+    const arg = args[1];
+    let text: string;
+    let file: string | null = null;
+    if (arg === undefined || arg === '-') text = await readStdin();
+    else {
+      file = path.resolve(arg);
+      if (!fs.existsSync(file) || !fs.lstatSync(file).isFile()) {
+        process.stderr.write(msg('error', { message: `file "${arg}" not found` }) + '\n');
+        process.exit(1);
+      }
+      text = fs.readFileSync(file, 'utf-8');
+    }
+    const { written, issues } = writeEvolve(text);
+    if (written && file && file.startsWith(path.join(getOmmDir(), '.drafts') + path.sep)) fs.rmSync(file, { force: true });
     if (!written) {
       process.stderr.write(msg('evolveRefused') + '\n' + issues.map(i => `  ${i}\n`).join(''));
       process.exit(1);
@@ -45,6 +61,6 @@ export async function commandEvolve(args: string[]): Promise<void> {
     process.stderr.write(msg('evolveWritten') + '\n');
     return;
   }
-  process.stderr.write(msg('usage', { usage: 'prisme evolve show | prisme evolve write -' }) + '\n');
+  process.stderr.write(msg('usage', { usage: 'prisme evolve show | prisme evolve write <file | ->' }) + '\n');
   process.exit(1);
 }

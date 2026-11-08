@@ -62,7 +62,10 @@ export function SpacesPage({ project }: { project: Project | null }) {
                 <span className="state">{t('evolveState', { n: (evo.code ?? 0) + (evo.ideas ?? 0), p: evo.products ?? 0 })}</span>
                 <a className="btn ghost" href={HREF.evolve}>{t('seeIdeas')}</a>
               </>
-            : <span className="state">{cmd('evolveNone', '/prisme-evolve')}</span>}
+            : <>
+                <span className="state">{t('evolveTile')}</span>
+                <a className="btn ghost" href={HREF.evolve}>{t('runEvolve')}</a>
+              </>}
         </article>
       </section>
 

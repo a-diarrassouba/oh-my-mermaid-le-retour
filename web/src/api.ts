@@ -56,12 +56,14 @@ export interface SecurityReport {
 export interface AuditFinding {
   title: string; severity: Severity; area: string; owasp?: string; file: string; lines?: string;
   what: string; impact: string; evidence: string; fix: string; effort: 'small' | 'medium' | 'large'; also?: string[]; elements?: string[];
+  verification?: 'confirmed' | 'contested' | 'added'; verificationNote?: string;
 }
 export interface AuditReport {
   kind: 'audit'; date: string; files: number; grade: Grade; score: number; counts: Record<Severity, number>; summary: string;
   findings: AuditFinding[];
   dismissed: { title: string; file?: string; reason: string }[];
   checked: { area: string; status: 'ok' | 'issues' | 'partial' | 'not-applicable'; note: string }[];
+  process?: { auditors: number; verified: boolean; refuted: number; added: number };
 }
 
 export type Stride = 'S' | 'T' | 'R' | 'I' | 'D' | 'E';
@@ -107,7 +109,7 @@ export const api = {
 export interface AuditJob {
   id: string; state: 'running' | 'done' | 'failed' | 'stopped'; startedAt: number; endedAt?: number;
   step: number; reads: number; error?: string;
-  events: { at: number; kind: 'step' | 'read' | 'search' | 'run' | 'note'; text: string }[];
+  events: { at: number; kind: 'step' | 'read' | 'search' | 'run' | 'agent' | 'web' | 'note'; text: string }[];
 }
 
 /** Calls that run something on the machine: the page token is required. */
@@ -120,11 +122,15 @@ async function pageCall<T>(path: string, method: string): Promise<{ ok: boolean;
   }
 }
 
-export const audit = {
-  start: () => pageCall<AuditJob & { job?: AuditJob }>('/api/v1/security/audit', 'POST'),
-  status: () => pageCall<AuditJob | null>('/api/v1/security/audit', 'GET'),
-  stop: () => pageCall<{ stopped: boolean }>('/api/v1/security/audit', 'DELETE'),
-};
+export type JobKind = 'security' | 'evolve';
+const JOB_URL: Record<JobKind, string> = { security: '/api/v1/security/audit', evolve: '/api/v1/evolve/run' };
+
+/** The skill buttons: run the audit, or find ideas to make the project evolve. */
+export const jobs = (kind: JobKind) => ({
+  start: () => pageCall<AuditJob & { job?: AuditJob }>(JOB_URL[kind], 'POST'),
+  status: () => pageCall<AuditJob | null>(JOB_URL[kind], 'GET'),
+  stop: () => pageCall<{ stopped: boolean }>(JOB_URL[kind], 'DELETE'),
+});
 
 /** The classic map viewer, opened on an element or a guide. */
 export function mapLink(target?: { element?: string; guide?: string }): string {

@@ -1,13 +1,15 @@
 import { describe, it, expect } from 'vitest';
 import http from 'node:http';
 import type { AddressInfo } from 'node:net';
-import { buildAuditArgs, buildAuditPrompt, eventsFromLine } from '../server/audit-job.js';
+import { buildAuditArgs, buildAuditPrompt, eventsFromLine } from '../server/skill-jobs.js';
 import { handleApiV1 } from '../server/api-v1.js';
 
 describe('audit from the viewer', () => {
   it('lets Claude read and run only the audit commands, never secrets', () => {
     const args = buildAuditArgs('skill');
-    expect(args[args.indexOf('--tools') + 1]).toBe('Read,Grep,Glob,Bash');
+    expect(args[args.indexOf('--tools') + 1]).toBe('Read,Grep,Glob,Bash,Write,Agent');
+    // Writing is allowed in the drafts folder only.
+    expect(args.filter(a => /^(Write|Edit)\(/.test(a))).toEqual(['Write(./.prisme/.drafts/**)', 'Edit(./.prisme/.drafts/**)']);
     expect(args).toEqual(expect.arrayContaining(['Bash(prisme security:*)', 'Bash(git ls-files:*)', 'Bash(npm audit:*)', '--restricted', 'stream-json']));
     expect(args.some(a => /Bash\((rm|curl|npm install|git push)/.test(a))).toBe(false);
     const deny = JSON.parse(args[args.indexOf('--settings') + 1]).permissions.deny as string[];
@@ -46,5 +48,37 @@ describe('audit from the viewer', () => {
     expect(await call('GET', { 'X-Prisme-Token': TOKEN, Origin: 'https://evil.example' })).toBe(403);
     expect(await call('GET', { 'X-Prisme-Token': TOKEN })).toBe(200);
     await new Promise<void>(r => server.close(() => r()));
+  });
+});
+
+describe('make it evolve from the viewer', () => {
+  it('keeps the web phase away from the project, and the code phase away from the web', async () => {
+    const { readingArgs, webArgs, EVOLVE_COMMANDS } = await import('../server/skill-jobs.js');
+    const web = webArgs('skill');
+    expect(web[web.indexOf('--tools') + 1]).toBe('WebSearch,WebFetch,Write');
+    expect(web.some(a => /^(Read|Grep|Glob|Bash)\b/.test(a))).toBe(false);
+    expect(web.filter(a => /^(Write|Edit)\(/.test(a))).toEqual(['Write(./.prisme/.drafts/**)', 'Edit(./.prisme/.drafts/**)']);
+    const code = readingArgs('skill', EVOLVE_COMMANDS, false);
+    expect(code[code.indexOf('--tools') + 1]).toBe('Read,Grep,Glob,Bash,Write');
+    expect(code.some(a => /^Web/.test(a))).toBe(false);
+  });
+
+  it('merges both drafts and saves them through the same checks', async () => {
+    const fs = await import('node:fs');
+    const os = await import('node:os');
+    const path = await import('node:path');
+    const { finishEvolve } = await import('../server/skill-jobs.js');
+    const { readEvolve } = await import('../lib/evolve.js');
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'prisme-evo-job-'));
+    const w = (rel: string, text: string) => { fs.mkdirSync(path.dirname(path.join(dir, rel)), { recursive: true }); fs.writeFileSync(path.join(dir, rel), text); };
+    w('.prisme/arch/description.md', 'arch');
+    w('.prisme/.drafts/evolve-code.yaml', 'summary: "Deux idées."\ncode:\n  - kind: speed\n    title: "Cache"\n    why: "Plus vite."\n    how: "Garder en mémoire."\n    effort: small\n    impact: high\n');
+    w('.prisme/.drafts/evolve-market.yaml', 'market:\n  products:\n    - {name: A, url: "https://a.example.com", what: "w", similar: "s"}\n  ideas: []\n');
+    w('.prisme/.drafts/evolve-brief.md', 'Un outil.');
+    expect(finishEvolve(dir)).toBeNull();
+    expect(readEvolve(dir)).toMatchObject({ code: [{ title: 'Cache' }], market: { products: [{ name: 'A' }] } });
+    expect(fs.readdirSync(path.join(dir, '.prisme/.drafts'))).toEqual([]);
+    expect(finishEvolve(dir)).toMatch(/without writing the code ideas/);
+    fs.rmSync(dir, { recursive: true, force: true });
   });
 });

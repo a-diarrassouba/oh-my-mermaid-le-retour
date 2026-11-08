@@ -46,6 +46,13 @@ export function SecurityPage({ project }: { project: Project | null }) {
         <div className="sum">
           <h1>{t(`gradeHead_${audit.grade}`)}</h1>
           <p>{t('auditOutOf', { score: audit.score, files: audit.files, date: formatDate(audit.date, lang) })}</p>
+          {audit.process && (
+            <p className="meta" style={{ margin: 0 }}>
+              {audit.process.verified
+                ? t('processLine', { a: audit.process.auditors, r: audit.process.refuted, d: audit.process.added })
+                : t('processSingle')}
+            </p>
+          )}
           <div className="chips">
             {SEVS.map(s => <span key={s} className={`chip ${audit.counts[s] ? `strong sev-${s}` : ''}`}>{audit.counts[s]} · {t(`sev_${s}`)}</span>)}
           </div>
@@ -73,6 +80,7 @@ export function SecurityPage({ project }: { project: Project | null }) {
                     <span className={`chip sev-${f.severity}`}>{t(`sev_${f.severity}`)}</span>
                     <b>{f.title}</b>
                     {f.owasp && <a className="chip owasp" href="https://owasp.org/Top10/" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}>OWASP {f.owasp}</a>}
+                    {f.verification && <span className={`chip ${f.verification === 'confirmed' ? 'ok' : ''}`}>{t(`ver_${f.verification}`)}</span>}
                     <span className="where">{f.file}{f.lines ? `:${f.lines}` : ''}</span>
                   </summary>
                   <div className="body">
@@ -83,6 +91,7 @@ export function SecurityPage({ project }: { project: Project | null }) {
                       <summary style={{ cursor: 'pointer', color: 'var(--accent-ink)', fontWeight: 600 }}>{t('evidence')}</summary>
                       <div className="match" style={{ marginTop: 8, whiteSpace: 'pre-wrap' }}>{f.evidence}</div>
                     </details>
+                    {f.verificationNote && <div className="full"><span className="k">{t('verNote')}</span>{f.verificationNote}</div>}
                     {f.also?.length ? <div className="where full">{t('alsoIn', { files: f.also.join(', ') })}</div> : null}
                     {f.elements?.length ? (
                       <div className="links full">{f.elements.map(p => <a key={p} className="link" href={mapLink({ element: p })}>{t('seeOnMap', { name: title(p) })}</a>)}</div>

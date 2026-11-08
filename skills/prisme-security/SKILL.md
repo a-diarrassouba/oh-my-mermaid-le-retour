@@ -18,7 +18,7 @@ A security audit of **the repository this skill is run in, and only that one**, 
 
 The viewer shows all of it on its Security page (`prisme view`, "Security score").
 
-**You find the flaws by reading the code.** Automatic checks only give leads: never put a lead in the audit without confirming it in the code.
+**The flaws are found by reading the code**, by two auditors working in parallel, then challenged by a verifier who tries to prove them wrong; you judge and write the audit (see [How the Audit Is Run](#how-the-audit-is-run-two-auditors-a-verifier-a-judge)). Automatic checks only give leads: never put a lead in the audit without confirming it in the code.
 
 With `--audit-only`, do Steps 0 to 6 and 10; with `--threats-only`, Steps 7 to 10. Without arguments, do everything.
 
@@ -28,7 +28,7 @@ With `--audit-only`, do Steps 0 to 6 and 10; with `--threats-only`, Steps 7 to 1
 - **Read-only until the user agrees.** The audit changes no code. Fixes come at the end, one by one, with the user's agreement (Step 10).
 - **Never print a secret.** Quote a secret by its first 4 characters and `…` at most.
 - **Confirm before you report.** A flaw is confirmed only when you have read the code path and can say how it would be exploited here. When in doubt, read more; if still in doubt, it is not a finding — mention it in the summary as a point to check.
-- **Severity follows the rubric of Step 5**, not the label of a tool or an advisory.
+- **Severity follows the [rubric](#severity-rubric)**, not the label of a tool or an advisory.
 - Write everything the reader sees in the project's language (`prisme config language`).
 
 ## Step 0: Prerequisites and Scope
@@ -42,7 +42,7 @@ git ls-files | grep -v '^\.claude/' | sed 's|/[^/]*$||' | sort | uniq -c | sort 
 
 Note the root, the number of files and the main folders. If `prisme security audit show` answers `invalid field` (or `champ invalide`), the CLI is too old: tell the user to run `prisme update`, then stop.
 
-On a large repository (more than ~2,000 files), tell the user the audit focuses on what runs in production and handles outside input first; areas you only skim get the status `partial`.
+On a large repository (more than ~2,000 files), tell the user the audit focuses on what runs in production and handles outside input first; areas only skimmed get the status `partial`. Tell the user too that the audit uses three agents (two auditors, a verifier) and takes a while.
 
 ## Step 1: Understand the Project
 
@@ -66,13 +66,13 @@ prisme read operations description
 
 ## Step 2: Gather Leads
 
-Leads point at places to read; they are not findings.
+Leads point at places to read; they are not findings. You give them to the auditors (Step 3).
 
 ```bash
 prisme security --json --no-tools
 ```
 
-It lists patterns (secrets, risky calls, CI and Docker practices). Many are false alarms: example files, tests, safe APIs that look unsafe. Note them, then check each in Step 4.
+It lists patterns (secrets, risky calls, CI and Docker practices). Many are false alarms: example files, tests, safe APIs that look unsafe. Note them: the auditors check each one (Step 3).
 
 Dependencies with known flaws (production dependencies only):
 
@@ -82,14 +82,18 @@ npm audit --omit=dev --json 2>/dev/null | head -c 200000
 
 (Use the project's package manager when it is not npm: `pnpm audit --prod --json`, `yarn npm audit --environment production --json`; for Python, Go, Rust… read the lockfile and only report what you can check. Install nothing.)
 
-## Step 3: Review the Code, Area by Area
+## How the Audit Is Run: Two Auditors, a Verifier, a Judge
 
-Go through **every area** below. For each, search the code (Grep, Glob), then **read** the relevant files. Start from the entry points of Step 1 and follow the data.
+Like a trial: two **auditors** look for flaws in parallel, each on half of the areas, so a large repository is read in depth; then a **verifier** who did not take part tries to prove them wrong, in both directions (a flaw that is not real, a lead wrongly dismissed, an area marked "ok" too fast); finally **you are the judge**: you settle each disagreement by reading the code, and you write the audit.
+
+Use the **Agent** tool (general-purpose agents). Agents start with an empty context: everything they need goes in their prompt. If the Agent tool is not available, do Steps 3 to 5 yourself, one after the other, and write `process: { auditors: 1, verified: false, refuted: 0, added: 0 }`.
+
+### The areas
 
 | Area (`area`) | What to look for |
 | --- | --- |
-| `secrets` | Real keys, tokens, passwords in tracked files or history-prone places; `.env` committed. Example files and local test values are not secrets. |
-| `auth` | Sign-in, password storage (hash algorithm), sessions and tokens (signature checked, expiry, storage), password reset, MFA, brute force protection. |
+| `secrets` | Real keys, tokens, passwords in tracked files; `.env` committed. Example files and local test values are not secrets. |
+| `auth` | Sign-in, password storage (hash algorithm), sessions and tokens (signature checked, expiry, storage), password reset, MFA, brute force protection, service-to-service secrets and what they allow. |
 | `access-control` | Every route that reads or changes data: is the user checked, and is the object theirs (IDOR)? Admin routes, roles, multi-tenant isolation. |
 | `injection` | SQL (raw queries built from input; ORMs' safe forms are fine), shell commands, templates, NoSQL, LDAP, eval. |
 | `xss` | HTML built from user content, `innerHTML`, `dangerouslySetInnerHTML`, `v-html`, markdown rendering without cleaning, unsafe CSP. |
@@ -100,41 +104,116 @@ Go through **every area** below. For each, search the code (Grep, Glob), then **
 | `config` | CORS, cookies (Secure, HttpOnly, SameSite), security headers, debug modes, error messages that leak details, default credentials, Docker running as root. |
 | `ci-cd` | Workflow rights, secrets in CI, untrusted input in scripts, unpinned third-party actions, deploy keys, `pull_request_target`. |
 | `data-exposure` | Personal or sensitive data in logs, API responses returning more than needed, backups, analytics. |
-| `dos` | Missing limits that matter here: request size, rate limiting on sign-in and costly endpoints, unbounded loops on input. |
+| `dos` | Missing limits that matter here: request size, rate limiting on sign-in and costly endpoints, unbounded loops on input, background workers. |
 
-## Step 4: Confirm or Dismiss Each Candidate
+### Severity rubric
 
-For every lead (Step 2) and every suspicion (Step 3):
-
-1. **Trace it**: where does the input come from (source), where does it end up (sink), what happens in between (validation, escaping, auth checks, framework protection)?
-2. **Is it reachable in production?** Development tools, tests, one-off scripts that are never deployed, example files and dead code are not.
-3. **Decide**:
-   - **confirmed**: you can describe the exploitation in this project → a finding (Step 5);
-   - **dismissed**: write the short reason ("`.env.example`: placeholder values", "`$executeRaw` with a tagged template is parameterized by Prisma", "vitest is a dev dependency, never deployed", "CI database on localhost, only exists during tests").
-
-Group the same flaw: one finding per problem, with the other files in `also` (one finding "Routes without ownership check" listing 6 routes, not 6 findings). For dependencies: **one finding per package to update**, only when it is a production dependency used in a reachable way; others are dismissed with the reason.
-
-## Step 5: Rate Each Confirmed Flaw
-
-Use this rubric — the context of **this** project, not the advisory's label:
+The context of **this** project decides, not the label of a tool or an advisory:
 
 - **critical**: exploitable now, from the outside, without special access, with a severe impact: a live production secret in the repository, unauthenticated remote code execution, SQL injection on a public route, authentication bypass.
 - **high**: exploitable with little effort or a common condition, significant impact: a signed-in user can read or change other users' data (IDOR), stored XSS, a secret for a non-production service with real access, a reachable vulnerable dependency with a known exploit.
 - **medium**: a real weakness with limited impact or hard to exploit: no rate limit on sign-in, missing security headers that matter here, a vulnerable dependency reachable only under a specific configuration, verbose errors exposing internals.
 - **low**: hardening and good practice: no `SECURITY.md`, unpinned CI actions, container running as root, no dependency update bot.
 
-Each finding also gets `effort` (small: an hour; medium: days; large: weeks) and, when it fits, an `owasp` code (A01 Broken Access Control, A02 Cryptographic Failures, A03 Injection, A04 Insecure Design, A05 Security Misconfiguration, A06 Vulnerable and Outdated Components, A07 Identification and Authentication Failures, A08 Software and Data Integrity Failures, A09 Security Logging and Monitoring Failures, A10 SSRF).
-
 prisme turns the severities into the grade: 100 minus 30 per critical, 15 per high, 6 per medium (30 at most) and 2 per low (10 at most); A ≥ 90, B ≥ 75, C ≥ 60, D ≥ 40, else E; any critical caps the grade at D, any high at C.
+
+## Step 3: Two Auditors, in Parallel
+
+Write a **brief** of the project from Step 1 (what it does, entry points, data, auth, outside services, how it is deployed, with file paths) and split the leads of Step 2 by area. Then launch **both auditors in the same message** (two Agent calls), so they run in parallel:
+
+- **Auditor 1**: `secrets`, `auth`, `access-control`, `injection`, `xss`, `files`, `ssrf`.
+- **Auditor 2**: `crypto`, `dependencies`, `config`, `ci-cd`, `data-exposure`, `dos`.
+
+Each auditor's prompt contains, in this order:
+
+1. Its role: "You audit the security of the repository at `<root>`, read-only, for the areas below. Read the code with Read, Grep and Glob; never change a file."
+2. The scope rules of this skill (only files `git ls-files` lists at the root; never `.claude/`, dependencies, build output; never print a secret).
+3. The project brief.
+4. Its areas, with their rows of the areas table.
+5. The leads of its areas (file, line, what the automatic check saw).
+6. The method: for each area, search and **read** the code, starting from the entry points and following the data; for every candidate, trace it (source → checks in between → sink), check it runs in production (not tests, one-off scripts, dev tools, examples), then decide: confirmed or dismissed. Group the same flaw in one finding with the other files in `also`; one finding per dependency to update.
+7. The severity rubric.
+8. The answer it must give, and nothing else:
+
+```yaml
+findings:
+  - title: "…"
+    severity: high
+    area: access-control
+    owasp: A01
+    file: path/as/git/lists/it
+    lines: "40-58"
+    what: "…"
+    impact: "…"
+    evidence: "the path from input to the risky code, with files and lines"
+    fix: "…"
+    effort: small
+    also: [other/file.ts]
+dismissed:
+  - title: "…"
+    file: "…"
+    reason: "…"
+checked:
+  - area: access-control
+    status: issues    # ok | issues | partial | not-applicable
+    note: "what was read, what was found"
+```
+
+## Step 4: Contradictory Verification
+
+When both auditors have answered, launch **one verifier** (one Agent call). It must not see the auditors' reasoning: give it only their **conclusions**.
+
+Its prompt contains:
+
+1. Its role: "You are a contradictory verifier. Two auditors reviewed the repository at `<root>`. Your job is to prove them wrong where they are wrong, by reading the code. Read-only; never change a file."
+2. The scope rules, the project brief, the areas table and the severity rubric.
+3. **The findings, without their `evidence`**: for each one, its number, title, severity, file, lines, `what` and `impact`. For each: try to refute it: is the input really controlled by an attacker, is there a check the auditor missed (middleware, framework protection, validation elsewhere), does this code run in production, is the severity right for this project?
+4. **The dismissed leads, with their reasons.** For each: is the reason true in the code? If not, it is a real flaw.
+5. **The areas marked `ok` or `partial`, with their notes.** Pick in each the riskiest places the note does not mention and read them: did the auditors miss something?
+6. The answer it must give, and nothing else:
+
+```yaml
+findings:
+  - number: 1
+    verdict: confirmed    # confirmed | refuted | uncertain
+    severity: high        # the severity it would give
+    proof: "what in the code supports the verdict, with files and lines"
+dismissed:
+  - title: "…"
+    verdict: agree        # agree | reopen
+    proof: "…"
+missed:                   # flaws nobody reported
+  - (same fields as an auditor's finding, evidence included)
+```
+
+## Step 5: Judge
+
+You decide, flaw by flaw, with these rules:
+
+- **confirmed** by the verifier: keep it, `verification: confirmed`. If the verifier gives another severity, read the code and pick the one the rubric supports.
+- **refuted** with a proof in the code: read the code it cites. If the proof holds, move the flaw to `dismissed` with the verifier's reason. If it does not hold, keep the flaw, `verification: contested`, and say in `verificationNote` why the refutation fails.
+- **uncertain**: read the code yourself and decide; a flaw you cannot confirm is not kept (mention it in the summary as a point to check).
+- A dismissed lead the verifier wants to **reopen**, and every **missed** flaw: read the code; if it is real, add it with `verification: added` and say in `verificationNote` what the verifier found; otherwise leave it dismissed.
+- Rate every flaw you keep with the rubric; merge duplicates between the two auditors.
+
+Count for `process`: `auditors: 2`, `verified: true`, `refuted` (flaws moved to dismissed after verification), `added` (flaws kept with `verification: added`).
 
 ## Step 6: Write the Audit
 
-One YAML document, in the project's language; texts in double quotes or `|` blocks; file paths relative to the root, exactly as `git ls-files` prints them.
+One YAML document, in the project's language; texts in double quotes or `|` blocks; file paths relative to the root, exactly as `git ls-files` prints them. `checked` covers every area, merged from both auditors and corrected by your decisions.
+
+Write it with the Write tool to **`.prisme/.drafts/audit.yaml`** (the drafts folder; it works the same in Claude Code and from the viewer's button, where it is the only place you may write), then have prisme check it and compute the grade:
 
 ```bash
-prisme security audit write - <<'YAML'
+prisme security audit write .prisme/.drafts/audit.yaml
+```
+
+The draft (here with an example finding):
+
+```yaml
 summary: |
-  (4 to 6 sentences, plain words: what the project exposes, the overall state, the two or three things to fix first, and what was not checked deeply)
+  (4 to 6 sentences, plain words: what the project exposes, the overall state, the two or three things to fix first, what the verification changed, and what was not checked deeply)
+process: { auditors: 2, verified: true, refuted: 1, added: 1 }
 findings:
   - title: "Any signed-in user can read other users' tickets"
     severity: high
@@ -148,6 +227,7 @@ findings:
     fix: "Add ownerId: req.user.id to the where clause (or check ticket.ownerId after loading) and return 404 otherwise; same for PATCH and DELETE."
     effort: small
     also: [apps/api/src/routes/comments.ts]
+    verification: confirmed
 dismissed:
   - title: "Database password in .env.example"
     file: apps/api/.env.example
@@ -156,14 +236,10 @@ checked:
   - area: secrets
     status: ok
     note: "No real secret in tracked files; .env is ignored."
-  - area: access-control
-    status: issues
-    note: "Ticket and comment routes do not check ownership."
-  # … one entry for every area of Step 3: ok, issues, partial (looked at quickly) or not-applicable (with why)
-YAML
+  # … one entry for every area: ok, issues, partial (looked at quickly) or not-applicable (with why)
 ```
 
-It is refused, with the reasons, when a file is not in this repository, lines do not exist, an area is missing from `checked` or marked `ok` while it has a finding, or a required text is missing. Fix and write again; the previous audit is replaced.
+It is refused, with the reasons, when a file is not in this repository, lines do not exist, an area is missing from `checked` or marked `ok` while it has a finding, a `contested` or `added` flaw has no `verificationNote`, or a required text is missing. Fix the draft and run the command again; once accepted, the draft is removed and the previous audit is replaced.
 
 ## Step 7: Threat Model (STRIDE per Element)
 
@@ -181,8 +257,15 @@ Use the map and what you learned in Steps 1 to 4:
 
 ## Step 9: Write the Threat Model
 
+Write it to **`.prisme/.drafts/threats.yaml`** with the Write tool, then:
+
 ```bash
-prisme security threats write - <<'YAML'
+prisme security threats write .prisme/.drafts/threats.yaml
+```
+
+The draft:
+
+```yaml
 summary: |
   (3 to 5 sentences)
 assets: ["…"]
@@ -206,7 +289,6 @@ questions:
     status: answered
     answer: "…"
     elements: [overall-architecture/api]
-YAML
 ```
 
 Element paths are copied from `prisme tree`; it is refused with the reasons otherwise.
