@@ -22,7 +22,7 @@ export function SpacesPage({ project }: { project: Project | null }) {
 
       <section className="tiles" aria-label={t('spacesTitle')}>
         <article className="tile">
-          <span className="icon" style={{ width: 60, height: 60, borderRadius: 16, background: '#ECEAFD' }}><MapIcon /></span>
+          <span className="icon" style={{ width: 60, height: 60, borderRadius: 16, background: 'var(--accent-soft)' }}><MapIcon /></span>
           <h2>{t('understand')}</h2>
           <p>{t('understandText')}</p>
           {cats?.understand.available
