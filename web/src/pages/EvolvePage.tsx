@@ -1,19 +1,21 @@
 import { useEffect, useState } from 'react';
-import { api, mapLink, type ApiElement, type EvolveReport, type Idea } from '../api';
+import { api, mapLink, type ApiElement, type EvolveReport, type Idea, type Project } from '../api';
+import { AuditRunner } from './AuditRunner';
 import { useI18n } from '../i18n';
 import { formatDate, markdown } from '../format';
 
 const CODE_KINDS = ['simplify', 'speed', 'further'];
 const MARKET_KINDS = ['feature', 'design'];
 
-export function EvolvePage() {
+export function EvolvePage({ project }: { project: Project | null }) {
   const { t, lang } = useI18n();
   const [report, setReport] = useState<EvolveReport | null | undefined>(undefined);
   const [titles, setTitles] = useState<Map<string, string>>(new Map());
   const [tab, setTab] = useState<'code' | 'market'>('code');
 
+  const load = () => api.evolve().then(setReport);
   useEffect(() => {
-    api.evolve().then(setReport);
+    load();
     api.elements().then(els => setTitles(new Map((els ?? []).map((e: ApiElement) => [e.path, e.title]))));
   }, []);
 
@@ -25,7 +27,10 @@ export function EvolvePage() {
     return (
       <div className="wrap page">
         <h1 className="title">{t('evolveTitle')}</h1>
-        <p className="lead">{cmd('evolveNone', '/prisme-evolve')}</p>
+        <section className="card group">
+          <p className="lead" style={{ margin: 0 }}>{t('evolveText')}</p>
+          <AuditRunner kind="evolve" project={project} onDone={load} />
+        </section>
       </div>
     );
   }
@@ -92,6 +97,11 @@ export function EvolvePage() {
           {byKind(report.market.ideas, MARKET_KINDS)}
         </section>
       ) : <p className="empty">{cmd('noMarket', '/prisme-evolve')}</p>)}
+
+      <section className="card group">
+        <h2 className="section">{t('rerunEvolve')}</h2>
+        <AuditRunner kind="evolve" project={project} onDone={load} />
+      </section>
     </div>
   );
 }

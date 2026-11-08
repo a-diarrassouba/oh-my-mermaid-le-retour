@@ -45,7 +45,7 @@ export function App() {
           {route === 'level' && <LevelPage level={level} onChoose={choose} />}
           {route === 'spaces' && <SpacesPage project={project} />}
           {route === 'security' && <SecurityPage project={project} />}
-          {route === 'evolve' && <EvolvePage />}
+          {route === 'evolve' && <EvolvePage project={project} />}
         </main>
       </div>
     </I18n.Provider>

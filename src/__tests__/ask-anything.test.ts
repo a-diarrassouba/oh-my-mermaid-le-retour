@@ -75,7 +75,8 @@ describe('Claude for questions', () => {
     expect(args[args.indexOf('--tools') + 1]).toBe('Read,Grep,Glob');
     expect(args).toContain('--restricted');
     const deny = JSON.parse(args[args.indexOf('--settings') + 1]).permissions.deny as string[];
-    expect(deny).toEqual(expect.arrayContaining(['Read(**/.env)', 'Grep(**/.env.*)', 'Read(**/*.pem)']));
+    expect(deny).toEqual(expect.arrayContaining(['Read(**/.env)', 'Grep(**/.env.production)', 'Read(**/*.pem)']));
+    expect(deny.some(d => d.includes('example'))).toBe(false);
   });
 
   it('records the question in the guide', () => {

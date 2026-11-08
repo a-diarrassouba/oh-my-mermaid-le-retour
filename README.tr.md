@@ -113,7 +113,7 @@ Beceriler, **AI kodlama aracınızın içinde** (terminalde değil) çalıştır
 | `/prisme-scan` | Kod tabanını analiz eder → belgeleri ve karşılama rehberini yazar |
 | `/prisme-guide` | Bir soruyu yanıtlayan adım adım rehber yazar → görüntüleyicide oynatılır |
 | `/prisme-security` | Depo güvenlik denetimi: Claude kodu okur, yalnızca gerçek açıkları tutup açıklar, A–E notunu, tehdit modelini (element başına STRIDE) ve tasarım sorularını yazar, onayladıklarınızı düzeltir |
-| `/prisme-evolve` | Kodu sadeleştirme, hızlandırma ve ileri taşıma fikirleri; 3-5 benzer ürünün özellik ve tasarım karşılaştırması |
+| `/prisme-evolve` | Kodu sadeleştirme, hızlandırma ve ileri taşıma fikirleri; 3-5 benzer ürünün özellik ve tasarım karşılaştırması (görüntüleyicideki "Claude ile fikir bul" düğmesinden de) |
 | `/prisme-view` | Görüntüleyiciyi açar |
 
 ## Desteklenen AI Araçları

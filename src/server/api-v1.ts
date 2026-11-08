@@ -13,7 +13,7 @@ import { readConfig } from '../lib/config.js';
 import { readExplain, readIcon, type Explain, type Icon } from '../lib/explain.js';
 import { readSecurityReport, type SecurityReport } from '../lib/security.js';
 import { readAudit, type AuditReport } from '../lib/audit.js';
-import { currentAudit, startAudit, stopAudit } from './audit-job.js';
+import { currentJob, startJob, stopJob, type JobKind } from './skill-jobs.js';
 import { readEvolve } from '../lib/evolve.js';
 import { readThreats } from '../lib/threats.js';
 import { askSupported, getJob, runningJob, startAsk, validateQuestion } from './ask.js';
@@ -252,16 +252,18 @@ export function handleApiV1(req: IncomingMessage, res: ServerResponse, ctx: ApiC
     return true;
   }
 
-  // The audit by Claude, from the viewer: start it, follow it, stop it.
-  if (route === '/api/v1/security/audit') {
+  // The skill buttons of the viewer (audit, make it evolve): start, follow, stop.
+  const JOB_ROUTES: Record<string, JobKind> = { '/api/v1/security/audit': 'security', '/api/v1/evolve/run': 'evolve' };
+  const kind = JOB_ROUTES[route];
+  if (kind) {
     if (!ctx.ai) { json(res, { error: 'questions to Claude are turned off' }, 404); return true; }
     if (!fromThePage(req, ctx)) { json(res, { error: 'forbidden' }, 403); return true; }
-    if (req.method === 'GET') json(res, currentAudit());
+    if (req.method === 'GET') json(res, currentJob(kind));
     else if (req.method === 'POST') {
-      const job = startAudit(ctx.cwd ?? process.cwd());
+      const job = startJob(kind, ctx.cwd ?? process.cwd());
       if ('status' in job) json(res, { error: job.error, job: job.job }, job.status);
       else json(res, job, 202);
-    } else if (req.method === 'DELETE') json(res, { stopped: stopAudit() });
+    } else if (req.method === 'DELETE') json(res, { stopped: stopJob(kind) });
     else json(res, { error: 'method not allowed' }, 405);
     return true;
   }

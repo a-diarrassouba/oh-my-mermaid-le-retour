@@ -109,7 +109,7 @@ export const api = {
 export interface AuditJob {
   id: string; state: 'running' | 'done' | 'failed' | 'stopped'; startedAt: number; endedAt?: number;
   step: number; reads: number; error?: string;
-  events: { at: number; kind: 'step' | 'read' | 'search' | 'run' | 'agent' | 'note'; text: string }[];
+  events: { at: number; kind: 'step' | 'read' | 'search' | 'run' | 'agent' | 'web' | 'note'; text: string }[];
 }
 
 /** Calls that run something on the machine: the page token is required. */
@@ -122,11 +122,15 @@ async function pageCall<T>(path: string, method: string): Promise<{ ok: boolean;
   }
 }
 
-export const audit = {
-  start: () => pageCall<AuditJob & { job?: AuditJob }>('/api/v1/security/audit', 'POST'),
-  status: () => pageCall<AuditJob | null>('/api/v1/security/audit', 'GET'),
-  stop: () => pageCall<{ stopped: boolean }>('/api/v1/security/audit', 'DELETE'),
-};
+export type JobKind = 'security' | 'evolve';
+const JOB_URL: Record<JobKind, string> = { security: '/api/v1/security/audit', evolve: '/api/v1/evolve/run' };
+
+/** The skill buttons: run the audit, or find ideas to make the project evolve. */
+export const jobs = (kind: JobKind) => ({
+  start: () => pageCall<AuditJob & { job?: AuditJob }>(JOB_URL[kind], 'POST'),
+  status: () => pageCall<AuditJob | null>(JOB_URL[kind], 'GET'),
+  stop: () => pageCall<{ stopped: boolean }>(JOB_URL[kind], 'DELETE'),
+});
 
 /** The classic map viewer, opened on an element or a guide. */
 export function mapLink(target?: { element?: string; guide?: string }): string {
