@@ -5,8 +5,8 @@ import { Arrow, Book, CodeIcon, Sprout } from '../icons';
 
 const LEVELS: { id: Level; icon: JSX.Element; bg: string }[] = [
   { id: 'novice', icon: <Sprout />, bg: '#E3F3EA' },
-  { id: 'junior', icon: <Book />, bg: '#E0EEF4' },
-  { id: 'senior', icon: <CodeIcon />, bg: '#ECEAFD' },
+  { id: 'junior', icon: <Book />, bg: '#E4EBF4' },
+  { id: 'senior', icon: <CodeIcon />, bg: '#E4EBF4' },
 ];
 
 export function LevelPage({ level, onChoose }: { level: Level; onChoose: (l: Level) => void }) {
@@ -39,7 +39,7 @@ export function LevelPage({ level, onChoose }: { level: Level; onChoose: (l: Lev
       </section>
 
       <section className="go">
-        <a className="btn big" href={HREF.spaces} onClick={() => onChoose(level)}>{t('continue')} <Arrow /></a>
+        <a className="btn big" href={HREF.spaces} onClick={() => onChoose(level)}>{t('continue')} <span className="dot" aria-hidden="true"><Arrow /></span></a>
         <span className="meta">{t('chosen', { level: t(`level_${level}`) })}</span>
       </section>
     </div>

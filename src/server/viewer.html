@@ -20,7 +20,7 @@
   --font: 'Inter', system-ui, -apple-system, sans-serif;
   --mono: 'SF Mono', 'Fira Code', monospace;
   --sidebar-w: 400px;
-  --accent: #818cf8;
+  --accent: #f55364; /* Tasmane coral */
   --surface: #0a0a0a;
   --surface-2: #141414;
 }
@@ -258,7 +258,7 @@ body.light #ask-bar { background: rgba(255,255,255,0.85); }
 .sb-levels { display: inline-flex; gap: 2px; margin-bottom: 10px; background: #0b0b0b; border: 1px solid #1e1e1e; border-radius: 6px; padding: 2px; }
 .sb-level { border: 0; background: none; color: #888; font-family: var(--font); font-size: 11px; padding: 3px 10px; border-radius: 4px; cursor: pointer; }
 .sb-level:hover { color: #ddd; }
-.sb-level.on { background: var(--accent); color: #fff; }
+.sb-level.on { background: var(--accent); color: var(--bg); }
 .sb-deeper { margin-top: 8px; border-top: 1px dashed #2a2a2a; padding-top: 6px; }
 .sb-deeper summary { cursor: pointer; font-size: 11px; color: var(--accent); list-style: none; }
 .sb-deeper summary::before { content: '＋ '; }
@@ -273,7 +273,7 @@ body.light .sb-deeper { border-color: #ddd; }
 .empty-state { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; pointer-events: none; }
 .empty-state p { font-size: 12px; color: #444; line-height: 1.9; }
 /* Light mode */
-body.light { --bg: #f0f0f0; --border: #ddd; --border-hi: #bbb; --text: #1a1a1a; --text-mid: #555; --text-dim: #aaa; --accent: #4f46e5; --surface: #ffffff; --surface-2: #ebebeb; }
+body.light { --bg: #f0f0f0; --border: #ddd; --border-hi: #bbb; --text: #1a1a1a; --text-mid: #555; --text-dim: #aaa; --accent: #273c59; --surface: #ffffff; --surface-2: #ebebeb; }
 body.light header { background: #fff; }
 body.light #canvas-wrap { background-color: #f0f0f0; background-image: radial-gradient(circle, #ccc 1px, transparent 1px); }
 body.light #sidebar { background: #fafafa; }
