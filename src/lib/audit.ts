@@ -25,8 +25,10 @@ export const AREAS = [
   'dependencies', 'config', 'ci-cd', 'data-exposure', 'dos',
 ] as const;
 export const AREA_STATUSES = ['ok', 'issues', 'partial', 'not-applicable'] as const;
+/** What the contradictory verification said about a flaw the report keeps. */
+export const VERIFICATIONS = ['confirmed', 'contested', 'added'] as const;
 export const OWASP_CODES = ['A01', 'A02', 'A03', 'A04', 'A05', 'A06', 'A07', 'A08', 'A09', 'A10'] as const;
-const LIMITS = { summary: 2000, title: 160, what: 1200, impact: 800, evidence: 1500, fix: 1500, reason: 600, note: 600 };
+const LIMITS = { summary: 2000, title: 160, what: 1200, impact: 800, evidence: 1500, fix: 1500, reason: 600, note: 600, verificationNote: 600 };
 const MAX = { findings: 60, dismissed: 200 };
 
 export interface AuditFinding {
@@ -46,8 +48,22 @@ export interface AuditFinding {
   effort: (typeof EFFORTS)[number];
   /** Other files with the same flaw */
   also?: string[];
+  /** confirmed: the verifier could not refute it; contested: it tried, the judge kept it; added: the verifier found it */
+  verification?: (typeof VERIFICATIONS)[number];
+  /** Why the judge kept a contested flaw, or what the verifier found */
+  verificationNote?: string;
 }
 export interface Dismissed { title: string; file?: string; reason: string }
+/** How the audit was run: parallel auditors, then a contradictory verification. */
+export interface AuditProcess {
+  auditors: number;
+  verified: boolean;
+  /** Flaws the verifier disproved, now in "dismissed" */
+  refuted: number;
+  /** Flaws the auditors missed or wrongly dismissed, found by the verifier */
+  added: number;
+}
+
 export interface AreaCheck { area: (typeof AREAS)[number]; status: (typeof AREA_STATUSES)[number]; note: string }
 
 export interface AuditReport {
@@ -64,6 +80,7 @@ export interface AuditReport {
   findings: AuditFinding[];
   dismissed: Dismissed[];
   checked: AreaCheck[];
+  process?: AuditProcess;
 }
 
 const PENALTY: Record<Severity, number> = { critical: 30, high: 15, medium: 6, low: 2 };
@@ -142,14 +159,14 @@ export function parseAudit(source: string, cwd: string = process.cwd()): { audit
     return v;
   };
 
-  keys('audit', data, ['summary', 'findings', 'dismissed', 'checked']);
+  keys('audit', data, ['summary', 'findings', 'dismissed', 'checked', 'process']);
   const summary = text('audit', data.summary, 'summary');
 
   const findings: AuditFinding[] = [];
   for (const [i, raw] of items('findings').entries()) {
     const where = `finding ${i + 1}`;
     if (!isObj(raw)) { issues.push(`${where}: must be a map`); continue; }
-    keys(where, raw, ['title', 'severity', 'area', 'owasp', 'file', 'lines', 'what', 'impact', 'evidence', 'fix', 'effort', 'also']);
+    keys(where, raw, ['title', 'severity', 'area', 'owasp', 'file', 'lines', 'what', 'impact', 'evidence', 'fix', 'effort', 'also', 'verification', 'verificationNote']);
     const file = inScope(where, 'file', raw.file);
     let lines: string | undefined;
     if (raw.lines !== undefined) {
@@ -176,7 +193,11 @@ export function parseAudit(source: string, cwd: string = process.cwd()): { audit
       fix: text(where, raw.fix, 'fix'),
       effort: oneOf(where, 'effort', raw.effort, EFFORTS),
       ...(also?.length ? { also } : {}),
+      ...(raw.verification !== undefined ? { verification: oneOf(where, 'verification', raw.verification, VERIFICATIONS) } : {}),
+      ...(raw.verificationNote !== undefined ? { verificationNote: text(where, raw.verificationNote, 'verificationNote') } : {}),
     });
+    if ((raw.verification === 'contested' || raw.verification === 'added') && raw.verificationNote === undefined)
+      issues.push(`${where}: a "${raw.verification}" flaw needs a "verificationNote" (why it was kept, or what the verifier found)`);
   }
 
   const dismissed: Dismissed[] = [];
@@ -209,7 +230,23 @@ export function parseAudit(source: string, cwd: string = process.cwd()): { audit
     if (c && c.status === 'ok') issues.push(`area "${f.area}" is "ok" but finding "${f.title}" is in it: use "issues"`);
   }
 
-  return { audit: issues.length ? null : { summary, findings, dismissed, checked }, issues };
+  let process: AuditProcess | undefined;
+  if (data.process !== undefined) {
+    const p = data.process;
+    const count = (k: string, v: unknown) => {
+      if (typeof v !== 'number' || !Number.isInteger(v) || v < 0) { issues.push(`process: "${k}" must be a whole number`); return 0; }
+      return v;
+    };
+    if (!isObj(p)) issues.push('"process" must be a map: auditors, verified, refuted, added');
+    else {
+      keys('process', p, ['auditors', 'verified', 'refuted', 'added']);
+      if (typeof p.verified !== 'boolean') issues.push('process: "verified" must be true or false');
+      process = { auditors: count('auditors', p.auditors), verified: p.verified === true, refuted: count('refuted', p.refuted), added: count('added', p.added) };
+      if (process.verified && findings.some(f => !f.verification)) issues.push('process: "verified" is true, so every finding needs "verification"');
+    }
+  }
+
+  return { audit: issues.length ? null : { summary, findings, dismissed, checked, ...(process ? { process } : {}) }, issues };
 }
 
 function headCommit(cwd: string): string | null {

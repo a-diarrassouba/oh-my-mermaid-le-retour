@@ -93,3 +93,23 @@ describe('security audit', () => {
     expect(readAudit(dir)).toBeNull();
   });
 });
+
+describe('verified audit', () => {
+  it('keeps the trace of the contradictory verification', () => {
+    const verified = GOOD
+      .replace('    also: [src/routes/comments.ts]\n', '    also: [src/routes/comments.ts]\n    verification: contested\n    verificationNote: "Le vérificateur citait un middleware qui ne couvre pas cette route."\n')
+      .replace('dismissed:', 'process: { auditors: 2, verified: true, refuted: 1, added: 0 }\ndismissed:');
+    const { written, report, issues } = writeAudit(verified, dir);
+    expect(issues).toEqual([]);
+    expect(written).toBe(true);
+    expect(report?.process).toEqual({ auditors: 2, verified: true, refuted: 1, added: 0 });
+    expect(report?.findings[0]).toMatchObject({ verification: 'contested' });
+  });
+
+  it('asks for a reason when a flaw was contested, and a verdict on every flaw once verified', () => {
+    expect(parseAudit(GOOD.replace('    also: [src/routes/comments.ts]\n', '    also: [src/routes/comments.ts]\n    verification: added\n'), dir).issues)
+      .toContain('finding 1: a "added" flaw needs a "verificationNote" (why it was kept, or what the verifier found)');
+    expect(parseAudit(GOOD.replace('dismissed:', 'process: { auditors: 2, verified: true, refuted: 0, added: 0 }\ndismissed:'), dir).issues)
+      .toContain('process: "verified" is true, so every finding needs "verification"');
+  });
+});

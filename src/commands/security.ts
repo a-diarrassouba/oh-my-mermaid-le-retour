@@ -1,5 +1,6 @@
+import fs from 'node:fs';
 import path from 'node:path';
-import { ensureOmmForRead, ensureOmmForWrite } from '../lib/store.js';
+import { ensureOmmForRead, ensureOmmForWrite, getOmmDir } from '../lib/store.js';
 import { readThreats, writeThreats, type ThreatModel } from '../lib/threats.js';
 import { readAudit, writeAudit, type AuditReport } from '../lib/audit.js';
 import { runSecurity, writeSecurityReport, SEVERITIES, type SecurityReport } from '../lib/security.js';
@@ -26,6 +27,22 @@ function printReport(r: SecurityReport, file: string): void {
   out.push(msg('securityReport', { file: path.relative(process.cwd(), file) }));
   out.push(msg('securityLeads'));
   process.stdout.write(out.join('\n') + '\n');
+}
+
+/**
+ * The YAML to write: stdin with "-" (or nothing), else a file. A file in
+ * .prisme/.drafts/ (where the viewer's audit may write) is removed once accepted.
+ */
+async function readSource(arg: string | undefined): Promise<{ text: string; done: () => void } | { error: string }> {
+  if (arg === undefined || arg === '-') return { text: await readStdin(), done: () => {} };
+  const file = path.resolve(arg);
+  try {
+    if (!fs.lstatSync(file).isFile()) return { error: `"${arg}" is not a file` };
+  } catch {
+    return { error: `file "${arg}" not found` };
+  }
+  const drafts = path.join(getOmmDir(), '.drafts') + path.sep;
+  return { text: fs.readFileSync(file, 'utf-8'), done: () => { if (file.startsWith(drafts)) fs.rmSync(file, { force: true }); } };
 }
 
 async function readStdin(): Promise<string> {
@@ -61,9 +78,12 @@ async function commandThreats(args: string[]): Promise<void> {
     printThreats(model);
     return;
   }
-  if (sub === 'write' && (args[1] === undefined || args[1] === '-')) {
+  if (sub === 'write') {
     ensureOmmForWrite();
-    const { written, issues } = writeThreats(await readStdin());
+    const source = await readSource(args[1]);
+    if ('error' in source) { process.stderr.write(msg('error', { message: source.error }) + '\n'); process.exit(1); }
+    const { written, issues } = writeThreats(source.text);
+    if (written) source.done();
     if (!written) {
       process.stderr.write(msg('threatsRefused') + '\n' + issues.map(i => `  ${i}\n`).join(''));
       process.exit(1);
@@ -71,7 +91,7 @@ async function commandThreats(args: string[]): Promise<void> {
     process.stderr.write(msg('threatsWritten') + '\n');
     return;
   }
-  process.stderr.write(msg('usage', { usage: 'prisme security threats show | prisme security threats write -' }) + '\n');
+  process.stderr.write(msg('usage', { usage: 'prisme security threats show | prisme security threats write <file | ->' }) + '\n');
   process.exit(1);
 }
 
@@ -96,9 +116,12 @@ async function commandAudit(args: string[]): Promise<void> {
     printAudit(report);
     return;
   }
-  if (sub === 'write' && (args[1] === undefined || args[1] === '-')) {
+  if (sub === 'write') {
     ensureOmmForWrite();
-    const { written, issues, report } = writeAudit(await readStdin());
+    const source = await readSource(args[1]);
+    if ('error' in source) { process.stderr.write(msg('error', { message: source.error }) + '\n'); process.exit(1); }
+    const { written, issues, report } = writeAudit(source.text);
+    if (written) source.done();
     if (!written) {
       process.stderr.write(msg('auditRefused') + '\n' + issues.map(i => `  ${i}\n`).join(''));
       process.exit(1);
@@ -106,7 +129,7 @@ async function commandAudit(args: string[]): Promise<void> {
     process.stderr.write(msg('auditWritten', { grade: report!.grade, score: report!.score }) + '\n');
     return;
   }
-  process.stderr.write(msg('usage', { usage: 'prisme security audit show | prisme security audit write -' }) + '\n');
+  process.stderr.write(msg('usage', { usage: 'prisme security audit show | prisme security audit write <file | ->' }) + '\n');
   process.exit(1);
 }
 

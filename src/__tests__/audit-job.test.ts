@@ -7,7 +7,9 @@ import { handleApiV1 } from '../server/api-v1.js';
 describe('audit from the viewer', () => {
   it('lets Claude read and run only the audit commands, never secrets', () => {
     const args = buildAuditArgs('skill');
-    expect(args[args.indexOf('--tools') + 1]).toBe('Read,Grep,Glob,Bash');
+    expect(args[args.indexOf('--tools') + 1]).toBe('Read,Grep,Glob,Bash,Agent,Write');
+    // Writing is allowed in the drafts folder only.
+    expect(args.filter(a => /^(Write|Edit)\(/.test(a))).toEqual(['Write(./.prisme/.drafts/**)', 'Edit(./.prisme/.drafts/**)']);
     expect(args).toEqual(expect.arrayContaining(['Bash(prisme security:*)', 'Bash(git ls-files:*)', 'Bash(npm audit:*)', '--restricted', 'stream-json']));
     expect(args.some(a => /Bash\((rm|curl|npm install|git push)/.test(a))).toBe(false);
     const deny = JSON.parse(args[args.indexOf('--settings') + 1]).permissions.deny as string[];
