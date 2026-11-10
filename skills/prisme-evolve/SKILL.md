@@ -20,7 +20,11 @@ With `--code`, do level 1 only; with `--market`, level 2 only. Without arguments
 ## Prerequisites
 
 ```bash
-command -v prisme && prisme config language && prisme tree
+prisme config language
+```
+
+```bash
+prisme tree
 ```
 
 - If `prisme` is missing, tell the user to install it (see the README).

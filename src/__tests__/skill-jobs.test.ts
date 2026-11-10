@@ -78,7 +78,20 @@ describe('make it evolve from the viewer', () => {
     expect(finishEvolve(dir)).toBeNull();
     expect(readEvolve(dir)).toMatchObject({ code: [{ title: 'Cache' }], market: { products: [{ name: 'A' }] } });
     expect(fs.readdirSync(path.join(dir, '.prisme/.drafts'))).toEqual([]);
-    expect(finishEvolve(dir)).toMatch(/without writing the code ideas/);
+    expect(finishEvolve(dir)).toMatch(/without writing the ideas/);
     fs.rmSync(dir, { recursive: true, force: true });
+  });
+});
+
+describe('skill instructions', () => {
+  it('never ask for combined shell commands, refused from the viewer', async () => {
+    const fs = await import('node:fs');
+    for (const skill of ['prisme-security', 'prisme-evolve']) {
+      const text = fs.readFileSync(`skills/${skill}/SKILL.md`, 'utf-8');
+      const blocks = [...text.matchAll(/```bash\n([\s\S]*?)```/g)].map(m => m[1]);
+      for (const block of blocks) for (const line of block.split('\n').filter(Boolean))
+        expect(line, `${skill}: ${line}`).not.toMatch(/&&|;\s|\s\|\s|2>/);
+    }
+    expect(buildAuditPrompt('French')).toMatch(/Run each shell command on its own/);
   });
 });

@@ -9,6 +9,7 @@ import { readEvolve, writeEvolve } from '../lib/evolve.js';
 import { listElements } from '../lib/elements.js';
 import { getLanguage } from '../lib/language.js';
 import { getOmmDir } from '../lib/store.js';
+import { msg } from '../lib/messages.js';
 
 // The viewer's skill buttons: "Run the audit with Claude" (prisme-security)
 // and "Find ideas with Claude" (prisme-evolve). Claude Code runs the skill
@@ -98,6 +99,7 @@ export function buildAuditPrompt(language: string): string {
     '- If `prisme tree` shows no map, skip Steps 7 to 9 (the threat model needs the map) and say so in the summary.',
     '- Before each step, write a line with exactly "STEP <n>" (for example "STEP 3"), then work.',
     '- Use the Read, Grep and Glob tools to read the code; the shell only for the commands of the instructions (prisme, git ls-files, npm audit…).',
+    '- Run each shell command on its own: no `&&`, `;`, `|` or redirections, combined commands are refused here. If a command is refused, do not stop: read the files with Read, Grep and Glob instead and go on.',
     '- Launch the two auditors in parallel and then the verifier with the Agent tool, as the instructions say; tell each agent it may only read files and run those same commands.',
     '- Write the audit YAML to .prisme/.drafts/audit.yaml and the threat model YAML to .prisme/.drafts/threats.yaml with the Write tool (the only place you may write; multi-line shell commands are refused), then run `prisme security audit write .prisme/.drafts/audit.yaml` and `prisme security threats write .prisme/.drafts/threats.yaml`; when they are refused, fix the draft and run them again.',
     `- Write everything the reader sees in ${language}.`,
@@ -112,6 +114,7 @@ export function buildEvolveCodePrompt(language: string): string {
     'You run in the background from the prisme viewer: nobody can answer you, and you change no code.',
     '- Before each step, write a line with exactly "STEP <n>": STEP 0 understand the project from the map, STEP 1 read the code, STEP 2 choose the ideas, STEP 3 write them.',
     '- Use Read, Grep and Glob to read the code; the shell only for prisme tree, prisme read and git ls-files.',
+    '- Run each shell command on its own: no `&&`, `;`, `|` or redirections, combined commands are refused here. If a command is refused, do not stop: read the files with Read, Grep and Glob instead and go on.',
     '- Write with the Write tool (the only place you may write):',
     '  1. .prisme/.drafts/evolve-code.yaml: a YAML map with "summary" (3 to 5 sentences: where the project stands, the ideas to do first) and "code" (the ideas, in the format of the instructions).',
     '  2. .prisme/.drafts/evolve-brief.md: a public description of the product for someone who will search the web for similar products: what it does, for whom, its main features and how it is used, in 10 lines at most. No code, no file names, no secrets, nothing internal.',
@@ -245,7 +248,7 @@ function runPhase(job: SkillJob, phase: Phase, cwd: string, deadline: number): P
     };
     const timer = setTimeout(() => {
       try { if (child.pid) process.kill(-child.pid, 'SIGTERM'); } catch { /* already gone */ }
-      done('it took longer than an hour');
+      done(msg('jobTimeout'));
     }, Math.max(0, deadline - Date.now()));
     child.on('error', e => done(e.message));
     child.on('close', code => done(code === 0 ? null : explainFailure(`${stderr}\n${result}`)));
@@ -253,16 +256,25 @@ function runPhase(job: SkillJob, phase: Phase, cwd: string, deadline: number): P
   });
 }
 
+/** A failure, with what Claude said last: usually the reason it stopped. */
+function fail(job: SkillJob, error: string): void {
+  const last = [...job.events].reverse().find(e => e.kind === 'note');
+  job.state = 'failed';
+  job.error = last ? `${error} ${msg('jobClaudeSaid', { text: last.text })}` : error;
+  job.endedAt = Date.now();
+}
+
 async function run(job: SkillJob, plan: Plan, cwd: string): Promise<void> {
   const deadline = job.startedAt + JOB_TIMEOUT_MS;
   for (const phase of plan.phases) {
     const error = await runPhase(job, phase, cwd, deadline);
     if (job.state !== 'running') return; // stopped meanwhile
-    if (error) { job.state = 'failed'; job.error = error; job.endedAt = Date.now(); return; }
+    if (error) return fail(job, error);
   }
   const error = plan.finish();
+  if (error) return fail(job, error);
   job.endedAt = Date.now();
-  if (error) { job.state = 'failed'; job.error = error; } else job.state = 'done';
+  job.state = 'done';
 }
 
 function auditPlan(cwd: string, skill: string): Plan {
@@ -272,7 +284,7 @@ function auditPlan(cwd: string, skill: string): Plan {
     // Done only when Claude actually wrote a new audit.
     finish: () => {
       const audit = readAudit(cwd);
-      return audit && Date.parse(audit.date) >= startedAt ? null : 'Claude finished without writing the audit';
+      return audit && Date.parse(audit.date) >= startedAt ? null : msg('jobNoAudit');
     },
   };
 }
@@ -285,19 +297,19 @@ function readDraft(cwd: string, name: string): string | null {
 /** Both levels of "make it evolve", merged and checked like `prisme evolve write`; an error message or null. */
 export function finishEvolve(cwd: string): string | null {
   const code = readDraft(cwd, 'evolve-code.yaml');
-  if (!code) return 'Claude finished without writing the code ideas';
+  if (!code) return msg('jobNoIdeas');
   let merged: Record<string, unknown>;
   try {
     const a = YAML.parse(code) ?? {};
     const b = YAML.parse(readDraft(cwd, 'evolve-market.yaml') ?? '') ?? {};
     merged = { summary: a.summary, code: a.code ?? [], ...(b.market ? { market: b.market } : {}) };
   } catch (e) {
-    return `a draft is not valid YAML: ${(e as Error).message.split('\n')[0]}`;
+    return msg('jobBadDraft', { reason: (e as Error).message.split('\n')[0] });
   }
   const { written, issues } = writeEvolve(YAML.stringify(merged), cwd);
-  if (!written) return `the ideas were refused: ${issues.slice(0, 5).join('; ')}`;
+  if (!written) return msg('jobIdeasRefused', { reasons: issues.slice(0, 5).join('; ') });
   for (const name of ['evolve-code.yaml', 'evolve-market.yaml', 'evolve-brief.md']) fs.rmSync(draft(cwd, name), { force: true });
-  return readEvolve(cwd) ? null : 'the ideas could not be saved';
+  return readEvolve(cwd) ? null : msg('jobNotSaved');
 }
 
 function evolvePlan(cwd: string, skill: string): Plan {
@@ -334,7 +346,7 @@ export function startJob(kind: JobKind, cwd: string = process.cwd()): SkillJob |
     if (job.state !== 'running') return;
     stopJob(kind);
     job.state = 'failed';
-    job.error = 'it took longer than an hour';
+    job.error = msg('jobTimeout');
   }, JOB_TIMEOUT_MS + 3 * KILL_GRACE_MS).unref();
   return job;
 }
