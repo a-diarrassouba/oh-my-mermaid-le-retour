@@ -30,17 +30,22 @@ With `--audit-only`, do Steps 0 to 6 and 10; with `--threats-only`, Steps 7 to 1
 - **Confirm before you report.** A flaw is confirmed only when you have read the code path and can say how it would be exploited here. When in doubt, read more; if still in doubt, it is not a finding — mention it in the summary as a point to check.
 - **Severity follows the [rubric](#severity-rubric)**, not the label of a tool or an advisory.
 - Write everything the reader sees in the project's language (`prisme config language`).
+- **One shell command at a time**: no `&&`, `;`, `|` or redirections. Combined commands may be refused (they always are when the audit runs from the viewer). Read files with the Read, Grep and Glob tools rather than the shell.
+- **A refused command never stops the audit**: get the information another way (read the files, the map) and go on; say in the summary what could not be checked.
 
 ## Step 0: Prerequisites and Scope
 
+Run each command on its own:
+
 ```bash
-command -v prisme && prisme config language
-git rev-parse --show-toplevel
-git ls-files | wc -l
-git ls-files | grep -v '^\.claude/' | sed 's|/[^/]*$||' | sort | uniq -c | sort -rn | head -40
+prisme config language
 ```
 
-Note the root, the number of files and the main folders. If `prisme security audit show` answers `invalid field` (or `champ invalide`), the CLI is too old: tell the user to run `prisme update`, then stop.
+```bash
+prisme security scope
+```
+
+The second prints the root, the number of files git tracks there (without `.claude/`, dependencies and builds) and the main folders. Note them. If `prisme security audit show` answers `invalid field` (or `champ invalide`), the CLI is too old: tell the user to run `prisme update`, then stop.
 
 On a large repository (more than ~2,000 files), tell the user the audit focuses on what runs in production and handles outside input first; areas only skimmed get the status `partial`. Tell the user too that the audit uses three agents (two auditors, a verifier) and takes a while.
 
@@ -77,7 +82,7 @@ It lists patterns (secrets, risky calls, CI and Docker practices). Many are fals
 Dependencies with known flaws (production dependencies only):
 
 ```bash
-npm audit --omit=dev --json 2>/dev/null | head -c 200000
+npm audit --omit=dev --json
 ```
 
 (Use the project's package manager when it is not npm: `pnpm audit --prod --json`, `yarn npm audit --environment production --json`; for Python, Go, Rust… read the lockfile and only report what you can check. Install nothing.)

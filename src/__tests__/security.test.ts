@@ -179,3 +179,13 @@ describe('docs', () => {
     expect(scanText('docs/setup.md', `export KEY=${AWS}`).map(f => f.rule)).toEqual(['secret-in-code']);
   });
 });
+
+describe('paths with accents', () => {
+  it('come back from git as they are', async () => {
+    const { projectFiles } = await import('../lib/security.js');
+    write('1 - Spécifications/cahier.md', '# cahier');
+    git('init', '-q');
+    git('add', '-A');
+    expect(projectFiles(dir)).toContain('1 - Spécifications/cahier.md');
+  });
+});

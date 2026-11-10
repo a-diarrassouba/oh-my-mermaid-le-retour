@@ -299,7 +299,8 @@ const MAX_FILES = 20_000;
 
 function git(args: string[], cwd: string): string | null {
   try {
-    return execFileSync('git', args, { cwd, encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 64 * 1024 * 1024 });
+    // core.quotePath=false: paths with accents come back as they are, not as "Sp\303\251cifications".
+    return execFileSync('git', ['-c', 'core.quotePath=false', ...args], { cwd, encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 64 * 1024 * 1024 });
   } catch {
     return null;
   }

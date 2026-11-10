@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { ensureOmmForRead, ensureOmmForWrite, getOmmDir } from '../lib/store.js';
 import { readThreats, writeThreats, type ThreatModel } from '../lib/threats.js';
-import { readAudit, writeAudit, type AuditReport } from '../lib/audit.js';
+import { auditScope, readAudit, writeAudit, type AuditReport } from '../lib/audit.js';
 import { runSecurity, writeSecurityReport, SEVERITIES, type SecurityReport } from '../lib/security.js';
 import { msg } from '../lib/messages.js';
 
@@ -133,8 +133,31 @@ async function commandAudit(args: string[]): Promise<void> {
   process.exit(1);
 }
 
-/** prisme security [--json] [--no-tools] | prisme security audit … | prisme security threats … */
+/**
+ * prisme security scope: what the audit covers, in one command (no pipes):
+ * the root, the number of files git tracks there, the main folders.
+ */
+function commandScope(): void {
+  const root = process.cwd();
+  const files = [...auditScope(root)];
+  const folders = new Map<string, number>();
+  for (const f of files) {
+    const parts = f.split('/');
+    const key = parts.length > 2 ? parts.slice(0, 2).join('/') : parts.length === 2 ? parts[0] : '.';
+    folders.set(key, (folders.get(key) ?? 0) + 1);
+  }
+  const top = [...folders].sort((a, b) => b[1] - a[1]).slice(0, 40);
+  process.stdout.write([
+    msg('scopeRoot', { root }),
+    msg('scopeFiles', { count: files.length }),
+    msg('scopeFolders'),
+    ...top.map(([dir, n]) => `  ${String(n).padStart(5)}  ${dir}`),
+  ].join('\n') + '\n');
+}
+
+/** prisme security [--json] [--no-tools] | prisme security scope | prisme security audit … | prisme security threats … */
 export async function commandSecurity(args: string[]): Promise<void> {
+  if (args[0] === 'scope') return commandScope();
   if (args[0] === 'threats') return commandThreats(args.slice(1));
   if (args[0] === 'audit') return commandAudit(args.slice(1));
   ensureOmmForWrite();
