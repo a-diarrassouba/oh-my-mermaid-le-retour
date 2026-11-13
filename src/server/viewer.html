@@ -419,6 +419,7 @@ body.light .reg-node:hover .nshape { stroke: #000 !important; }
 .sb-step[hidden] { display: none; }
 .sb-step b { display: block; font-family: var(--mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); font-weight: 500; margin-bottom: 2px; }
 .sb-step .sb-say { margin: 4px 0 0; }
+.sb-step .sb-levels { margin: 6px 0 2px; }
 .sb-step .sb-say code { background: var(--bg); padding: 1px 5px; border-radius: 3px; font-family: var(--mono); font-size: .88em; font-weight: 400; }
 /* Guide mode: on the step's element, the panel tells the step only. The
    full sheet stays one click away (.show-full). */
@@ -812,6 +813,15 @@ function setReaderLevel(level) {
   readerLevel = level;
   safeStorageSet(LEVEL_KEY, level);
   if (sidebar.classList.contains('open') && sbOpenKey) openSidebar(sbOpenKey);
+  if (activeGuide) paintGuideStep(); // only on a click, once the whole script ran
+}
+// A text at the reader's level (`levels.novice`, `levels.junior`), else the base (senior) text.
+function atLevel(obj, field) {
+  return (readerLevel !== 'senior' && obj.levels?.[readerLevel]?.[field]) || obj[field];
+}
+function levelTabs() {
+  const tabs = LEVELS.map(l => `<button type="button" class="sb-level${l === readerLevel ? ' on' : ''}" data-level="${l}">${esc(t('level' + l[0].toUpperCase() + l.slice(1)))}</button>`).join('');
+  return `<div class="sb-levels" role="group" aria-label="${esc(t('levelsAria'))}">${tabs}</div>`;
 }
 
 // ── flowchart parser ──────────────────────────────────────
@@ -1568,7 +1578,6 @@ let threatModel = null;
 function explainSection(data, md) {
   const ex = data.explain;
   if (!ex || !ex.novice) return '';
-  const tabs = LEVELS.map(l => `<button type="button" class="sb-level${l === readerLevel ? ' on' : ''}" data-level="${l}">${esc(t('level' + l[0].toUpperCase() + l.slice(1)))}</button>`).join('');
   let body;
   if (readerLevel === 'novice') {
     body = md(ex.novice) + (ex.deeper ? `<details class="sb-deeper"><summary>${esc(t('deeper'))}</summary>${md(ex.deeper)}</details>` : '');
@@ -1577,7 +1586,7 @@ function explainSection(data, md) {
   } else {
     body = md(data.description);
   }
-  return `<div class="sb-sec"><div class="sb-levels" role="group" aria-label="${esc(t('levelsAria'))}">${tabs}</div><div class="sb-sec-body">${body}</div></div>`;
+  return `<div class="sb-sec">${levelTabs()}<div class="sb-sec-body">${body}</div></div>`;
 }
 
 function openSidebar(cls) {
@@ -1600,7 +1609,7 @@ function openSidebar(cls) {
   html += explained || sec(esc(t('description')),md(data.description));
   // Threats on this element, from the threat model of /prisme-security.
   const elThreats = (threatModel && threatModel.threats || []).filter(th => th.element === cls);
-  if (elThreats.length) html += sec(esc(t('threats')), elThreats.map(th => `<div class="sb-threat"><span class="sec-chip th-st-${esc(th.status)}">${esc(t('thStatus_' + th.status))}</span> <b>${esc(th.title)}</b><br>${strideChips(th.stride)}</div>`).join(''));
+  if (elThreats.length) html += sec(esc(t('threats')), elThreats.map(th => `<div class="sb-threat"><span class="sec-chip th-st-${esc(th.status)}">${esc(t('thStatus_' + th.status))}</span> <b>${esc(atLevel(th, 'title'))}</b><br>${strideChips(th.stride)}</div>`).join(''));
   html+=sec(esc(t('constraint')),md(data.constraint));
   html+=sec(esc(t('concern')),md(data.concern),'sb-concern');
   html+=sec(esc(t('context')),md(data.context));
@@ -2328,12 +2337,16 @@ function paintGuideStep() {
   const g = activeGuide.guide, cur = g.steps[guideStep];
   sbStep.hidden = selectedCls !== cur.element;
   const head = [t('stepOf', { i: guideStep + 1, n: g.steps.length }), partLabel(g, cur)].filter(Boolean).join(' · ');
-  const details = cur.details ? `<div class="sb-details">${safeMarkdown(cur.details)}</div>` : '';
+  const curDetails = atLevel(cur, 'details');
+  const details = curDetails ? `<div class="sb-details">${safeMarkdown(curDetails)}</div>` : '';
   const full = sidebar.classList.contains('show-full');
   // `say` is plain text; only `code` spans are shown as code, after escaping.
-  const say = esc(cur.say).replace(/`([^`]+)`/g, '<code>$1</code>');
-  sbStep.innerHTML = `<b>${esc(head)}</b><p class="sb-say">${say}</p>${details}`
+  const say = esc(atLevel(cur, 'say')).replace(/`([^`]+)`/g, '<code>$1</code>');
+  // The level tabs show only when the guide was written with the three levels.
+  const tabs = g.steps.some(s => s.levels) ? levelTabs() : '';
+  sbStep.innerHTML = `<b>${esc(head)}</b>${tabs}<p class="sb-say">${say}</p>${details}`
     + `<button type="button" class="sb-full-toggle">${esc(t(full ? 'hideFull' : 'showFull'))}</button>`;
+  sbStep.querySelectorAll('[data-level]').forEach(b => { b.onclick = () => setReaderLevel(b.dataset.level); });
   sbStep.querySelector('.sb-full-toggle').onclick = () => {
     sidebar.classList.toggle('show-full');
     syncFullToggle();
@@ -2737,10 +2750,10 @@ function evolveItem(i) {
   const chips = `<span class="sec-chip">${esc(t('evEffort', { v: t('lvl_' + i.effort) }))}</span><span class="sec-chip${i.impact === 'high' ? ' sev-high' : ''}">${esc(t('evImpact', { v: t('lvl_' + i.impact) }))}</span>`;
   const links = (i.elements || []).map(p => `<button type="button" class="sec-link" data-go="${esc(p)}">${esc(t('secSeeMap', { name: displayTitle(p) }))}</button>`).join('');
   return `<details class="sec-item">
-    <summary><span class="sec-item-title">${esc(i.title)}</span>${chips}</summary>
+    <summary><span class="sec-item-title">${esc(atLevel(i, 'title'))}</span>${chips}</summary>
     <div class="sec-item-body">
-      <div><b>${esc(t('evWhy'))}</b>${esc(i.why)}</div>
-      <div class="ev-md"><b>${esc(t('evHow'))}</b>${safeMarkdown(i.how)}</div>
+      <div><b>${esc(t('evWhy'))}</b>${esc(atLevel(i, 'why'))}</div>
+      <div class="ev-md"><b>${esc(t('evHow'))}</b>${safeMarkdown(atLevel(i, 'how'))}</div>
       ${i.seenIn && i.seenIn.length ? `<div>${esc(t('evSeenIn', { names: i.seenIn.join(', ') }))}</div>` : ''}
       ${i.files && i.files.length ? `<div class="sec-item-where">${esc(t('evFiles', { files: i.files.join(', ') }))}</div>` : ''}
       ${links ? `<div class="sec-links">${links}</div>` : ''}
@@ -2776,7 +2789,7 @@ function renderEvolve() {
   evolveEl.innerHTML = `<div class="sec-box">
     <div class="sec-nav"><button type="button" class="hbtn" data-act="home">${esc(t('secBack'))}</button><button type="button" class="hbtn" data-act="map">${esc(t('secMap'))}</button></div>
     <div class="ev-head"><div class="sec-title">🌱 ${esc(t('tileEvolve'))}</div><div class="sec-sub">${esc(t('evDate', { date }))}</div></div>
-    <div class="sec-sub ev-md">${safeMarkdown(r.summary || '')}</div>
+    <div class="sec-sub ev-md">${safeMarkdown(atLevel(r, 'summary') || '')}</div>
     <div class="ev-tabs">${tab('code', 'evCodeTab')}${tab('market', 'evMarketTab')}</div>
     ${body}
   </div>`;
@@ -2813,7 +2826,7 @@ function securityItem(f) {
   const links = (f.elements || []).map(p =>
     `<button type="button" class="sec-link" data-go="${esc(p)}">${esc(t('secSeeMap', { name: displayTitle(p) }))}</button>`).join('');
   return `<details class="sec-item">
-    <summary><span class="sec-chip sev-${esc(f.severity)}">${esc(t('sev_' + f.severity))}</span><span class="sec-item-title">${esc(f.title)}</span>${f.owasp ? `<a class="sec-chip sec-owasp" href="https://owasp.org/Top10/" target="_blank" rel="noopener noreferrer" title="${esc(f.owasp)}">${esc(t('secOwasp', { code: f.owasp.split(':')[0] }))}</a>` : ''}<span class="sec-item-where">${esc(where)}</span></summary>
+    <summary><span class="sec-chip sev-${esc(f.severity)}">${esc(t('sev_' + f.severity))}</span><span class="sec-item-title">${esc(f.title)}</span>${f.owasp ? `<a class="sec-chip sec-owasp" href="https://owasp.org/Top10/2021/" target="_blank" rel="noopener noreferrer" title="${esc(f.owasp)}">${esc(t('secOwasp', { code: f.owasp.split(':')[0] }))}</a>` : ''}<span class="sec-item-where">${esc(where)}</span></summary>
     <div class="sec-item-body">
       ${f.match ? `<div class="sec-match">${esc(f.match)}</div>` : ''}
       <div><b>${esc(t('secWhy'))}</b>${esc(f.why)}</div>
@@ -2848,11 +2861,11 @@ const levelWord = v => t({ low: 'lvl_low', medium: 'lvl_medium', high: 'lvl_high
 function threatItem(th) {
   const control = th.status === 'mitigated' ? 'thProtects' : th.status === 'accepted' ? 'thAccepted' : 'thTodo';
   return `<details class="sec-item">
-    <summary><span class="sec-chip th-st-${esc(th.status)}">${esc(t('thStatus_' + th.status))}</span><span class="sec-item-title">${esc(th.title)}</span>${strideChips(th.stride)}</summary>
+    <summary><span class="sec-chip th-st-${esc(th.status)}">${esc(t('thStatus_' + th.status))}</span><span class="sec-item-title">${esc(atLevel(th, 'title'))}</span>${strideChips(th.stride)}</summary>
     <div class="sec-item-body">
-      <div>${esc(th.scenario)}</div>
+      <div>${esc(atLevel(th, 'scenario'))}</div>
       <div class="sec-chips"><span class="sec-chip">${esc(t('thLikelihood', { v: levelWord(th.likelihood) }))}</span><span class="sec-chip${th.impact === 'high' ? ' sev-high' : ''}">${esc(t('thImpact', { v: levelWord(th.impact) }))}</span></div>
-      <div><b>${esc(t(control))}</b>${esc(th.control)}</div>
+      <div><b>${esc(t(control))}</b>${esc(atLevel(th, 'control'))}</div>
       ${th.files && th.files.length ? `<div class="sec-item-where">${esc(th.files.join(', '))}</div>` : ''}
       <div class="sec-links"><button type="button" class="sec-link" data-go="${esc(th.element)}">${esc(t('secSeeMap', { name: displayTitle(th.element) }))}</button></div>
     </div>
@@ -2869,10 +2882,10 @@ function threatsSection(m) {
   const threats = [...byEl].map(([el, list]) => `<div><div class="sec-group-title">${esc(displayTitle(el))} · ${list.length}</div>${list.map(threatItem).join('')}</div>`).join('');
   const themes = new Map();
   for (const q of m.questions || []) themes.set(q.theme, [...(themes.get(q.theme) || []), q]);
-  const questions = [...themes].map(([theme, list]) => `<div class="q-theme"><div class="sec-group-title">${esc(theme)}</div>${list.map(q => `<div class="q-item"><b>${esc(q.question)}</b><span class="sec-chip ${q.status === 'answered' ? 'th-st-mitigated' : 'th-st-open'}" style="align-self:flex-start">${esc(t(q.status === 'answered' ? 'qAnswered' : 'qOpen'))}</span>${q.answer ? `<span>${esc(q.answer)}</span>` : ''}</div>`).join('')}</div>`).join('');
+  const questions = [...themes].map(([theme, list]) => `<div class="q-theme"><div class="sec-group-title">${esc(theme)}</div>${list.map(q => `<div class="q-item"><b>${esc(atLevel(q, 'question'))}</b><span class="sec-chip ${q.status === 'answered' ? 'th-st-mitigated' : 'th-st-open'}" style="align-self:flex-start">${esc(t(q.status === 'answered' ? 'qAnswered' : 'qOpen'))}</span>${q.answer ? `<span>${esc(atLevel(q, 'answer'))}</span>` : ''}</div>`).join('')}</div>`).join('');
   return `<div class="sec-title" style="font-size:18px">${esc(t('thTitle'))}</div>
     <div class="sec-sub">${esc(t('thIntro'))}</div>
-    ${m.summary ? `<div class="sec-sub ev-md">${safeMarkdown(m.summary)}</div>` : ''}
+    ${m.summary ? `<div class="sec-sub ev-md">${safeMarkdown(atLevel(m, 'summary'))}</div>` : ''}
     ${assets}${bounds}${threats}
     ${questions ? `<div class="sec-title" style="font-size:18px">${esc(t('qTitle'))}</div><div class="sec-sub">${esc(t('qIntro'))}</div>${questions}` : ''}`;
 }

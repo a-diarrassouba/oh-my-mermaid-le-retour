@@ -30,6 +30,7 @@ With `--audit-only`, do Steps 0 to 6 and 10; with `--threats-only`, Steps 7 to 1
 - **Confirm before you report.** A flaw is confirmed only when you have read the code path and can say how it would be exploited here. When in doubt, read more; if still in doubt, it is not a finding — mention it in the summary as a point to check.
 - **Severity follows the [rubric](#severity-rubric)**, not the label of a tool or an advisory.
 - Write everything the reader sees in the project's language (`prisme config language`).
+- **Three reader levels.** The viewer lets each reader pick beginner, junior or senior, and every text follows. The base texts (`summary`, `what`, `impact`, `fix`, `scenario`…) are the **senior** version: precise and technical. In the final drafts (Steps 6 and 9, not in the auditors' answers), add `levels.novice` and `levels.junior` with the same facts in other words — see [Three Levels](#three-levels).
 - **One shell command at a time**: no `&&`, `;`, `|` or redirections. Combined commands may be refused (they always are when the audit runs from the viewer). Read files with the Read, Grep and Glob tools rather than the shell.
 - **A refused command never stops the audit**: get the information another way (read the files, the map) and go on; say in the summary what could not be checked.
 
@@ -119,6 +120,8 @@ The context of **this** project decides, not the label of a tool or an advisory:
 - **high**: exploitable with little effort or a common condition, significant impact: a signed-in user can read or change other users' data (IDOR), stored XSS, a secret for a non-production service with real access, a reachable vulnerable dependency with a known exploit.
 - **medium**: a real weakness with limited impact or hard to exploit: no rate limit on sign-in, missing security headers that matter here, a vulnerable dependency reachable only under a specific configuration, verbose errors exposing internals.
 - **low**: hardening and good practice: no `SECURITY.md`, unpinned CI actions, container running as root, no dependency update bot.
+
+`owasp` is the code of the finding's category in the **OWASP Top 10, 2021 edition** (A01 Broken Access Control, A02 Cryptographic Failures, A03 Injection, A04 Insecure Design, A05 Security Misconfiguration, A06 Vulnerable and Outdated Components, A07 Identification and Authentication Failures, A08 Software and Data Integrity Failures, A09 Security Logging and Monitoring Failures, A10 SSRF), not the 2025 one: the viewer links to the 2021 edition.
 
 prisme turns the severities into the grade: 100 minus 30 per critical, 15 per high, 6 per medium (30 at most) and 2 per low (10 at most); A ≥ 90, B ≥ 75, C ≥ 60, D ≥ 40, else E; any critical caps the grade at D, any high at C.
 
@@ -217,7 +220,10 @@ The draft (here with an example finding):
 
 ```yaml
 summary: |
-  (4 to 6 sentences, plain words: what the project exposes, the overall state, the two or three things to fix first, what the verification changed, and what was not checked deeply)
+  (4 to 6 sentences: what the project exposes, the overall state, the two or three things to fix first, what the verification changed, and what was not checked deeply)
+levels:
+  novice: { summary: "(the same, for someone who has never coded: everyday images, no jargon)" }
+  junior: { summary: "(the same, for a developer new to the project: technical words explained once)" }
 process: { auditors: 2, verified: true, refuted: 1, added: 1 }
 findings:
   - title: "Any signed-in user can read other users' tickets"
@@ -233,6 +239,15 @@ findings:
     effort: small
     also: [apps/api/src/routes/comments.ts]
     verification: confirmed
+    levels:
+      novice:
+        what: "Each ticket is like a locker with a number on it. The app opens any locker whose number you give, without checking it is yours."
+        impact: "Someone who types another number in the address bar reads other companies' tickets."
+        fix: "Before opening the locker, check that it belongs to the person asking; otherwise answer \"not found\"."
+      junior:
+        what: "GET /tickets/:id loads the ticket with findUnique on the id only: the auth middleware checks that a user is signed in, not that the ticket is theirs (an IDOR)."
+        impact: "Any signed-in user can enumerate ids and read every ticket."
+        fix: "Filter on ownerId: req.user.id in the where clause (tickets.ts:44), return 404 otherwise, and do the same in PATCH and DELETE."
 dismissed:
   - title: "Database password in .env.example"
     file: apps/api/.env.example
@@ -243,6 +258,8 @@ checked:
     note: "No real secret in tracked files; .env is ignored."
   # … one entry for every area: ok, issues, partial (looked at quickly) or not-applicable (with why)
 ```
+
+Every finding has `levels.novice` and `levels.junior`, each with `what`, `impact` and `fix`; `evidence`, `checked` and `dismissed` stay as they are (they are read by the people who check the audit).
 
 It is refused, with the reasons, when a file is not in this repository, lines do not exist, an area is missing from `checked` or marked `ok` while it has a finding, a `contested` or `added` flaw has no `verificationNote`, or a required text is missing. Fix the draft and run the command again; once accepted, the draft is removed and the previous audit is replaced.
 
@@ -273,6 +290,9 @@ The draft:
 ```yaml
 summary: |
   (3 to 5 sentences)
+levels:
+  novice: { summary: "…" }
+  junior: { summary: "…" }
 assets: ["…"]
 boundaries:
   - from: overall-architecture/browser
@@ -288,15 +308,31 @@ threats:
     status: open
     control: "…"
     files: [apps/api/src/routes/tickets.ts]
+    levels:
+      novice: { title: "…", scenario: "…", control: "…" }
+      junior: { title: "…", scenario: "…", control: "…" }
 questions:
   - theme: "…"
     question: "…"
     status: answered
     answer: "…"
     elements: [overall-architecture/api]
+    levels:
+      novice: { question: "…", answer: "…" }
+      junior: { question: "…", answer: "…" }
 ```
 
-Element paths are copied from `prisme tree`; it is refused with the reasons otherwise.
+Element paths are copied from `prisme tree`; it is refused with the reasons otherwise. Every threat and every question has `levels.novice` and `levels.junior` (`answer` only when the question is answered).
+
+## Three Levels
+
+The same facts, three ways to say them; never a fact in one level that the others do not support.
+
+- **senior** (the base texts): precise and technical — routes, functions, files and lines, the CWE or OWASP name when it helps.
+- **junior** (`levels.junior`): a developer new to this project. Technical words are fine but each one is explained once ("an IDOR: the object is found by its id without checking who asks"); name the file to open and the function to change.
+- **novice** (`levels.novice`): someone who has never coded. Start with an image from everyday life (a locker, a key, a guest list, a letter opened on the way), then what could really happen to the users, in plain words. No file names, no code, no acronyms; the real word at most once, explained.
+
+Keep each level within the limits of its base field. Write them last, from the final texts, so the three say the same thing.
 
 ## Step 10: Report and Offer Fixes
 
@@ -308,5 +344,7 @@ Tell the user, in the project's language and at their level (ask once if you do 
 4. **What was not checked deeply** (areas marked `partial`).
 
 Then offer the fixes as a numbered list and **change code only for the ones the user approves**. A real secret: first revoke it at the service that issued it and create a new one; removing it from the code is not enough (it stays in git history). After fixes, run Steps 3 to 6 again on the changed areas and write the audit again so the grade reflects them.
+
+If the user asks how the grade is computed, the Security page has a "How is your security score computed?" button: the steps, the formula, the 13 areas, OWASP Top 10 and STRIDE, with their sources.
 
 Suggest `prisme view`: the Security page shows the grade, the flaws, the dismissed leads, the areas checked and the threat model; "See … on the map" opens the element that holds a file.

@@ -76,6 +76,8 @@ While a guide runs, the viewer's panel shows **only the step**, not the element'
   3. **Words to know**, only when the step introduces a new term (not one an earlier step already defined): define it in plain words. Point to a glossary entry only if `prisme tree glossary` lists it; never cite one that does not exist.
   4. **What to remember**, in one sentence.
 
+**Three levels.** The viewer lets each reader pick beginner, junior or senior. `say` and `details` are the senior version; add to every step `levels.novice` (an everyday image first, then the real words one at a time, no jargon) and `levels.junior` (technical words explained once, files to open), each with its own `say` and `details`: same facts, other words.
+
 **Show the code** when the answer is in a file: add `file` to the step, with a path relative to the project and the lines to light (5 to 60 of them). The viewer opens the file next to the map, scrolled to those lines; `details` then explains what they do, line by line when it helps. Read the file first: the lines must exist and show what you say. Files that may hold secrets (`.env`, keys) are refused.
 
 Write for the guide's audience: `newcomer` defines every term; `developer` may name files and functions; `product` uses business words only and says what the step changes for users. Do not copy the element's description: explain the step, in the order of the walk. Never state something the `.prisme/` docs or the code do not show.
@@ -127,6 +129,7 @@ YAML
 | `steps[].part` | no | Chapter name; all steps or none, steps of one part together |
 | `steps[].say` | yes | What to notice, 1–2 sentences: the step's headline |
 | `steps[].details` | no, but expected | The explanation, Markdown, a few short paragraphs (use a `\|` block) |
+| `steps[].levels` | expected | `novice` and `junior`, each with `say` and `details`; the base texts are the senior level |
 | `steps[].file` | no | A project file to open next to the map: `src/a.ts`, or `{ path: src/a.ts, lines: "12-40" }` |
 | `question` | no | The reader's question, for a guide that answers one (the viewer lists these under "Your questions") |
 

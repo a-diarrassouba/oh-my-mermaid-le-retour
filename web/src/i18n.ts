@@ -80,6 +80,17 @@ const en = {
   area_secrets: 'Secrets', area_auth: 'Sign-in and sessions', 'area_access-control': 'Access rights', area_injection: 'Injection', area_xss: 'Scripts in pages (XSS)',
   area_files: 'Files and uploads', area_ssrf: 'Requests to other servers', area_crypto: 'Encryption', area_dependencies: 'Dependencies', area_config: 'Configuration',
   'area_ci-cd': 'CI and deployment', 'area_data-exposure': 'Data exposure', area_dos: 'Overload (DoS)',
+  levelSwitch: 'Explanation level',
+  levelOld: 'This report was written before the three levels: it shows the senior text. Run it again to read it at your level.',
+  howScore: 'How is your security score computed?',
+  'attacker@novice': 'What could happen',
+  'evidence@novice': 'The proof in the code (for developers)',
+  'threatsIntro@novice': 'For each part of the project: what could go wrong, and what already protects it.',
+  'questionsIntro@novice': 'Questions the team should be able to answer to be sure the project was built safely. Claude answered the ones it could check.',
+  'codeIntro@novice': 'What Claude suggests after reading the code, explained without jargon.',
+  'marketIntro@novice': 'Apps that do the same kind of job, and the good ideas they give for this one.',
+  'stride_S@novice': 'Pretending to be someone', 'stride_T@novice': 'Changing things on the way', 'stride_R@novice': 'Denying what was done',
+  'stride_I@novice': 'Leaking information', 'stride_D@novice': 'Making it unavailable', 'stride_E@novice': 'Getting too many rights',
   areaSt_ok: 'Nothing found', areaSt_issues: 'Problems found', areaSt_partial: 'Looked at quickly', 'areaSt_not-applicable': 'Not applicable',
 };
 
@@ -162,6 +173,17 @@ const fr: Record<Key, string> = {
   area_secrets: 'Secrets', area_auth: 'Connexion et sessions', 'area_access-control': "Droits d'accès", area_injection: 'Injection', area_xss: 'Scripts dans les pages (XSS)',
   area_files: 'Fichiers et envois', area_ssrf: "Requêtes vers d'autres serveurs", area_crypto: 'Chiffrement', area_dependencies: 'Dépendances', area_config: 'Configuration',
   'area_ci-cd': 'CI et déploiement', 'area_data-exposure': 'Exposition des données', area_dos: 'Surcharge (DoS)',
+  levelSwitch: "Niveau d'explication",
+  levelOld: "Ce rapport a été écrit avant les trois niveaux : il montre le texte senior. Relancez-le pour le lire à votre niveau.",
+  howScore: 'Comment est calculé votre score de sécurité ?',
+  'attacker@novice': 'Ce qui pourrait arriver',
+  'evidence@novice': 'La preuve dans le code (pour les développeurs)',
+  'threatsIntro@novice': 'Pour chaque partie du projet : ce qui pourrait mal tourner, et ce qui la protège déjà.',
+  'questionsIntro@novice': "Les questions auxquelles l'équipe doit savoir répondre pour être sûre que le projet a été construit de façon sûre. Claude a répondu à celles qu'il a pu vérifier.",
+  'codeIntro@novice': "Ce que Claude propose après avoir lu le code, expliqué sans jargon.",
+  'marketIntro@novice': "Des applications qui font le même genre de travail, et les bonnes idées qu'elles donnent pour celle-ci.",
+  'stride_S@novice': "Se faire passer pour quelqu'un", 'stride_T@novice': 'Modifier en chemin', 'stride_R@novice': 'Nier avoir agi',
+  'stride_I@novice': "Laisser fuiter l'information", 'stride_D@novice': 'Rendre indisponible', 'stride_E@novice': 'Obtenir trop de droits',
   areaSt_ok: 'Rien trouvé', areaSt_issues: 'Problèmes trouvés', areaSt_partial: 'Vu rapidement', 'areaSt_not-applicable': 'Ne s\'applique pas',
 };
 
@@ -172,10 +194,12 @@ export function langOf(code: string | undefined): Lang {
   return String(code ?? '').toLowerCase().split('-')[0] === 'fr' ? 'fr' : 'en';
 }
 
-export function makeT(lang: Lang) {
+export function makeT(lang: Lang, level?: string) {
   // Keys built at run time (`level_${id}`) are accepted; an unknown one shows as is.
+  // A text may have a version for one reader level, under `key@level`.
+  const text = (key: string) => TEXTS[lang][key as Key] ?? en[key as Key];
   return (key: Key | (string & {}), vars: Record<string, string | number> = {}): string =>
-    (TEXTS[lang][key as Key] ?? en[key as Key] ?? key).replace(/\{(\w+)\}/g, (_, k) => String(vars[k] ?? ''));
+    ((level ? text(`${key}@${level}`) : undefined) ?? text(key) ?? key).replace(/\{(\w+)\}/g, (_, k) => String(vars[k] ?? ''));
 }
 
 export type T = ReturnType<typeof makeT>;

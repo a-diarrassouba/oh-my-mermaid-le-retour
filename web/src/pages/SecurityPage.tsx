@@ -3,11 +3,16 @@ import { api, mapLink, type ApiElement, type AuditReport, type Project, type Sev
 import { AuditRunner } from './AuditRunner';
 import { useI18n } from '../i18n';
 import { formatDate, markdown } from '../format';
+import { at, hasLevels, useLevel } from '../level';
+import { HREF } from '../App';
 
 const SEVS: Severity[] = ['critical', 'high', 'medium', 'low'];
 const GRADES = ['A', 'B', 'C', 'D', 'E'] as const;
+// The audits use the codes of the 2021 edition (owasp.org/Top10 now opens the 2025 one).
+const OWASP_2021 = 'https://owasp.org/Top10/2021/';
 export function SecurityPage({ project }: { project: Project | null }) {
   const { t, lang } = useI18n();
+  const { level } = useLevel();
   const [audit, setAudit] = useState<AuditReport | null | undefined>(undefined);
   const [threats, setThreats] = useState<ThreatModel | null>(null);
   const [titles, setTitles] = useState<Map<string, string>>(new Map());
@@ -33,6 +38,7 @@ export function SecurityPage({ project }: { project: Project | null }) {
           <AuditRunner project={project} onDone={loadAudit} />
           <p className="meta" style={{ margin: 0 }}>{t('auditNeed')}</p>
         </section>
+        <a className="btn ghost" href={HREF.method} style={{ alignSelf: 'flex-start' }}>{t('howScore')}</a>
         {threats && <ThreatsSection model={threats} title={title} cmd={cmd} />}
       </div>
     );
@@ -59,11 +65,13 @@ export function SecurityPage({ project }: { project: Project | null }) {
         </div>
       </section>
 
-      <div className="card md" dangerouslySetInnerHTML={markdown(audit.summary)} />
+      {level !== 'senior' && !hasLevels(audit) && <p className="notice">{t('levelOld')}</p>}
+      <div className="card md" dangerouslySetInnerHTML={markdown(at(audit, 'summary', level))} />
 
       <section className="scale" aria-label="A–E">
         {GRADES.map(g => <div key={g} className={`s-${g} ${g === audit.grade ? 'on' : ''}`}><b>{g}</b>{t(`scale_${g}`)}</div>)}
       </section>
+      <a className="btn ghost" href={HREF.method} style={{ alignSelf: 'flex-start' }}>{t('howScore')}</a>
 
       <section className="group" aria-labelledby="tofix">
         <h2 className="section" id="tofix">{t('toFix', { n: total })}</h2>
@@ -79,14 +87,14 @@ export function SecurityPage({ project }: { project: Project | null }) {
                   <summary>
                     <span className={`chip sev-${f.severity}`}>{t(`sev_${f.severity}`)}</span>
                     <b>{f.title}</b>
-                    {f.owasp && <a className="chip owasp" href="https://owasp.org/Top10/" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}>OWASP {f.owasp}</a>}
+                    {f.owasp && <a className="chip owasp" href={OWASP_2021} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}>OWASP {f.owasp}</a>}
                     {f.verification && <span className={`chip ${f.verification === 'confirmed' ? 'ok' : ''}`}>{t(`ver_${f.verification}`)}</span>}
                     <span className="where">{f.file}{f.lines ? `:${f.lines}` : ''}</span>
                   </summary>
                   <div className="body">
-                    <div><span className="k">{t('problem')}</span>{f.what}</div>
-                    <div><span className="k">{t('attacker')}</span>{f.impact}</div>
-                    <div className="full"><span className="k">{t('fix')}</span>{f.fix} <span className="chip" style={{ marginLeft: 6 }}>{t('effort', { v: t(`eff_${f.effort}`) })}</span></div>
+                    <div><span className="k">{t('problem')}</span>{at(f, 'what', level)}</div>
+                    <div><span className="k">{t('attacker')}</span>{at(f, 'impact', level)}</div>
+                    <div className="full"><span className="k">{t('fix')}</span>{at(f, 'fix', level)} <span className="chip" style={{ marginLeft: 6 }}>{t('effort', { v: t(`eff_${f.effort}`) })}</span></div>
                     <details className="full">
                       <summary style={{ cursor: 'pointer', color: 'var(--accent-ink)', fontWeight: 600 }}>{t('evidence')}</summary>
                       <div className="match" style={{ marginTop: 8, whiteSpace: 'pre-wrap' }}>{f.evidence}</div>
@@ -147,6 +155,7 @@ export function SecurityPage({ project }: { project: Project | null }) {
 
 function ThreatsSection({ model, title, cmd }: { model: ThreatModel | null; title: (p: string) => string; cmd: (k: string, c: string) => (string | JSX.Element)[] }) {
   const { t } = useI18n();
+  const { level } = useLevel();
   if (!model) {
     return (
       <section className="group">
@@ -166,7 +175,7 @@ function ThreatsSection({ model, title, cmd }: { model: ThreatModel | null; titl
       <section className="group">
         <h2 className="section">{t('threatsTitle')}</h2>
         <p className="lead" style={{ fontSize: 15 }}>{t('threatsIntro')}</p>
-        {model.summary && <div className="card md" dangerouslySetInnerHTML={markdown(model.summary)} />}
+        {model.summary && <div className="card md" dangerouslySetInnerHTML={markdown(at(model, 'summary', level))} />}
         {model.assets.length > 0 && <div><p className="label">{t('assets')}</p><ul className="list">{model.assets.map(a => <li key={a}>{a}</li>)}</ul></div>}
         {model.boundaries.length > 0 && <div><p className="label">{t('boundaries')}</p><ul className="list">{model.boundaries.map(b => <li key={b.from + b.to}><b>{title(b.from)} → {title(b.to)}</b> : {b.why}</li>)}</ul></div>}
         {[...byElement].map(([el, list]) => (
@@ -176,13 +185,13 @@ function ThreatsSection({ model, title, cmd }: { model: ThreatModel | null; titl
               <details key={th.title} className="item">
                 <summary>
                   <span className={`chip ${th.status === 'open' ? 'todo' : th.status === 'mitigated' ? 'ok' : ''}`}>{t(`st_${th.status}`)}</span>
-                  <b>{th.title}</b>
+                  <b>{at(th, 'title', level)}</b>
                   {th.stride.map(s => <span key={s} className="chip" title={t(`stride_${s}_help`)}>{s} · {t(`stride_${s}`)}</span>)}
                 </summary>
                 <div className="body">
-                  <div className="full">{th.scenario}</div>
+                  <div className="full">{at(th, 'scenario', level)}</div>
                   <div className="chips full"><span className="chip">{t('likelihood', { v: levelWord(th.likelihood) })}</span><span className={`chip ${th.impact === 'high' ? 'sev-high' : ''}`}>{t('impact', { v: levelWord(th.impact) })}</span></div>
-                  <div className="full"><span className="k">{t(th.status === 'mitigated' ? 'protects' : th.status === 'accepted' ? 'accepted' : 'todo')}</span>{th.control}</div>
+                  <div className="full"><span className="k">{t(th.status === 'mitigated' ? 'protects' : th.status === 'accepted' ? 'accepted' : 'todo')}</span>{at(th, 'control', level)}</div>
                   {th.files?.length ? <div className="where full">{th.files.join(', ')}</div> : null}
                   <div className="links full"><a className="link" href={mapLink({ element: th.element })}>{t('seeOnMap', { name: title(th.element) })}</a></div>
                 </div>
@@ -201,9 +210,9 @@ function ThreatsSection({ model, title, cmd }: { model: ThreatModel | null; titl
               <p className="label" style={{ margin: '8px 0' }}>{theme}</p>
               {list.map(q => (
                 <div key={q.question} className="item" style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <b>{q.question}</b>
+                  <b>{at(q, 'question', level)}</b>
                   <span className={`chip ${q.status === 'answered' ? 'ok' : 'todo'}`} style={{ alignSelf: 'flex-start' }}>{t(q.status === 'answered' ? 'q_answered' : 'q_open')}</span>
-                  {q.answer && <span style={{ color: 'var(--ink-2)' }}>{q.answer}</span>}
+                  {q.answer && <span style={{ color: 'var(--ink-2)' }}>{at(q, 'answer', level)}</span>}
                 </div>
               ))}
             </div>

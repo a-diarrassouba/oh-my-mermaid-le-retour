@@ -101,6 +101,8 @@ The security audit `/prisme-security` wrote after reading the code (checked by `
 ```
 
 - Only confirmed flaws, in files git tracks in this repository (never `.claude/` worktrees, dependencies or build output). `dismissed` keeps the leads Claude ruled out, with the reason; `checked` covers every area (`secrets`, `auth`, `access-control`, `injection`, `xss`, `files`, `ssrf`, `crypto`, `dependencies`, `config`, `ci-cd`, `data-exposure`, `dos`) as `ok`, `issues`, `partial` or `not-applicable`.
+- `levels` (on the report and on each finding, optional): the same texts for a beginner and a junior, `{ "novice": { "what": "…", "impact": "…", "fix": "…" }, "junior": { … } }` (`summary` on the report); the base texts are the senior level. A front shows the reader's level, else the base text. The threat model (`summary`; `title`, `scenario`, `control` of a threat; `question`, `answer` of a question), the evolve report (`summary`; `title`, `why`, `how` of an idea) and guide steps (`say`, `details`) carry `levels` the same way.
+- `owasp`: a category code of the OWASP Top 10, **2021** edition.
 - `grade`: computed by prisme from the severities, always the same way: 100 minus 30 per critical, 15 per high, 6 per medium (30 at most), 2 per low (10 at most); A ≥ 90, B ≥ 75, C ≥ 60, D ≥ 40, else E; a critical caps at D, a high at C.
 
 ## `/api/v1/security/audit` and `/api/v1/evolve/run`

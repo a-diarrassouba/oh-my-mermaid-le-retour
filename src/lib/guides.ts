@@ -4,6 +4,7 @@ import YAML from 'yaml';
 import { getOmmDir, isSafeElementPath, nodeDir } from './store.js';
 import { isPlainOmmPath, readOmmFile, removeOmmPath, writeOmmFile } from './omm-fs.js';
 import { parseLineRange, readProjectFile } from './project-files.js';
+import { parseLevels, type Levels } from './levels.js';
 
 // A guide is an ordered walk through existing elements of .prisme/. It holds no
 // content of its own: only the order, what to look at (an edge, a few nodes)
@@ -34,6 +35,8 @@ export interface GuideStep {
   part?: string;
   /** A project file to show next to the map, and the lines to light ("12-40") */
   file?: { path: string; lines?: string };
+  /** "say" and "details" for a beginner and a junior; the base texts are the senior level */
+  levels?: Levels<'say' | 'details'>;
 }
 
 export interface Guide {
@@ -66,7 +69,7 @@ export interface GuideResult {
 
 const GUIDE_ID = /^[a-z0-9][a-z0-9-]*$/;
 const GUIDE_KEYS = new Set(['title', 'kind', 'audience', 'start', 'duration', 'after', 'question', 'steps']);
-const STEP_KEYS = new Set(['element', 'edge', 'focus', 'say', 'details', 'part', 'file']);
+const STEP_KEYS = new Set(['element', 'edge', 'focus', 'say', 'details', 'part', 'file', 'levels']);
 
 export function guidesDir(cwd?: string): string {
   return path.join(getOmmDir(cwd), GUIDES_DIR);
@@ -167,6 +170,9 @@ export function parseGuide(id: string, source: string): { guide: Guide | null; i
         else if (f.lines !== undefined && !parseLineRange(f.lines)) error('file', '"lines" must be a line or a range, e.g. "12-40"', n);
         else file = { path: f.path.trim(), ...(f.lines !== undefined ? { lines: String(f.lines).replace(/\s+/g, '') } : {}) };
       }
+      const levelIssues: string[] = [];
+      const levels = parseLevels(`step ${n}`, step.levels, { say: MAX_SAY_LENGTH, details: MAX_DETAILS_LENGTH }, levelIssues);
+      for (const m of levelIssues) error('levels', m.replace(/^step \d+: /, ''), n);
       steps.push({
         element: typeof step.element === 'string' ? step.element.trim().replace(/^\/+|\/+$/g, '') : '',
         edge: typeof step.edge === 'string' ? step.edge : undefined,
@@ -175,6 +181,7 @@ export function parseGuide(id: string, source: string): { guide: Guide | null; i
         ...(typeof step.details === 'string' && step.details.trim() ? { details: step.details.trim() } : {}),
         ...(typeof step.part === 'string' && step.part.trim() ? { part: step.part.trim() } : {}),
         ...(file ? { file } : {}),
+        ...(levels ? { levels } : {}),
       });
     });
     issues.push(...partIssues(steps));

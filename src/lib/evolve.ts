@@ -5,6 +5,7 @@ import { getOmmDir } from './store.js';
 import { listElements } from './elements.js';
 import { readOmmFile, writeOmmFile } from './omm-fs.js';
 import { REPORTS_DIR } from './security.js';
+import { parseLevels, type Levels } from './levels.js';
 
 // `/prisme-evolve` writes ideas to make the project evolve, at two levels:
 //
@@ -32,6 +33,8 @@ export interface CodeIdea {
   impact: (typeof LEVELS)[number];
   elements?: string[];
   files?: string[];
+  /** title, why and how for a beginner and a junior; the base texts are the senior level */
+  levels?: Levels<'title' | 'why' | 'how'>;
 }
 
 export interface Product { name: string; url: string; what: string; similar: string }
@@ -46,6 +49,7 @@ export interface MarketIdea {
   /** Names of the products where the idea was seen */
   seenIn: string[];
   elements?: string[];
+  levels?: Levels<'title' | 'why' | 'how'>;
 }
 
 export interface EvolveReport {
@@ -55,6 +59,8 @@ export interface EvolveReport {
   summary: string;
   code: CodeIdea[];
   market: { products: Product[]; ideas: MarketIdea[] } | null;
+  /** The summary for a beginner and a junior */
+  levels?: Levels<'summary'>;
 }
 
 type Obj = Record<string, unknown>;
@@ -96,15 +102,18 @@ export function parseEvolve(source: string, cwd?: string): { report: Omit<Evolve
     for (const k of Object.keys(o)) if (!keys.includes(k)) issues.push(`${where}: unknown key "${k}"`);
   };
 
-  allowedKeys('report', data, ['summary', 'code', 'market']);
+  allowedKeys('report', data, ['summary', 'code', 'market', 'levels']);
   const summary = text('report', data.summary, 'summary');
+  const levels = parseLevels('report', data.levels, { summary: LIMITS.summary }, issues);
+  const ideaLevels = (where: string, raw: unknown) => parseLevels(where, raw, { title: LIMITS.title, why: LIMITS.why, how: LIMITS.how }, issues);
 
   const code: CodeIdea[] = [];
   if (data.code !== undefined && !Array.isArray(data.code)) issues.push('"code" must be a list');
   for (const [i, raw] of (Array.isArray(data.code) ? data.code : []).entries()) {
     const where = `code ${i + 1}`;
     if (!isObj(raw)) { issues.push(`${where}: must be a map`); continue; }
-    allowedKeys(where, raw, ['kind', 'title', 'why', 'how', 'effort', 'impact', 'elements', 'files']);
+    allowedKeys(where, raw, ['kind', 'title', 'why', 'how', 'effort', 'impact', 'elements', 'files', 'levels']);
+    const codeLevels = ideaLevels(where, raw.levels);
     code.push({
       kind: oneOf(where, 'kind', raw.kind, CODE_KINDS),
       title: text(where, raw.title, 'title'),
@@ -114,6 +123,7 @@ export function parseEvolve(source: string, cwd?: string): { report: Omit<Evolve
       impact: oneOf(where, 'impact', raw.impact, LEVELS),
       ...(raw.elements !== undefined ? { elements: elements(where, raw.elements) } : {}),
       ...(raw.files !== undefined ? { files: strings(where, 'files', raw.files) } : {}),
+      ...(codeLevels ? { levels: codeLevels } : {}),
     });
   }
   if (code.length > MAX_IDEAS) issues.push(`"code" has more than ${MAX_IDEAS} ideas: keep the best ones`);
@@ -140,7 +150,8 @@ export function parseEvolve(source: string, cwd?: string): { report: Omit<Evolve
       for (const [i, raw] of (Array.isArray(data.market.ideas) ? data.market.ideas : []).entries()) {
         const where = `market idea ${i + 1}`;
         if (!isObj(raw)) { issues.push(`${where}: must be a map`); continue; }
-        allowedKeys(where, raw, ['kind', 'title', 'why', 'how', 'effort', 'impact', 'seenIn', 'elements']);
+        allowedKeys(where, raw, ['kind', 'title', 'why', 'how', 'effort', 'impact', 'seenIn', 'elements', 'levels']);
+        const marketLevels = ideaLevels(where, raw.levels);
         const seenIn = strings(where, 'seenIn', raw.seenIn) ?? [];
         if (!seenIn.length) issues.push(`${where}: "seenIn" must name at least one product`);
         for (const n of seenIn) if (!names.has(n)) issues.push(`${where}: "${n}" is not in market.products`);
@@ -153,6 +164,7 @@ export function parseEvolve(source: string, cwd?: string): { report: Omit<Evolve
           impact: oneOf(where, 'impact', raw.impact, LEVELS),
           seenIn,
           ...(raw.elements !== undefined ? { elements: elements(where, raw.elements) } : {}),
+          ...(marketLevels ? { levels: marketLevels } : {}),
         });
       }
       if (ideas.length > MAX_IDEAS) issues.push(`"market.ideas" has more than ${MAX_IDEAS} ideas: keep the best ones`);
@@ -160,7 +172,7 @@ export function parseEvolve(source: string, cwd?: string): { report: Omit<Evolve
     }
   }
   if (!code.length && !market) issues.push('write at least "code" or "market"');
-  return { report: issues.length ? null : { summary, code, market }, issues };
+  return { report: issues.length ? null : { summary, code, market, ...(levels ? { levels } : {}) }, issues };
 }
 
 function headCommit(cwd?: string): string | null {

@@ -64,6 +64,11 @@ code { font-family: var(--mono); font-size: 0.88em; background: var(--surface-2)
 .pill { min-height: 44px; padding: 0 16px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); text-decoration: none; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; }
 .pill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--coral); }
 .pill .more { color: var(--accent-ink); }
+.switch { display: inline-flex; padding: 3px; gap: 2px; border-radius: 999px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.18); }
+.switch button { min-height: 38px; padding: 0 14px; border: 0; border-radius: 999px; background: none; color: #D3DCE8; font-size: 14px; cursor: pointer; }
+.switch button:hover { color: #fff; }
+.switch button[aria-pressed='true'] { background: #fff; color: var(--accent-ink); font-weight: 600; }
+.notice { margin: 0; padding: 10px 14px; border-radius: 10px; background: var(--warn-soft); color: var(--ink-2); font-size: 14px; }
 
 main { flex: 1; }
 .page { padding-top: 28px; padding-bottom: 64px; display: flex; flex-direction: column; gap: 32px; }
@@ -167,6 +172,25 @@ h2.section { margin: 0; font-family: var(--display); font-size: 22px; font-weigh
   .tile, .level { min-height: 0; }
   .hero .big { width: 88px; height: 88px; font-size: 52px; border-radius: 22px; }
 }
+
+/* How the score is computed */
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; }
+.flow { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; counter-reset: flow; }
+.flow li { position: relative; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--accent-soft); display: flex; flex-direction: column; gap: 2px; }
+.flow li span { font-size: 13px; color: var(--ink-2); }
+.flow li:last-child { background: var(--accent); color: #fff; border-color: var(--accent); }
+.flow li:last-child span { color: #D3DCE8; }
+.flow.side li, .flow.side li:last-child { background: var(--surface-2); color: var(--ink); border: 1px dashed var(--line-2); }
+.flow.side li:last-child span { color: var(--ink-2); }
+.calc { border-collapse: collapse; width: 100%; max-width: 560px; font-size: 14px; }
+.calc td { padding: 6px 8px; border-bottom: 1px solid var(--line); }
+.calc .n, .calc .meta { text-align: right; font-family: var(--mono); white-space: nowrap; }
+.calc .meta { font-family: var(--body); }
+.calc .sum td { font-weight: 700; border-bottom: 2px solid var(--line-2); }
+.mini { display: inline-flex; width: 28px; height: 28px; border-radius: 8px; color: #fff; align-items: center; justify-content: center; font-family: var(--display); }
+.letter { flex-shrink: 0; width: 40px; height: 40px; border-radius: 10px; background: var(--accent); color: #fff; font-family: var(--display); font-size: 22px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.list.owasp, .list.sources { display: flex; flex-direction: column; gap: 4px; }
+.list.owasp { list-style: none; padding-left: 0; }
 
 /* Audit running */
 .steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 6px; counter-reset: step; }
