@@ -9,6 +9,8 @@ declare global {
 }
 
 export type Level = 'novice' | 'junior' | 'senior';
+/** The same texts for a beginner and a junior; the base texts are the senior level. */
+type Levels<F extends string> = { levels?: Partial<Record<'novice' | 'junior', Partial<Record<F, string>>>> };
 export type Severity = 'critical' | 'high' | 'medium' | 'low';
 export type Grade = 'A' | 'B' | 'C' | 'D' | 'E';
 
@@ -53,17 +55,19 @@ export interface SecurityReport {
   tools: { name: string; status: 'ran' | 'missing' | 'failed' | 'skipped'; findings: number }[];
 }
 
-export interface AuditFinding {
+interface AuditFindingBase {
   title: string; severity: Severity; area: string; owasp?: string; file: string; lines?: string;
   what: string; impact: string; evidence: string; fix: string; effort: 'small' | 'medium' | 'large'; also?: string[]; elements?: string[];
   verification?: 'confirmed' | 'contested' | 'added'; verificationNote?: string;
 }
+export type AuditFinding = AuditFindingBase & Levels<'what' | 'impact' | 'fix'>;
 export interface AuditReport {
   kind: 'audit'; date: string; files: number; grade: Grade; score: number; counts: Record<Severity, number>; summary: string;
   findings: AuditFinding[];
   dismissed: { title: string; file?: string; reason: string }[];
   checked: { area: string; status: 'ok' | 'issues' | 'partial' | 'not-applicable'; note: string }[];
   process?: { auditors: number; verified: boolean; refuted: number; added: number };
+  levels?: Levels<'summary'>['levels'];
 }
 
 export type Stride = 'S' | 'T' | 'R' | 'I' | 'D' | 'E';
@@ -72,14 +76,16 @@ export interface ThreatModel {
   summary: string;
   assets: string[];
   boundaries: { from: string; to: string; why: string }[];
-  threats: { element: string; stride: Stride[]; title: string; scenario: string; likelihood: 'low' | 'medium' | 'high'; impact: 'low' | 'medium' | 'high'; status: 'open' | 'mitigated' | 'accepted'; control: string; files?: string[] }[];
-  questions: { theme: string; question: string; status: 'answered' | 'open'; answer?: string; elements?: string[] }[];
+  threats: ({ element: string; stride: Stride[]; title: string; scenario: string; likelihood: 'low' | 'medium' | 'high'; impact: 'low' | 'medium' | 'high'; status: 'open' | 'mitigated' | 'accepted'; control: string; files?: string[] } & Levels<'title' | 'scenario' | 'control'>)[];
+  questions: ({ theme: string; question: string; status: 'answered' | 'open'; answer?: string; elements?: string[] } & Levels<'question' | 'answer'>)[];
+  levels?: Levels<'summary'>['levels'];
 }
 
-export interface Idea { kind: string; title: string; why: string; how: string; effort: 'small' | 'medium' | 'large'; impact: 'low' | 'medium' | 'high'; elements?: string[]; files?: string[]; seenIn?: string[] }
+export interface Idea { kind: string; title: string; why: string; how: string; effort: 'small' | 'medium' | 'large'; impact: 'low' | 'medium' | 'high'; elements?: string[]; files?: string[]; seenIn?: string[]; levels?: Levels<'title' | 'why' | 'how'>['levels'] }
 export interface EvolveReport {
   date: string;
   summary: string;
+  levels?: Levels<'summary'>['levels'];
   code: Idea[];
   market: { products: { name: string; url: string; what: string; similar: string }[]; ideas: Idea[] } | null;
 }

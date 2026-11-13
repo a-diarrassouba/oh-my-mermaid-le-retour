@@ -29,6 +29,7 @@ prisme tree
 
 - If `prisme` is missing, tell the user to install it (see the README).
 - `prisme config language` prints the language to write in (`en`, `fr`, ...): `summary`, every `title`, `why`, `how`, `what` and `similar` go in that language.
+- **Three reader levels.** The viewer lets each reader pick beginner, junior or senior. `summary`, `title`, `why` and `how` are the **senior** version (precise, technical). Add to the report and to every idea `levels.novice` (someone who has never coded: an everyday image, what it changes for the users, no file names or jargon) and `levels.junior` (a developer new to the project: technical words explained once, the files to open), with the same facts in other words. `products` stay as they are.
 - `prisme tree` lists the elements. If there is no `.prisme/` yet, run `/prisme-scan` first: the ideas point at elements of the map.
 - If `prisme evolve write` later answers `invalid field` (or `champ invalide`), the CLI is too old: tell the user to run `prisme update`.
 
@@ -85,6 +86,9 @@ The draft:
 ```yaml
 summary: |
   (3 to 5 sentences: where the project stands, the two or three ideas to do first and why)
+levels:
+  novice: { summary: "…" }
+  junior: { summary: "…" }
 code:
   - kind: simplify            # simplify | speed | further
     title: "Merge the two config readers"
@@ -96,6 +100,16 @@ code:
     impact: medium            # low | medium | high
     elements: [overall-architecture/config]
     files: [src/a.ts, src/lib/config.ts]
+    levels:
+      novice:
+        title: "One place for the settings"
+        why: "Today the settings are read in two places, like two address books that drift apart. One book means fewer surprises."
+        how: "Keep only one of the two readers and make the other parts use it."
+      junior:
+        title: "Merge readConfig into the config module"
+        why: "Two readers parse the same file with different defaults: one module removes that drift."
+        how: |
+          Move `readConfig` from `src/a.ts` into `src/lib/config.ts`, then point its callers there.
 market:
   products:
     - name: "Product name"
@@ -111,6 +125,9 @@ market:
       effort: medium
       impact: high
       seenIn: ["Product name"]
+      levels:
+        novice: { title: "…", why: "…", how: "…" }
+        junior: { title: "…", why: "…", how: "…" }
 ```
 
 It is refused, with the reasons, when a key is unknown, a value is missing or too long, an element does not exist, a URL is not http(s), or `seenIn` names a product not in `products`. Fix the draft and run the command again; once accepted, the draft is removed. With `--code`, leave `market` out; with `--market`, leave `code` out (the previous report is replaced, so keep the other level from `prisme evolve show` if the user wants both).

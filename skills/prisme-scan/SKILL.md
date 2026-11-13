@@ -268,6 +268,9 @@ Write each step for a newcomer who sees the project for the first time; while th
 - `details`: 300 to 800 characters of Markdown: which elements to look at on the diagram (by their titles, not by position or color), the answer in plain words, the few names a newcomer will meet (files, commands) in code spans, and "To remember:" in one sentence.
 - **Facts about this project** come only from `.prisme/`: the fields of the step's element, of its children and of its parent. Never add one they do not hold. **General words** (CLI, unit test, CDN) may be defined from general knowledge, in plain words, the first time they appear.
 - In the technical part, say where to look to change things ("a new command starts in `src/commands/`"); in the operational part, give the exact commands, in code spans or a fenced code block.
+- **Three levels.** The viewer lets each reader pick beginner, junior or senior, and the guide follows. `say` and `details` above are the **senior** version (precise, technical). Add to every step `levels.novice` and `levels.junior`, each with its own `say` and `details`, same facts, other words:
+  - `novice`: someone who has never coded. An image from everyday life first, then the real words one at a time, each explained when it first appears; no file names unless they must type them.
+  - `junior`: a developer new to this project. Technical words are fine but explained once; name the files to open and the main function or pattern.
 
 ### Write it
 
@@ -288,6 +291,15 @@ steps:
       The diagram shows the two kinds of users on the left and what each can do.
 
       To remember: everything starts from an order.
+    levels:
+      novice:
+        say: "acme-shop is like a market stall on the internet: shoppers order, the shop owner packs and sends."
+        details: |
+          On the left, the two kinds of people who use it: the shoppers and the shop owners…
+      junior:
+        say: "A shop front for customers and a back office for shop owners, both on the same API."
+        details: |
+          The two actors on the left map to two front-end apps…
   - element: overall-architecture
     part: "Technical"
     say: "A web front end talks to one back end, which owns the database."

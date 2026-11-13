@@ -5,6 +5,7 @@ import { getOmmDir } from './store.js';
 import { listElements } from './elements.js';
 import { readOmmFile, writeOmmFile } from './omm-fs.js';
 import { REPORTS_DIR } from './security.js';
+import { parseLevels, type Levels } from './levels.js';
 
 // The threat model `/prisme-security` writes from the map: what to protect,
 // where trusted parts meet untrusted ones, the realistic threats on each
@@ -37,6 +38,8 @@ export interface Threat {
   /** What protects against it today, or what to do */
   control: string;
   files?: string[];
+  /** title, scenario and control for a beginner and a junior */
+  levels?: Levels<'title' | 'scenario' | 'control'>;
 }
 export interface Question {
   theme: string;
@@ -45,6 +48,8 @@ export interface Question {
   /** The answer found in the code, when answered */
   answer?: string;
   elements?: string[];
+  /** question and answer for a beginner and a junior */
+  levels?: Levels<'question' | 'answer'>;
 }
 export interface ThreatModel {
   version: 1;
@@ -55,6 +60,8 @@ export interface ThreatModel {
   boundaries: Boundary[];
   threats: Threat[];
   questions: Question[];
+  /** The summary for a beginner and a junior */
+  levels?: Levels<'summary'>;
 }
 
 type Obj = Record<string, unknown>;
@@ -102,8 +109,9 @@ export function parseThreats(source: string, cwd?: string): { model: Omit<Threat
     return v;
   };
 
-  keys('model', data, ['summary', 'assets', 'boundaries', 'threats', 'questions']);
+  keys('model', data, ['summary', 'assets', 'boundaries', 'threats', 'questions', 'levels']);
   const summary = text('model', data.summary, 'summary');
+  const levels = parseLevels('model', data.levels, { summary: LIMITS.summary }, issues);
 
   const assets: string[] = [];
   for (const [i, a] of items('assets').entries()) {
@@ -124,7 +132,8 @@ export function parseThreats(source: string, cwd?: string): { model: Omit<Threat
   for (const [i, raw] of items('threats').entries()) {
     const where = `threat ${i + 1}`;
     if (!isObj(raw)) { issues.push(`${where}: must be a map`); continue; }
-    keys(where, raw, ['element', 'stride', 'title', 'scenario', 'likelihood', 'impact', 'status', 'control', 'files']);
+    keys(where, raw, ['element', 'stride', 'title', 'scenario', 'likelihood', 'impact', 'status', 'control', 'files', 'levels']);
+    const threatLevels = parseLevels(where, raw.levels, { title: LIMITS.title, scenario: LIMITS.scenario, control: LIMITS.control }, issues);
     const stride = list(where, 'stride', raw.stride) ?? [];
     if (!stride.length) issues.push(`${where}: "stride" must list at least one of ${STRIDE.join(', ')}`);
     for (const s of stride) if (!(STRIDE as readonly string[]).includes(s)) issues.push(`${where}: "${s}" is not a STRIDE letter (${STRIDE.join(', ')})`);
@@ -138,6 +147,7 @@ export function parseThreats(source: string, cwd?: string): { model: Omit<Threat
       status: oneOf(where, 'status', raw.status, THREAT_STATUSES),
       control: text(where, raw.control, 'control'),
       ...(raw.files !== undefined ? { files: list(where, 'files', raw.files) } : {}),
+      ...(threatLevels ? { levels: threatLevels } : {}),
     });
   }
 
@@ -145,7 +155,8 @@ export function parseThreats(source: string, cwd?: string): { model: Omit<Threat
   for (const [i, raw] of items('questions').entries()) {
     const where = `question ${i + 1}`;
     if (!isObj(raw)) { issues.push(`${where}: must be a map`); continue; }
-    keys(where, raw, ['theme', 'question', 'status', 'answer', 'elements']);
+    keys(where, raw, ['theme', 'question', 'status', 'answer', 'elements', 'levels']);
+    const questionLevels = parseLevels(where, raw.levels, { question: LIMITS.question, answer: LIMITS.answer }, issues);
     const status = oneOf(where, 'status', raw.status, QUESTION_STATUSES);
     const answer = status === 'answered' ? text(where, raw.answer, 'answer') : text(where, raw.answer, 'answer', false);
     const elements = list(where, 'elements', raw.elements);
@@ -156,11 +167,12 @@ export function parseThreats(source: string, cwd?: string): { model: Omit<Threat
       status,
       ...(answer ? { answer } : {}),
       ...(elements ? { elements } : {}),
+      ...(questionLevels ? { levels: questionLevels } : {}),
     });
   }
 
   if (!threats.length && !questions.length) issues.push('write at least "threats" or "questions"');
-  return { model: issues.length ? null : { summary, assets, boundaries, threats, questions }, issues };
+  return { model: issues.length ? null : { summary, assets, boundaries, threats, questions, ...(levels ? { levels } : {}) }, issues };
 }
 
 function headCommit(cwd?: string): string | null {

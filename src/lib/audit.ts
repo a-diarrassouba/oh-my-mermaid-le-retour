@@ -6,6 +6,7 @@ import { getOmmDir } from './store.js';
 import { readOmmFile, writeOmmFile } from './omm-fs.js';
 import { REPORTS_DIR, projectFiles, type Grade, type Severity } from './security.js';
 import { parseLineRange } from './project-files.js';
+import { parseLevels, type Levels } from './levels.js';
 
 // The security audit `/prisme-security` writes after reading the code: only
 // confirmed flaws, each explained (what, what an attacker could do, proof,
@@ -52,6 +53,8 @@ export interface AuditFinding {
   verification?: (typeof VERIFICATIONS)[number];
   /** Why the judge kept a contested flaw, or what the verifier found */
   verificationNote?: string;
+  /** what, impact and fix for a beginner and a junior; the base texts are the senior level */
+  levels?: Levels<'what' | 'impact' | 'fix'>;
 }
 export interface Dismissed { title: string; file?: string; reason: string }
 /** How the audit was run: parallel auditors, then a contradictory verification. */
@@ -81,6 +84,8 @@ export interface AuditReport {
   dismissed: Dismissed[];
   checked: AreaCheck[];
   process?: AuditProcess;
+  /** The summary for a beginner and a junior */
+  levels?: Levels<'summary'>;
 }
 
 const PENALTY: Record<Severity, number> = { critical: 30, high: 15, medium: 6, low: 2 };
@@ -159,14 +164,16 @@ export function parseAudit(source: string, cwd: string = process.cwd()): { audit
     return v;
   };
 
-  keys('audit', data, ['summary', 'findings', 'dismissed', 'checked', 'process']);
+  keys('audit', data, ['summary', 'findings', 'dismissed', 'checked', 'process', 'levels']);
   const summary = text('audit', data.summary, 'summary');
+  const levels = parseLevels('audit', data.levels, { summary: LIMITS.summary }, issues);
 
   const findings: AuditFinding[] = [];
   for (const [i, raw] of items('findings').entries()) {
     const where = `finding ${i + 1}`;
     if (!isObj(raw)) { issues.push(`${where}: must be a map`); continue; }
-    keys(where, raw, ['title', 'severity', 'area', 'owasp', 'file', 'lines', 'what', 'impact', 'evidence', 'fix', 'effort', 'also', 'verification', 'verificationNote']);
+    keys(where, raw, ['title', 'severity', 'area', 'owasp', 'file', 'lines', 'what', 'impact', 'evidence', 'fix', 'effort', 'also', 'verification', 'verificationNote', 'levels']);
+    const findingLevels = parseLevels(where, raw.levels, { what: LIMITS.what, impact: LIMITS.impact, fix: LIMITS.fix }, issues);
     const file = inScope(where, 'file', raw.file);
     let lines: string | undefined;
     if (raw.lines !== undefined) {
@@ -195,6 +202,7 @@ export function parseAudit(source: string, cwd: string = process.cwd()): { audit
       ...(also?.length ? { also } : {}),
       ...(raw.verification !== undefined ? { verification: oneOf(where, 'verification', raw.verification, VERIFICATIONS) } : {}),
       ...(raw.verificationNote !== undefined ? { verificationNote: text(where, raw.verificationNote, 'verificationNote') } : {}),
+      ...(findingLevels ? { levels: findingLevels } : {}),
     });
     if ((raw.verification === 'contested' || raw.verification === 'added') && raw.verificationNote === undefined)
       issues.push(`${where}: a "${raw.verification}" flaw needs a "verificationNote" (why it was kept, or what the verifier found)`);
@@ -246,7 +254,7 @@ export function parseAudit(source: string, cwd: string = process.cwd()): { audit
     }
   }
 
-  return { audit: issues.length ? null : { summary, findings, dismissed, checked, ...(process ? { process } : {}) }, issues };
+  return { audit: issues.length ? null : { summary, findings, dismissed, checked, ...(process ? { process } : {}), ...(levels ? { levels } : {}) }, issues };
 }
 
 function headCommit(cwd: string): string | null {

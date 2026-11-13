@@ -85,7 +85,7 @@ Görüntüleyicinin soru çubuğuna istediğiniz soruyu yazın (örneğin "`pris
 
 Bunun için `prisme view` çalıştıran makinede Claude Code kurulu ve oturum açılmış olmalıdır (`claude`, ardından `/login`); görüntüleyiciyi yalnızca açanlar için hiçbir şey gerekmez. Claude projeyi yalnızca okur (`.env` dosyalarını veya anahtarları asla okumaz), hiçbir şeyi değiştirmez. `prisme view --no-ai` soruları kapatır.
 
-Güvenlik notu bir denetimden gelir: Claude Code'da `/prisme-security` çalıştırın (veya terminalde `claude "/prisme:prisme-security"`). Claude yalnızca bu deponun kodunu okur, gerçek açıkları doğrular, yanlış alarmları gerekçesiyle eler, her açığı ve düzeltmesini açıklar; A–E notunu prisme hesaplar. Görüntüleyicinin Güvenlik sayfası hepsini gösterir; "Denetimi Claude ile çalıştır" düğmesi aynı denetimi arka planda (salt okunur, düzeltme yok) çalıştırır ve adımları ekranda izlersiniz.
+Güvenlik notu bir denetimden gelir: Claude Code'da `/prisme-security` çalıştırın (veya terminalde `claude "/prisme:prisme-security"`). Claude yalnızca bu deponun kodunu okur, gerçek açıkları doğrular, yanlış alarmları gerekçesiyle eler, her açığı ve düzeltmesini açıklar; A–E notunu prisme hesaplar. Görüntüleyicinin Güvenlik sayfası hepsini gösterir; "Denetimi Claude ile çalıştır" düğmesi aynı denetimi arka planda (salt okunur, düzeltme yok) çalıştırır ve adımları ekranda izlersiniz. Tüm metinler okuyucunun seviyesine uyar: görüntüleyicinin üstünde Başlangıç, Junior veya Senior seçin; harita, rehberler, denetim ve fikirler buna göre değişir (tarama, denetim ve `/prisme-evolve` üç sürümü yazar). "Güvenlik puanınız nasıl hesaplanıyor?" düğmesi denetimin adımlarını, formülü, 13 alanı, OWASP Top 10'u ve STRIDE'ı kaynaklarıyla açıklar.
 
 ## CLI
 

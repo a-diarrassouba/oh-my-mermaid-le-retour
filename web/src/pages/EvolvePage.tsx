@@ -3,12 +3,14 @@ import { api, mapLink, type ApiElement, type EvolveReport, type Idea, type Proje
 import { AuditRunner } from './AuditRunner';
 import { useI18n } from '../i18n';
 import { formatDate, markdown } from '../format';
+import { at, hasLevels, useLevel } from '../level';
 
 const CODE_KINDS = ['simplify', 'speed', 'further'];
 const MARKET_KINDS = ['feature', 'design'];
 
 export function EvolvePage({ project }: { project: Project | null }) {
   const { t, lang } = useI18n();
+  const { level } = useLevel();
   const [report, setReport] = useState<EvolveReport | null | undefined>(undefined);
   const [titles, setTitles] = useState<Map<string, string>>(new Map());
   const [tab, setTab] = useState<'code' | 'market'>('code');
@@ -42,9 +44,9 @@ export function EvolvePage({ project }: { project: Project | null }) {
         <span className="chip">{t('effort', { v: t(`eff_${idea.effort}`) })}</span>
         <span className={`chip ${idea.impact === 'high' ? 'sev-high strong' : ''}`}>{t('ideaImpact', { v: t(`imp_${idea.impact}`) })}</span>
       </div>
-      <h3>{idea.title}</h3>
-      <div><span className="label" style={{ display: 'block' }}>{t('brings')}</span>{idea.why}</div>
-      <div className="md"><span className="label" style={{ display: 'block' }}>{t('how')}</span><div dangerouslySetInnerHTML={markdown(idea.how)} /></div>
+      <h3>{at(idea, 'title', level)}</h3>
+      <div><span className="label" style={{ display: 'block' }}>{t('brings')}</span>{at(idea, 'why', level)}</div>
+      <div className="md"><span className="label" style={{ display: 'block' }}>{t('how')}</span><div dangerouslySetInnerHTML={markdown(at(idea, 'how', level))} /></div>
       {idea.seenIn?.length ? <div className="meta">{t('seenIn', { names: idea.seenIn.join(', ') })}</div> : null}
       {idea.files?.length ? <div className="meta" style={{ fontFamily: 'var(--mono)', fontSize: 12 }}>{t('files', { files: idea.files.join(', ') })}</div> : null}
       {idea.elements?.length ? (
@@ -68,7 +70,8 @@ export function EvolvePage({ project }: { project: Project | null }) {
       <section style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <p className="eyebrow">{t('writtenOn', { date: formatDate(report.date, lang) })}</p>
         <h1 className="title">{t('evolveTitle')}</h1>
-        <div className="lead md" dangerouslySetInnerHTML={markdown(report.summary)} />
+        <div className="lead md" dangerouslySetInnerHTML={markdown(at(report, 'summary', level))} />
+        {level !== 'senior' && !hasLevels(report) && <p className="notice">{t('levelOld')}</p>}
       </section>
 
       <div className="tabs" role="tablist" aria-label={t('evolveTitle')}>
